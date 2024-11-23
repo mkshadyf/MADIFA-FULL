@@ -1,15 +1,21 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Chart from 'chart.js/index'
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js'
+import { Line } from 'react-chartjs-2'
 import { createClient } from '@/lib/supabase/client'
+import type { ActivityData } from '@/lib/types/activity'
 
-interface ActivityData {
-  date: string
-  views: number
-  searches: number
-  interactions: number
-}
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 export default function UserActivityChart() {
   const chartRef = useRef<HTMLCanvasElement>(null)
@@ -70,38 +76,37 @@ export default function UserActivityChart() {
                     label: 'Views',
                     data: sortedData.map(d => d.views),
                     borderColor: 'rgb(99, 102, 241)',
-                    tension: 0.1
+                    fill: false,
+                    lineTension: 0.1
                   },
                   {
                     label: 'Searches',
                     data: sortedData.map(d => d.searches),
                     borderColor: 'rgb(139, 92, 246)',
-                    tension: 0.1
+                    fill: false,
+                    lineTension: 0.1
                   },
                   {
                     label: 'Other Interactions',
                     data: sortedData.map(d => d.interactions),
                     borderColor: 'rgb(167, 139, 250)',
-                    tension: 0.1
+                    fill: false,
+                    lineTension: 0.1
                   }
                 ]
               },
               options: {
                 responsive: true,
-                plugins: {
-                  legend: {
-                    position: 'top',
-                    labels: { color: 'white' }
-                  }
-                },
                 scales: {
-                  y: {
-                    beginAtZero: true,
-                    ticks: { color: 'white' }
-                  },
-                  x: {
-                    ticks: { color: 'white' }
-                  }
+                  xAxes: [{
+                    ticks: { fontColor: 'white' }
+                  }],
+                  yAxes: [{
+                    ticks: { fontColor: 'white', beginAtZero: true }
+                  }]
+                },
+                legend: {
+                  labels: { fontColor: 'white' }
                 }
               }
             })
@@ -117,8 +122,36 @@ export default function UserActivityChart() {
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
-      <h2 className="text-xl font-semibold text-white mb-4">User Activity</h2>
-      <canvas ref={chartRef} />
+      <Line
+        data={{
+          labels: [],
+          datasets: [
+            {
+              label: 'Activity',
+              data: [],
+              borderColor: 'rgb(99, 102, 241)',
+              tension: 0.1
+            }
+          ]
+        }}
+        options={{
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { color: 'white' }
+            },
+            x: {
+              ticks: { color: 'white' }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: 'white' }
+            }
+          }
+        }}
+      />
     </div>
   )
 } 

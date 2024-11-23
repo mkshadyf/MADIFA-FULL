@@ -1,52 +1,40 @@
 import { createClient } from '@/lib/supabase/client'
-import type { FileOptions } from '@supabase/storage-js'
-
-interface UploadProgress {
-  loaded: number
-  total: number
-}
-
-interface UploadOptions extends FileOptions {
-  onProgress?: (progress: UploadProgress) => void
-}
+import type { FileOptions, UploadProgress } from '@/lib/types/upload'
 
 export async function uploadContent(
   file: File,
   path: string,
-  options?: UploadOptions
+  options?: FileOptions
 ): Promise<string> {
   const supabase = createClient()
-  const fileExt = file.name.split('.').pop()
-  const filePath = `${path}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-
-  // Create a readable stream from the file
-  const fileStream = file.stream()
-  const reader = fileStream.getReader()
   let loaded = 0
 
-  // Upload the file in chunks
-  const { error: uploadError } = await supabase.storage
-    .from('content')
-    .upload(filePath, file, {
-      ...options,
-      duplex: 'half',
-      onUploadProgress: (progress: UploadProgress) => {
-        loaded += progress.loaded
-        options?.onProgress?.({
-          loaded,
-          total: file.size
-        })
-      }
-    })
+  try {
+    const { data, error } = await supabase.storage
+      .from('content')
+      .upload(`${path}/${crypto.randomUUID()}`, file, {
+        cacheControl: options?.cacheControl || '3600',
+        contentType: options?.contentType || file.type,
+        upsert: options?.upsert || false,
+        duplex: 'half',
+        onUploadProgress: (progress: UploadProgress) => {
+          loaded += progress.loaded
+          options?.onProgress?.({
+            loaded,
+            total: file.size
+          })
+        }
+      })
 
-  if (uploadError) {
-    throw uploadError
+    if (error) throw error
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('content')
+      .getPublicUrl(data.path)
+
+    return publicUrl
+  } catch (error) {
+    console.error('Upload error:', error)
+    throw error
   }
-
-  // Get the public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from('content')
-    .getPublicUrl(filePath)
-
-  return publicUrl
 } 

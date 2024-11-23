@@ -3,51 +3,32 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { uploadContent } from '@/lib/utils/content-upload'
-import UploadProgress from '@/components/admin/upload-progress'
-import type { ChangeEvent, FormEvent } from 'react'
-
-interface UploadForm {
-  title: string
-  description: string
-  category: string
-  releaseYear: number
-  language: string
-  ageRating: string
-  duration: number
-}
-
-const initialForm: UploadForm = {
-  title: '',
-  description: '',
-  category: '',
-  releaseYear: new Date().getFullYear(),
-  language: '',
-  ageRating: '',
-  duration: 0
-}
+import type { Content } from '@/lib/supabase/types'
 
 export default function ContentUpload() {
-  const [form, setForm] = useState<UploadForm>(initialForm)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState('')
+  const [releaseYear, setReleaseYear] = useState(new Date().getFullYear())
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!thumbnailFile || !videoFile) {
+      setError('Please select both thumbnail and video files')
+      return
+    }
+
     setLoading(true)
     setError(null)
-    setSuccess(false)
     setUploadProgress(0)
 
     try {
-      if (!thumbnailFile || !videoFile) {
-        throw new Error('Please select both thumbnail and video files')
-      }
-
       // Upload thumbnail
       const thumbnailUrl = await uploadContent(thumbnailFile, 'thumbnails', {
         onProgress: (progress) => {
@@ -66,20 +47,26 @@ export default function ContentUpload() {
       const { error: dbError } = await supabase
         .from('content')
         .insert({
-          ...form,
+          title,
+          description,
+          category,
+          release_year: releaseYear,
           thumbnail_url: thumbnailUrl,
-          video_url: videoUrl,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          video_url: videoUrl
         })
 
       if (dbError) throw dbError
 
-      setSuccess(true)
-      setForm(initialForm)
+      // Reset form
+      setTitle('')
+      setDescription('')
+      setCategory('')
+      setReleaseYear(new Date().getFullYear())
       setThumbnailFile(null)
       setVideoFile(null)
+      setUploadProgress(0)
     } catch (error) {
+      console.error('Upload error:', error)
       setError(error instanceof Error ? error.message : 'Upload failed')
     } finally {
       setLoading(false)
@@ -87,138 +74,111 @@ export default function ContentUpload() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-8">Upload Content</h1>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold text-white mb-6">Upload Content</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Title</label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Category</label>
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
-              required
-            >
-              <option value="">Select Category</option>
-              <option value="movies">Movies</option>
-              <option value="series">Series</option>
-              <option value="music">Music</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300">Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
+          />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-300">Description</label>
           <textarea
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={3}
-            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             required
+            rows={4}
+            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
+            >
+              <option value="">Select Category</option>
+              <option value="movies">Movies</option>
+              <option value="series">Series</option>
+              <option value="documentaries">Documentaries</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-300">Release Year</label>
             <input
               type="number"
-              value={form.releaseYear}
-              onChange={(e) => setForm({ ...form, releaseYear: Number(e.target.value) })}
-              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
+              value={releaseYear}
+              onChange={(e) => setReleaseYear(parseInt(e.target.value))}
               required
+              min="1900"
+              max={new Date().getFullYear()}
+              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Language</label>
-            <select
-              value={form.language}
-              onChange={(e) => setForm({ ...form, language: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
-              required
-            >
-              <option value="">Select Language</option>
-              <option value="english">English</option>
-              <option value="zulu">Zulu</option>
-              <option value="xhosa">Xhosa</option>
-              <option value="afrikaans">Afrikaans</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300">Age Rating</label>
-            <select
-              value={form.ageRating}
-              onChange={(e) => setForm({ ...form, ageRating: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
-              required
-            >
-              <option value="">Select Rating</option>
-              <option value="all">All Ages</option>
-              <option value="7+">7+</option>
-              <option value="13+">13+</option>
-              <option value="16+">16+</option>
-              <option value="18+">18+</option>
-            </select>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-300">Thumbnail</label>
             <input
               type="file"
               accept="image/*"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => 
-                setThumbnailFile(e.target.files?.[0] || null)
-              }
-              className="mt-1 block w-full text-white"
+              onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
               required
+              className="mt-1 block w-full text-white"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300">Video File</label>
+            <label className="block text-sm font-medium text-gray-300">Video</label>
             <input
               type="file"
               accept="video/*"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => 
-                setVideoFile(e.target.files?.[0] || null)
-              }
-              className="mt-1 block w-full text-white"
+              onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
               required
+              className="mt-1 block w-full text-white"
             />
           </div>
         </div>
 
-        {loading && <UploadProgress progress={uploadProgress} />}
+        {uploadProgress > 0 && (
+          <div className="relative pt-1">
+            <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-700">
+              <div
+                style={{ width: `${uploadProgress}%` }}
+                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500"
+              />
+            </div>
+            <div className="text-right">
+              <span className="text-sm font-semibold inline-block text-gray-300">
+                {Math.round(uploadProgress)}%
+              </span>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="text-red-500 text-sm">{error}</div>
         )}
 
-        {success && (
-          <div className="text-green-500 text-sm">Content uploaded successfully!</div>
-        )}
-
-        <div className="flex justify-end">
+        <div>
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
             {loading ? 'Uploading...' : 'Upload Content'}
           </button>

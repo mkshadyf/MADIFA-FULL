@@ -1,82 +1,74 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import ContentCard from '@/components/ui/content-card'
-import type { Database } from '@/lib/supabase/database.types'
+import { useRecommendations } from '@/lib/hooks/useRecommendations'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/components/providers/AuthProvider'
 
-type Content = Database['public']['Tables']['content']['Row']
+export default function Recommendations() {
+  const { user } = useAuth()
+  const router = useRouter()
+  const { recommendations, loading, error } = useRecommendations({
+    userId: user?.id || '',
+    limit: 10
+  })
 
-interface RecommendationsProps {
-  userId: string
-  currentContentId?: string
-  category?: string
-  limit?: number
-}
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {[...Array(10)].map((_, i) => (
+            <div
+              key={i}
+              className="aspect-video bg-gray-800 rounded-lg"
+            />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
-export default function Recommendations({ 
-  userId, 
-  currentContentId,
-  category,
-  limit = 5 
-}: RecommendationsProps) {
-  const [recommendations, setRecommendations] = useState<Content[]>([])
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  if (error) {
+    return (
+      <div className="text-red-500 text-center py-4">
+        {error}
+      </div>
+    )
+  }
 
-  useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        // Get user's viewing history
-        const { data: history } = await supabase
-          .from('viewing_history')
-          .select('content_id')
-          .eq('user_id', userId)
-          .order('last_watched', { ascending: false })
-          .limit(10)
-
-        const watchedIds = history?.map(h => h.content_id) || []
-
-        // Get recommendations based on viewing history
-        let query = supabase
-          .from('content')
-          .select('*')
-          .not('id', 'in', `(${watchedIds.join(',')})`)
-          .limit(limit)
-
-        if (currentContentId) {
-          query = query.neq('id', currentContentId)
-        }
-
-        if (category) {
-          query = query.eq('category', category)
-        }
-
-        const { data, error } = await query
-
-        if (error) throw error
-        setRecommendations(data)
-      } catch (error) {
-        console.error('Error fetching recommendations:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchRecommendations()
-  }, [userId, currentContentId, category, limit])
-
-  if (loading) return null
+  if (recommendations.length === 0) {
+    return (
+      <div className="text-gray-400 text-center py-4">
+        No recommendations available
+      </div>
+    )
+  }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      {recommendations.map((content) => (
-        <ContentCard
-          key={content.id}
-          content={content}
-          aspectRatio="video"
-        />
-      ))}
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">Recommended for You</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {recommendations.map((content) => (
+          <div
+            key={content.id}
+            onClick={() => router.push(`/watch/${content.id}`)}
+            className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden cursor-pointer group"
+          >
+            {content.thumbnail_url && (
+              <img
+                src={content.thumbnail_url}
+                alt={content.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <h3 className="text-white font-medium">{content.title}</h3>
+                <p className="text-sm text-gray-400 mt-1">{content.category}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 } 

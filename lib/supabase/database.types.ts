@@ -9,6 +9,7 @@ export type Database = {
           full_name: string
           avatar_url: string | null
           pin_code: string | null
+          role: 'admin' | 'moderator' | 'user'
           subscription_tier: 'free' | 'premium' | 'premium_plus'
           subscription_status: 'active' | 'inactive' | 'past_due'
           current_profile_id: string | null
@@ -22,6 +23,7 @@ export type Database = {
           full_name: string
           avatar_url?: string | null
           pin_code?: string | null
+          role?: 'admin' | 'moderator' | 'user'
           subscription_tier?: 'free' | 'premium' | 'premium_plus'
           subscription_status?: 'active' | 'inactive' | 'past_due'
           current_profile_id?: string | null
@@ -35,6 +37,7 @@ export type Database = {
           full_name?: string
           avatar_url?: string | null
           pin_code?: string | null
+          role?: 'admin' | 'moderator' | 'user'
           subscription_tier?: 'free' | 'premium' | 'premium_plus'
           subscription_status?: 'active' | 'inactive' | 'past_due'
           current_profile_id?: string | null
@@ -47,6 +50,7 @@ export type Database = {
           title: string
           description: string
           thumbnail_url: string
+          video_url: string
           category: string
           release_year: number
           created_at: string
@@ -57,6 +61,7 @@ export type Database = {
           title: string
           description: string
           thumbnail_url: string
+          video_url: string
           category: string
           release_year: number
           created_at?: string
@@ -66,6 +71,7 @@ export type Database = {
           title?: string
           description?: string
           thumbnail_url?: string
+          video_url?: string
           category?: string
           release_year?: number
           updated_at?: string

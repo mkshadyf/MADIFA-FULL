@@ -8,11 +8,18 @@ export type Profile = {
   updated_at: string
 }
 
-export type UserProfile = {
-  id: string
-  email: string
-  profiles: Profile[]
-  current_profile_id?: string
-  subscription_tier: 'free' | 'premium' | 'premium_plus'
-  subscription_status: 'active' | 'inactive' | 'past_due'
+export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
+
+export type Content = Database['public']['Tables']['content']['Row']
+
+export type UploadProgress = {
+  loaded: number
+  total: number
+}
+
+export type FileOptions = {
+  cacheControl?: string
+  contentType?: string
+  upsert?: boolean
+  onProgress?: (progress: UploadProgress) => void
 } 
