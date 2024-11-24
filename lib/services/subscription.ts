@@ -1,124 +1,94 @@
+import type { PlanId } from '@/lib/config/subscription-plans'
 import { createClient } from '@/lib/supabase/client'
-import type { SubscriptionStatus, SubscriptionTier } from '@/lib/types/subscription'
+import Stripe from 'stripe'
 
-interface CreateSubscriptionParams {
-  userId: string
-  planId: string
-  tier: SubscriptionTier
-  price: number
-  billingPeriod: 'monthly' | 'yearly'
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16'
+})
 
-interface UpdateSubscriptionParams {
-  subscriptionId: string
-  status: SubscriptionStatus
-  currentPeriodEnd?: string
-  cancelAtPeriodEnd?: boolean
-}
-
-export async function createSubscription({
-  userId,
-  planId,
-  tier,
-  price,
-  billingPeriod
-}: CreateSubscriptionParams) {
+export async function createSubscription(userId: string, planId: PlanId) {
   const supabase = createClient()
 
   try {
-    // Create subscription record
-    const { data: subscription, error } = await supabase
-      .from('subscriptions')
-      .insert({
-        user_id: userId,
-        plan_id: planId,
-        tier,
-        status: 'active',
-        current_period_start: new Date().toISOString(),
-        current_period_end: new Date(
-          new Date().setMonth(
-            new Date().getMonth() + (billingPeriod === 'yearly' ? 12 : 1)
-          )
-        ).toISOString(),
-        price,
-        billing_period: billingPeriod
-      })
-      .select()
+    // Get user's email
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError) throw userError
+
+    // Create Stripe customer if doesn't exist
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
       .single()
 
-    if (error) throw error
+    let customerId = profile?.stripe_customer_id
 
-    // Update user profile with subscription info
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .update({
-        subscription_tier: tier,
-        subscription_status: 'active'
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user?.email,
+        metadata: {
+          supabase_user_id: userId
+        }
       })
-      .eq('user_id', userId)
+      customerId = customer.id
 
-    if (profileError) throw profileError
+      // Save Stripe customer ID
+      await supabase
+        .from('user_profiles')
+        .update({ stripe_customer_id: customerId })
+        .eq('user_id', userId)
+    }
 
-    return subscription
+    // Create subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: process.env[`STRIPE_${planId.toUpperCase()}_PRICE_ID`]! }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent']
+    })
+
+    return {
+      subscriptionId: subscription.id,
+      clientSecret: (subscription.latest_invoice as Stripe.Invoice)
+        .payment_intent?.client_secret
+    }
   } catch (error) {
     console.error('Error creating subscription:', error)
     throw error
   }
 }
 
-export async function updateSubscription({
-  subscriptionId,
-  status,
-  currentPeriodEnd,
-  cancelAtPeriodEnd
-}: UpdateSubscriptionParams) {
-  const supabase = createClient()
-
+export async function cancelSubscription(subscriptionId: string) {
   try {
-    const { data: subscription, error } = await supabase
-      .from('subscriptions')
-      .update({
-        status,
-        ...(currentPeriodEnd && { current_period_end: currentPeriodEnd }),
-        ...(typeof cancelAtPeriodEnd !== 'undefined' && { cancel_at_period_end: cancelAtPeriodEnd })
-      })
-      .eq('id', subscriptionId)
-      .select()
-      .single()
-
-    if (error) throw error
-
-    // Update user profile status
-    if (subscription) {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update({
-          subscription_status: status
-        })
-        .eq('user_id', subscription.user_id)
-
-      if (profileError) throw profileError
-    }
-
-    return subscription
+    await stripe.subscriptions.cancel(subscriptionId)
   } catch (error) {
-    console.error('Error updating subscription:', error)
+    console.error('Error canceling subscription:', error)
     throw error
   }
 }
 
-export async function cancelSubscription(subscriptionId: string) {
-  return updateSubscription({
-    subscriptionId,
-    status: 'inactive',
-    cancelAtPeriodEnd: true
-  })
-}
+export async function getSubscriptionStatus(userId: string) {
+  const supabase = createClient()
 
-export async function reactivateSubscription(subscriptionId: string) {
-  return updateSubscription({
-    subscriptionId,
-    status: 'active',
-    cancelAtPeriodEnd: false
-  })
+  try {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
+      .single()
+
+    if (!profile?.stripe_customer_id) return null
+
+    const subscriptions = await stripe.subscriptions.list({
+      customer: profile.stripe_customer_id,
+      status: 'active',
+      expand: ['data.plan']
+    })
+
+    return subscriptions.data[0] || null
+  } catch (error) {
+    console.error('Error getting subscription status:', error)
+    throw error
+  }
 } 

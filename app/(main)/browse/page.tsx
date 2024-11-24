@@ -2,19 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { createClient } from '@/lib/supabase/client'
+import { getVideoDetails } from '@/lib/services/vimeo'
 import Loading from '@/components/ui/loading'
 import { useRouter } from 'next/navigation'
-import type { Database } from '@/lib/supabase/database.types'
-
-type Content = Database['public']['Tables']['content']['Row']
+import type { VimeoVideo } from '@/types/vimeo'
 
 export default function Browse() {
   const { user, loading: authLoading } = useAuth()
-  const [content, setContent] = useState<Content[]>([])
+  const [videos, setVideos] = useState<VimeoVideo[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     if (!user && !authLoading) {
@@ -22,25 +19,23 @@ export default function Browse() {
       return
     }
 
-    const fetchContent = async () => {
+    const fetchVideos = async () => {
       try {
-        const { data, error } = await supabase
-          .from('content')
-          .select('*')
-          .limit(20)
-
-        if (error) throw error
-
-        setContent(data || [])
+        // Replace with your actual Vimeo folder/showcase IDs
+        const videoIds = ['123456789', '987654321'] // Your Vimeo video IDs
+        const fetchedVideos = await Promise.all(
+          videoIds.map(id => getVideoDetails(id))
+        )
+        setVideos(fetchedVideos)
       } catch (error) {
-        console.error('Error fetching content:', error)
+        console.error('Error fetching videos:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchContent()
-  }, [user, authLoading, router, supabase])
+    fetchVideos()
+  }, [user, authLoading])
 
   if (loading || authLoading) {
     return <Loading />
@@ -60,7 +55,7 @@ export default function Browse() {
                 Profile
               </button>
               <button 
-                onClick={() => supabase.auth.signOut()}
+                onClick={() => router.push('/signout')}
                 className="text-white hover:text-gray-300"
               >
                 Sign Out
@@ -72,37 +67,27 @@ export default function Browse() {
 
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <section className="max-w-7xl mx-auto">
-          <h2 className="text-xl font-semibold text-white mb-4">Continue Watching</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">Videos</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {content.map((item) => (
+            {videos.map((video) => (
               <div 
-                key={item.id}
+                key={video.uri}
                 className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all"
-                onClick={() => router.push(`/watch/${item.id}`)}
+                onClick={() => router.push(`/watch/${video.uri.split('/').pop()}`)}
               >
-                {/* Add thumbnail image here */}
+                <img 
+                  src={video.pictures.sizes[3].link} 
+                  alt={video.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
                 <div className="absolute inset-0 flex items-end p-2 bg-gradient-to-t from-black/60 to-transparent">
                   <div>
-                    <h3 className="text-sm font-medium text-white">{item.title}</h3>
-                    <p className="text-xs text-gray-300">{item.release_year}</p>
+                    <h3 className="text-sm font-medium text-white">{video.name}</h3>
+                    <p className="text-xs text-gray-300">{Math.floor(video.duration / 60)} min</p>
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="max-w-7xl mx-auto mt-12">
-          <h2 className="text-xl font-semibold text-white mb-4">Trending Now</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {/* Similar content grid */}
-          </div>
-        </section>
-
-        <section className="max-w-7xl mx-auto mt-12">
-          <h2 className="text-xl font-semibold text-white mb-4">New Releases</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {/* Similar content grid */}
           </div>
         </section>
       </main>

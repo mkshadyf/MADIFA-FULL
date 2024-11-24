@@ -9,16 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.12.10",
-    "hls.js": "^1.4.12",
-    "stripe": "^14.12.0",
-    "react-chartjs-2": "^5.2.0"
+    "@vimeo/player": "^2.20.1",
+    "@vimeo/vimeo": "^3.0.3",
+    "next": "14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
+    "@supabase/supabase-js": "^2.39.1"
   },
   "devDependencies": {
-    "@types/stripe": "^8.0.417",
-    "@types/react-chartjs-2": "^2.5.7"
-  },
-  "resolutions": {
-    "@types/react": "^18.2.48"
+    "@types/node": "^20.10.6",
+    "@types/react": "^18.2.46",
+    "@types/react-dom": "^18.2.18",
+    "@types/vimeo__player": "^2.18.3",
+    "typescript": "^5.3.3",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0"
   }
 }

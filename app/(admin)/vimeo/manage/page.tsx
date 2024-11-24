@@ -1,22 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import VimeoUpload from '@/components/admin/vimeo-upload'
+import VimeoShowcaseCreator from '@/components/admin/vimeo-showcase-creator'
 import VimeoShowcaseManager from '@/components/admin/vimeo-showcase-manager'
 import VimeoAnalytics from '@/components/admin/vimeo-analytics'
-import VimeoContentManager from '@/components/admin/vimeo-content-manager'
-import VimeoMetadataEditor from '@/components/admin/vimeo-metadata-editor'
-import type { VimeoVideo } from '@/types/vimeo'
 
-type ActiveView = 'showcases' | 'analytics' | 'content' | 'metadata'
+type ActiveView = 'upload' | 'showcases' | 'analytics'
 
-export default function AdminDashboard() {
-  const [activeView, setActiveView] = useState<ActiveView>('content')
-  const [selectedVideo, setSelectedVideo] = useState<VimeoVideo | null>(null)
-
-  const handleVideoSelect = (video: VimeoVideo) => {
-    setSelectedVideo(video)
-    setActiveView('metadata')
-  }
+export default function VimeoManagePage() {
+  const [activeView, setActiveView] = useState<ActiveView>('upload')
 
   return (
     <div className="min-h-screen bg-gray-900">
@@ -26,14 +19,14 @@ export default function AdminDashboard() {
             <div className="flex">
               <div className="flex space-x-8">
                 <button
-                  onClick={() => setActiveView('content')}
+                  onClick={() => setActiveView('upload')}
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
-                    activeView === 'content'
+                    activeView === 'upload'
                       ? 'text-white border-b-2 border-indigo-500'
                       : 'text-gray-300 hover:text-white'
                   }`}
                 >
-                  Content
+                  Upload
                 </button>
                 <button
                   onClick={() => setActiveView('showcases')}
@@ -62,14 +55,15 @@ export default function AdminDashboard() {
       </nav>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {activeView === 'content' && (
+        {activeView === 'upload' && (
           <div className="px-4 py-6 sm:px-0">
-            <VimeoContentManager onVideoSelect={handleVideoSelect} />
+            <VimeoUpload />
           </div>
         )}
 
         {activeView === 'showcases' && (
-          <div className="px-4 py-6 sm:px-0">
+          <div className="px-4 py-6 sm:px-0 space-y-6">
+            <VimeoShowcaseCreator />
             <VimeoShowcaseManager />
           </div>
         )}
@@ -77,27 +71,6 @@ export default function AdminDashboard() {
         {activeView === 'analytics' && (
           <div className="px-4 py-6 sm:px-0">
             <VimeoAnalytics />
-          </div>
-        )}
-
-        {activeView === 'metadata' && selectedVideo && (
-          <div className="px-4 py-6 sm:px-0">
-            <button
-              onClick={() => {
-                setSelectedVideo(null)
-                setActiveView('content')
-              }}
-              className="mb-4 px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600"
-            >
-              ← Back to Content
-            </button>
-            <VimeoMetadataEditor
-              video={selectedVideo}
-              onUpdate={() => {
-                setSelectedVideo(null)
-                setActiveView('content')
-              }}
-            />
           </div>
         )}
       </main>

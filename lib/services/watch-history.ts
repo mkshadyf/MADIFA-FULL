@@ -1,55 +1,20 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/supabase/types'
-
-interface WatchHistoryItem {
-  id: string
-  user_id: string
-  content_id: string
-  progress: number
-  duration: number
-  last_watched: string
-  content: Content
-}
-
-export async function getWatchHistory(userId: string, limit = 20): Promise<WatchHistoryItem[]> {
-  const supabase = createClient()
-
-  try {
-    const { data, error } = await supabase
-      .from('viewing_history')
-      .select(`
-        *,
-        content (*)
-      `)
-      .eq('user_id', userId)
-      .order('last_watched', { ascending: false })
-      .limit(limit)
-
-    if (error) throw error
-
-    return data || []
-  } catch (error) {
-    console.error('Error fetching watch history:', error)
-    throw error
-  }
-}
+import { getVideoDetails } from './vimeo'
 
 export async function updateWatchProgress(
   userId: string,
-  contentId: string,
-  progress: number,
-  duration: number
+  vimeoId: string,
+  progress: number
 ) {
   const supabase = createClient()
 
   try {
     const { error } = await supabase
-      .from('viewing_history')
+      .from('watch_history')
       .upsert({
         user_id: userId,
-        content_id: contentId,
+        vimeo_id: vimeoId,
         progress,
-        duration,
         last_watched: new Date().toISOString()
       })
 
@@ -60,19 +25,33 @@ export async function updateWatchProgress(
   }
 }
 
-export async function removeFromHistory(userId: string, contentId: string) {
+export async function getWatchHistory(userId: string, limit = 20) {
   const supabase = createClient()
 
   try {
-    const { error } = await supabase
-      .from('viewing_history')
-      .delete()
+    const { data: history, error } = await supabase
+      .from('watch_history')
+      .select('*')
       .eq('user_id', userId)
-      .eq('content_id', contentId)
+      .order('last_watched', { ascending: false })
+      .limit(limit)
 
     if (error) throw error
+
+    // Fetch video details from Vimeo
+    const watchHistory = await Promise.all(
+      history.map(async (item) => {
+        const videoDetails = await getVideoDetails(item.vimeo_id)
+        return {
+          ...item,
+          video: videoDetails
+        }
+      })
+    )
+
+    return watchHistory
   } catch (error) {
-    console.error('Error removing from history:', error)
+    console.error('Error fetching watch history:', error)
     throw error
   }
 } 
