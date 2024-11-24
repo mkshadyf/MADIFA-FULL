@@ -66,7 +66,7 @@ export default function ProfileSettings() {
     try {
       const updates: ProfileUpdate = {
         full_name: fullName,
-        pin_code: pinCode || null,
+        pin_code: pinCode || undefined,
         preferences
       }
 

@@ -68,7 +68,7 @@ export default function VideoPlayer({
             }
           })
 
-          hlsRef.current.on(Hls.Events.ERROR, (_, data) => {
+          hlsRef.current.on(Hls.Events.ERROR, (_event: any, data: { fatal: boolean }) => {
             if (data.fatal) {
               setError('Video playback error')
             }

@@ -12,7 +12,29 @@ export type Profile = {
 
 export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
-export type Content = Database['public']['Tables']['content']['Row']
+export interface Content {
+  id: string
+  title: string
+  description: string
+  thumbnail_url: string
+  video_url: string
+  category: string
+  release_year: number
+  duration: number
+  status: 'processing' | 'ready' | 'failed'
+  error_message?: string
+  created_at: string
+  updated_at: string
+  content_count?: number
+  total_views?: number
+  average_rating?: number
+  available_qualities?: string[]
+}
+
+export interface Category extends Content {
+  content_count: number
+  total_views: number
+}
 
 export type UploadProgress = {
   loaded: number
