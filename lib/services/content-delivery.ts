@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/client'
 import type { VideoQuality } from '@/types/vimeo'
 import { getSubscriptionStatus } from './subscription'
 import { getVideoDetails } from './vimeo'
@@ -22,23 +21,22 @@ export async function getStreamUrl(
 }
 
 export async function trackProgress(
-  userId: string,
-  videoId: string,
-  progress: number
+  contentId: string,
+  progress: number,
+  duration: number
 ): Promise<void> {
-  const supabase = createClient()
-
   try {
-    await supabase
-      .from('watch_history')
-      .upsert({
-        user_id: userId,
-        vimeo_id: videoId,
-        progress,
-        last_watched: new Date().toISOString()
-      })
+    await fetch(`/api/progress/${contentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        progress: progress.toString(),
+        duration: duration.toString(),
+      }),
+    })
   } catch (error) {
-    console.error('Error tracking progress:', error)
-    throw error
+    console.error('Progress tracking error:', error)
   }
 } 

@@ -1,41 +1,54 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import type { CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
-
-  // Protected routes
-  if (req.nextUrl.pathname.startsWith('/browse') ||
-    req.nextUrl.pathname.startsWith('/watch') ||
-    req.nextUrl.pathname.startsWith('/profile')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/signin', req.url))
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+            path: options.path || '/',
+          })
+        },
+        remove(name: string, options: CookieOptions) {
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+            path: options.path || '/',
+          })
+        },
+      },
     }
+  )
+
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session && request.nextUrl.pathname.startsWith('/browse')) {
+    return NextResponse.redirect(new URL('/signin', request.url))
   }
 
-  // Auth routes (when already logged in)
-  if (session && (
-    req.nextUrl.pathname.startsWith('/signin') ||
-    req.nextUrl.pathname.startsWith('/signup')
-  )) {
-    return NextResponse.redirect(new URL('/browse', req.url))
-  }
-
-  return res
+  return response
 }
 
 export const config = {
   matcher: [
-    '/browse/:path*',
-    '/watch/:path*',
-    '/profile/:path*',
-    '/signin',
-    '/signup'
-  ]
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 } 

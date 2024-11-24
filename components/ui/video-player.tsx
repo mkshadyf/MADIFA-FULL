@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { initializeStream } from '@/lib/services/streaming'
 import { trackProgress } from '@/lib/services/content-delivery'
-import type { Content } from '@/lib/types/content'
-import type { StreamConfig } from '@/lib/types/streaming'
-import Hls from 'hls.js'
+import type { Tables } from '@/types/supabase'
+import type { VideoPlayerInstance } from '@/types/video'
+import { createVideoPlayer, destroyVideoPlayer, loadSource } from '@/lib/services/video-player'
+import { useAds } from '@/lib/hooks/useAds'
+import BannerAd from '@/components/ads/BannerAd'
 
 interface VideoPlayerProps {
-  content: Content
+  content: Tables<'content'>['Row']
   onProgress?: (progress: number) => void
   onComplete?: () => void
   initialQuality?: '480p' | '720p' | '1080p'
@@ -25,7 +27,7 @@ export default function VideoPlayer({
 }: VideoPlayerProps) {
   const { user } = useAuth()
   const videoRef = useRef<HTMLVideoElement>(null)
-  const hlsRef = useRef<Hls | null>(null)
+  const playerInstanceRef = useRef<VideoPlayerInstance | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(startTime)
   const [duration, setDuration] = useState(0)
@@ -33,52 +35,31 @@ export default function VideoPlayer({
   const [quality, setQuality] = useState(initialQuality)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const playerRef = useRef<HTMLDivElement>(null)
+  const { showInterstitial, adsEnabled, getAdStats } = useAds()
+  const [nextAdTime, setNextAdTime] = useState<number | null>(null)
 
   useEffect(() => {
     const initPlayer = async () => {
       if (!user || !videoRef.current) return
 
       try {
-        const config: StreamConfig = {
+        const config = {
           quality,
-          format: 'hls',
+          format: 'hls' as const,
           drm: {
-            type: 'widevine',
+            type: 'widevine' as const,
             licenseUrl: '/api/drm/license'
           }
         }
 
         const manifest = await initializeStream(content.id, config)
+        
+        playerInstanceRef.current = createVideoPlayer(videoRef.current)
+        loadSource(playerInstanceRef.current, manifest.playbackUrl)
 
-        if (Hls.isSupported()) {
-          hlsRef.current = new Hls({
-            maxBufferLength: 30,
-            maxMaxBufferLength: 600,
-            enableWorker: true,
-            lowLatencyMode: true
-          })
-
-          hlsRef.current.loadSource(manifest.playbackUrl)
-          hlsRef.current.attachMedia(videoRef.current)
-
-          hlsRef.current.on(Hls.Events.MANIFEST_PARSED, () => {
-            if (videoRef.current) {
-              videoRef.current.currentTime = startTime
-              setLoading(false)
-            }
-          })
-
-          hlsRef.current.on(Hls.Events.ERROR, (_event: any, data: { fatal: boolean }) => {
-            if (data.fatal) {
-              setError('Video playback error')
-            }
-          })
-        } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-          // Native HLS support (Safari)
-          videoRef.current.src = manifest.playbackUrl
-          videoRef.current.currentTime = startTime
-          setLoading(false)
-        }
+        videoRef.current.currentTime = startTime
+        setLoading(false)
       } catch (error) {
         console.error('Player initialization error:', error)
         setError('Failed to initialize player')
@@ -88,11 +69,11 @@ export default function VideoPlayer({
     initPlayer()
 
     return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy()
+      if (playerInstanceRef.current) {
+        destroyVideoPlayer(playerInstanceRef.current)
       }
     }
-  }, [content.id, quality, user])
+  }, [content.id, quality, user, startTime])
 
   useEffect(() => {
     // Save progress periodically
@@ -106,6 +87,38 @@ export default function VideoPlayer({
 
     return () => clearInterval(progressInterval)
   }, [content.id, duration, isPlaying, user])
+
+  useEffect(() => {
+    if (!playerRef.current || !adsEnabled) return
+
+    const stats = getAdStats('interstitial')
+    if (!stats.canShow) {
+      setNextAdTime(Date.now() + (stats.timeUntilNext || 0))
+      return
+    }
+
+    let adShown = false
+    const showAdAfterDelay = async () => {
+      if (!adShown && adsEnabled) {
+        // Show ad after 5 minutes or at 25% of video duration
+        const adTriggerTime = Math.min(5 * 60, duration * 0.25)
+        if (currentTime >= adTriggerTime) {
+          const shown = await showInterstitial()
+          if (shown) {
+            adShown = true
+            const stats = getAdStats('interstitial')
+            setNextAdTime(Date.now() + (stats.timeUntilNext || 0))
+          }
+        }
+      }
+    }
+
+    const adCheckInterval = setInterval(showAdAfterDelay, 1000)
+
+    return () => {
+      clearInterval(adCheckInterval)
+    }
+  }, [adsEnabled, showInterstitial, currentTime, duration])
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -242,6 +255,14 @@ export default function VideoPlayer({
           </div>
         </div>
       </div>
+
+      {adsEnabled && nextAdTime && (
+        <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full text-sm">
+          Next ad in: {Math.ceil((nextAdTime - Date.now()) / 1000)}s
+        </div>
+      )}
+
+      {adsEnabled && <BannerAd />}
     </div>
   )
 } 

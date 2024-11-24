@@ -1,42 +1,52 @@
 {
-  "name": "Madifa - Modern African Streaming",
+  "name": "Madifa",
   "short_name": "Madifa",
-  "description": "Stream African content in HD quality",
+  "description": "Your premium video streaming platform",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#111827",
-  "theme_color": "#111827",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait",
+  "scope": "/",
+  "id": "com.wMadifa_14324059",
+  "prefer_related_applications": true,
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "com.wMadifa_14324059",
+      "url": "https://play.google.com/store/apps/details?id=com.wMadifa_14324059"
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-192x192.png",
@@ -45,47 +55,16 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-384x384.png", 
+      "src": "/icons/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "Continue Watching",
-      "short_name": "Continue",
-      "description": "Resume where you left off",
-      "url": "/browse?section=continue-watching",
-      "icons": [{ "src": "/icons/play.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "My List",
-      "short_name": "List",
-      "description": "View your saved content",
-      "url": "/browse?section=my-list",
-      "icons": [{ "src": "/icons/list.png", "sizes": "192x192" }]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "platform": "wide",
-      "label": "Home screen of Madifa"
-    }
-  ],
-  "categories": ["entertainment", "video"],
-  "prefer_related_applications": false,
-  "handle_links": "preferred",
-  "launch_handler": {
-    "client_mode": ["focus-existing", "auto"]
-  }
+  ]
 } 

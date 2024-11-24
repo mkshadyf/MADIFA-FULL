@@ -1,8 +1,34 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import type { Database } from '@/types/supabase'
+import type { CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import type { Database } from './database.types'
 
-export const createClient = () => {
+export function createClient() {
   const cookieStore = cookies()
-  return createServerComponentClient<Database>({ cookies: () => cookieStore })
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options })
+          } catch (error) {
+            // Handle cookie setting error
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options })
+          } catch (error) {
+            // Handle cookie removal error
+          }
+        },
+      },
+    }
+  )
 } 

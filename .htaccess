@@ -1,0 +1,17 @@
+# Allow access to manifest and assetlinks
+<FilesMatch "(manifest\.json|assetlinks\.json)$">
+    Header set Access-Control-Allow-Origin "*"
+</FilesMatch>
+
+# Set correct content type for JSON files
+<Files "manifest.json">
+    Header set Content-Type "application/json"
+</Files>
+
+<Files "assetlinks.json">
+    Header set Content-Type "application/json"
+</Files>
+
+# Redirect all .well-known requests to the correct path
+RewriteEngine On
+RewriteRule ^\.well-known/(.*)$ .well-known/$1 [L] 

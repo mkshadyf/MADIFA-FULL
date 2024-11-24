@@ -1,38 +1,39 @@
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import withPWA from 'next-pwa'
+import withBundleAnalyzer from '@next/bundle-analyzer'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const pwaConfig = withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development'
 })
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development'
+const analyzerConfig = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true'
 })
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
   images: {
-    domains: ['i.vimeocdn.com'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    domains: ['vimeo.com', 'i.vimeocdn.com'],
   },
-  experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
-    serverActions: true
-  },
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production'
-  },
-  headers: async () => [
-    {
-      source: '/:path*',
-      headers: [
-        {
-          key: 'Cache-Control',
-          value: 'public, max-age=31536000, immutable'
+  server: {
+    https: process.env.NODE_ENV === 'development' && 
+      fs.existsSync(path.join(__dirname, 'localhost-key.pem')) &&
+      fs.existsSync(path.join(__dirname, 'localhost.pem'))
+      ? {
+          key: fs.readFileSync(path.join(__dirname, 'localhost-key.pem')),
+          cert: fs.readFileSync(path.join(__dirname, 'localhost.pem')),
         }
-      ]
-    }
-  ]
+      : undefined,
+  },
 }
 
-module.exports = withBundleAnalyzer(withPWA(nextConfig)) 
+export default analyzerConfig(pwaConfig(nextConfig)) 

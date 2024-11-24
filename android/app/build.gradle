@@ -1,0 +1,6 @@
+android {
+    defaultConfig {
+        applicationId "com.wMadifa_14324059"
+        // ...
+    }
+} 

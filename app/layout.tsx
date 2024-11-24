@@ -1,90 +1,50 @@
-import { Inter } from 'next/font/google'
+import { Suspense } from 'react'
+import Providers from '@/components/providers/Providers'
+import Navigation from '@/components/layout/Navigation'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { createClient } from '@/lib/supabase/server'
 import './globals.css'
-import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
-import { AuthProvider } from '@/components/providers/AuthProvider'
+import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  title: 'Madifa - Modern African Streaming',
-  description: 'Stream the best African content in HD quality',
-  manifest: '/manifest.json',
-  themeColor: '#111827',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-    viewportFit: 'cover'
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Madifa',
-    startupImage: [
-      {
-        url: '/splash/iphone5.png',
-        media: '(device-width: 320px) and (device-height: 568px)'
-      },
-      {
-        url: '/splash/iphone6.png',
-        media: '(device-width: 375px) and (device-height: 667px)'
-      },
-      {
-        url: '/splash/iphoneplus.png',
-        media: '(device-width: 621px) and (device-height: 1104px)'
-      },
-      {
-        url: '/splash/iphonex.png',
-        media: '(device-width: 375px) and (device-height: 812px)'
-      },
-      {
-        url: '/splash/iphonexr.png',
-        media: '(device-width: 414px) and (device-height: 896px)'
-      },
-      {
-        url: '/splash/ipad.png',
-        media: '(device-width: 768px) and (device-height: 1024px)'
-      },
-      {
-        url: '/splash/ipadpro1.png',
-        media: '(device-width: 834px) and (device-height: 1112px)'
-      },
-      {
-        url: '/splash/ipadpro2.png',
-        media: '(device-width: 834px) and (device-height: 1194px)'
-      },
-      {
-        url: '/splash/ipadpro3.png',
-        media: '(device-width: 1024px) and (device-height: 1366px)'
-      }
-    ]
-  },
-  formatDetection: {
-    telephone: false
-  },
-  applicationName: 'Madifa',
-  other: {
-    'mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    'msapplication-TileColor': '#111827',
-    'msapplication-config': '/browserconfig.xml'
-  }
-}
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
 
-interface RootLayoutProps {
-  children: ReactNode
-}
-
-export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className={`${inter.className} h-full overflow-x-hidden bg-gray-900 text-white`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="en" className={`h-full ${inter.className}`}>
+      <head>
+        <meta name="application-name" content="Madifa" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Madifa" />
+        <meta name="description" content="Your premium video streaming platform" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#4F46E5" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+      </head>
+      <body className="min-h-screen bg-[rgb(var(--background))]">
+        <Providers>
+          <div className="flex min-h-screen">
+            {session && (
+              <aside className="w-64 border-r border-[rgb(var(--text))]/10">
+                <Navigation />
+              </aside>
+            )}
+            <main className="flex-1">
+              <Suspense fallback={<LoadingSpinner />}>
+                {children}
+              </Suspense>
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   )

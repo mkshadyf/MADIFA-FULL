@@ -3,6 +3,7 @@ import type { Provider } from '@supabase/supabase-js'
 
 export async function signIn(email: string, password: string) {
   const supabase = createClient()
+  if (!supabase) throw new Error('Auth client not available')
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -15,6 +16,7 @@ export async function signIn(email: string, password: string) {
 
 export async function signUp(email: string, password: string, fullName: string) {
   const supabase = createClient()
+  if (!supabase) throw new Error('Auth client not available')
 
   // Create auth user
   const { data: { user }, error: signUpError } = await supabase.auth.signUp({
@@ -30,13 +32,15 @@ export async function signUp(email: string, password: string, fullName: string) 
   if (signUpError) throw signUpError
 
   if (user) {
-    // Create user profile
+    // Create user profile with proper types
     const { error: profileError } = await supabase
       .from('user_profiles')
       .insert({
-        user_id: user.id,
+        id: user.id,
         full_name: fullName,
-        email
+        email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
 
     if (profileError) throw profileError
@@ -47,11 +51,16 @@ export async function signUp(email: string, password: string, fullName: string) 
 
 export async function signInWithProvider(provider: Provider) {
   const supabase = createClient()
+  if (!supabase) throw new Error('Auth client not available')
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`
+      redirectTo: `${window.location.origin}/auth/callback`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      }
     }
   })
 
@@ -61,12 +70,15 @@ export async function signInWithProvider(provider: Provider) {
 
 export async function signOut() {
   const supabase = createClient()
+  if (!supabase) throw new Error('Auth client not available')
+
   const { error } = await supabase.auth.signOut()
   if (error) throw error
 }
 
 export async function resetPassword(email: string) {
   const supabase = createClient()
+  if (!supabase) throw new Error('Auth client not available')
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/update-password`
@@ -77,10 +89,15 @@ export async function resetPassword(email: string) {
 
 export async function updatePassword(password: string) {
   const supabase = createClient()
+  if (!supabase) throw new Error('Auth client not available')
 
   const { error } = await supabase.auth.updateUser({
     password
   })
 
   if (error) throw error
+}
+
+export async function signInWithGoogle() {
+  return signInWithProvider('google')
 } 
