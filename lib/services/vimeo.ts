@@ -1,5 +1,6 @@
 import type { VideoQuality, VimeoVideo } from '@/types/vimeo'
 import { Vimeo } from '@vimeo/vimeo'
+import { getSubscriptionStatus } from './subscription'
 
 const vimeoClient = new Vimeo(
   process.env.NEXT_PUBLIC_VIMEO_CLIENT_ID!,
@@ -48,7 +49,18 @@ export async function uploadVideo(
   })
 }
 
-export async function getPlaybackUrl(videoId: string, quality: VideoQuality = '720p'): Promise<string> {
+export async function getPlaybackUrl(
+  videoId: string,
+  quality: VideoQuality = '720p',
+  userId?: string
+): Promise<string> {
+  if (userId) {
+    const subscription = await getSubscriptionStatus(userId)
+    if (subscription?.status !== 'active') {
+      throw new Error('Active subscription required')
+    }
+  }
+
   const video = await getVideoDetails(videoId)
   const file = video.files.find(f => f.quality === quality) || video.files[0]
   return file.link
@@ -87,4 +99,13 @@ export async function getVideosFromFolder(folderId: string): Promise<VimeoVideo[
       resolve(result.data)
     })
   })
+}
+
+export async function updateVideosPrivacy(
+  videoIds: string[],
+  makePublic: boolean
+): Promise<void> {
+  await Promise.all(
+    videoIds.map(id => updateVideoPrivacy(id, makePublic))
+  )
 } 

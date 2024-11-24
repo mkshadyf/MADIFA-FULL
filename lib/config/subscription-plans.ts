@@ -2,7 +2,7 @@ export const subscriptionPlans = {
   monthly: {
     id: 'monthly',
     name: 'Monthly Pass',
-    price: 9.99,
+    price: 39.99,
     features: [
       'Access to all current videos',
       'HD quality streaming',
@@ -17,10 +17,10 @@ export const subscriptionPlans = {
   yearly: {
     id: 'yearly',
     name: 'Annual Pass',
-    price: 99.99,
+    price: 299.99,
     features: [
       'Everything in Monthly',
-      'Save 17% vs monthly',
+      'Save 27% vs monthly',
       'Early access to new content',
       'Offline viewing'
     ],

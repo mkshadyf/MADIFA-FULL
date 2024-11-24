@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/client'
+import type { WatchHistoryItem } from '@/lib/types/watch-history'
 import { getVideoDetails } from './vimeo'
 
 export async function updateWatchProgress(
   userId: string,
   vimeoId: string,
   progress: number
-) {
+): Promise<void> {
   const supabase = createClient()
 
   try {
@@ -25,7 +26,7 @@ export async function updateWatchProgress(
   }
 }
 
-export async function getWatchHistory(userId: string, limit = 20) {
+export async function getWatchHistory(userId: string, limit = 20): Promise<WatchHistoryItem[]> {
   const supabase = createClient()
 
   try {
@@ -40,7 +41,7 @@ export async function getWatchHistory(userId: string, limit = 20) {
 
     // Fetch video details from Vimeo
     const watchHistory = await Promise.all(
-      history.map(async (item) => {
+      history.map(async (item: WatchHistoryItem) => {
         const videoDetails = await getVideoDetails(item.vimeo_id)
         return {
           ...item,

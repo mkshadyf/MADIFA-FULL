@@ -1,5 +1,6 @@
-import { createServerClient } from '@/lib/supabase/client'
-import { headers } from 'next/headers'
+import { subscriptionPlans } from '@/lib/config/subscription-plans'
+import { handleSubscriptionAccess } from '@/lib/services/subscription-access'
+import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
@@ -7,98 +8,74 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16'
 })
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
-
 export async function POST(request: Request) {
-  const supabase = createServerClient()
   const body = await request.text()
-  const signature = headers().get('stripe-signature')!
+  const signature = request.headers.get('stripe-signature')!
 
   try {
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      webhookSecret
+      process.env.STRIPE_WEBHOOK_SECRET!
     )
 
+    const supabase = createClient()
+
     switch (event.type) {
-      case 'customer.subscription.updated':
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
-        const customerId = subscription.customer as string
+        const { customer, status, items } = subscription
 
-        // Get user ID from customer ID
-        const { data: customer } = await stripe.customers.retrieve(customerId)
-        const userId = customer.metadata.userId
+        if (status === 'active') {
+          // Get user from customer ID
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('stripe_customer_id', customer)
+            .single()
 
-        // Update subscription status
-        await supabase
+          if (!profile) break
+
+          // Get plan from price ID
+          const priceId = items.data[0].price.id
+          const plan = Object.values(subscriptionPlans).find(
+            p => process.env[`STRIPE_${p.id.toUpperCase()}_PRICE_ID`] === priceId
+          )
+
+          if (!plan) break
+
+          // Grant access to content
+          await handleSubscriptionAccess(profile.user_id, plan, 'grant')
+        }
+        break
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription
+        const { customer } = subscription
+
+        // Get user from customer ID
+        const { data: profile } = await supabase
           .from('user_profiles')
-          .update({
-            subscription_status: subscription.status === 'active' ? 'active' : 'past_due',
-            subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString()
-          })
-          .eq('user_id', userId)
+          .select('user_id')
+          .eq('stripe_customer_id', customer)
+          .single()
 
+        if (!profile) break
+
+        // Get plan from price ID
+        const priceId = subscription.items.data[0].price.id
+        const plan = Object.values(subscriptionPlans).find(
+          p => process.env[`STRIPE_${p.id.toUpperCase()}_PRICE_ID`] === priceId
+        )
+
+        if (!plan) break
+
+        // Revoke access to content
+        await handleSubscriptionAccess(profile.user_id, plan, 'revoke')
         break
-
-      case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object as Stripe.Subscription
-        const deletedCustomerId = deletedSubscription.customer as string
-
-        // Get user ID from customer ID
-        const { data: deletedCustomer } = await stripe.customers.retrieve(deletedCustomerId)
-        const deletedUserId = deletedCustomer.metadata.userId
-
-        // Update subscription status
-        await supabase
-          .from('user_profiles')
-          .update({
-            subscription_status: 'inactive',
-            subscription_tier: 'free'
-          })
-          .eq('user_id', deletedUserId)
-
-        break
-
-      case 'invoice.payment_failed':
-        const invoice = event.data.object as Stripe.Invoice
-        const failedCustomerId = invoice.customer as string
-
-        // Get user ID from customer ID
-        const { data: failedCustomer } = await stripe.customers.retrieve(failedCustomerId)
-        const failedUserId = failedCustomer.metadata.userId
-
-        // Update subscription status
-        await supabase
-          .from('user_profiles')
-          .update({
-            subscription_status: 'past_due'
-          })
-          .eq('user_id', failedUserId)
-
-        break
-
-      case 'invoice.paid':
-        const paidInvoice = event.data.object as Stripe.Invoice
-        const paidCustomerId = paidInvoice.customer as string
-
-        // Get user ID from customer ID
-        const { data: paidCustomer } = await stripe.customers.retrieve(paidCustomerId)
-        const paidUserId = paidCustomer.metadata.userId
-
-        // Add to billing history
-        await supabase
-          .from('billing_history')
-          .insert({
-            user_id: paidUserId,
-            amount: paidInvoice.amount_paid,
-            status: 'succeeded',
-            payment_method: paidInvoice.payment_intent_types?.[0] || 'card',
-            billing_reason: 'subscription_renewal',
-            created_at: new Date().toISOString()
-          })
-
-        break
+      }
     }
 
     return NextResponse.json({ received: true })

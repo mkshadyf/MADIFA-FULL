@@ -7,18 +7,23 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res })
 
   const {
-    data: { session },
+    data: { session }
   } = await supabase.auth.getSession()
 
-  // If user is not signed in and the current path is not /signin,
-  // redirect the user to /signin
-  if (!session && !req.nextUrl.pathname.startsWith('/(auth)')) {
-    return NextResponse.redirect(new URL('/signin', req.url))
+  // Protected routes
+  if (req.nextUrl.pathname.startsWith('/browse') ||
+    req.nextUrl.pathname.startsWith('/watch') ||
+    req.nextUrl.pathname.startsWith('/profile')) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/signin', req.url))
+    }
   }
 
-  // If user is signed in and the current path is /signin,
-  // redirect the user to /browse
-  if (session && req.nextUrl.pathname.startsWith('/(auth)')) {
+  // Auth routes (when already logged in)
+  if (session && (
+    req.nextUrl.pathname.startsWith('/signin') ||
+    req.nextUrl.pathname.startsWith('/signup')
+  )) {
     return NextResponse.redirect(new URL('/browse', req.url))
   }
 
@@ -26,5 +31,11 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/browse/:path*',
+    '/watch/:path*',
+    '/profile/:path*',
+    '/signin',
+    '/signup'
+  ]
 } 

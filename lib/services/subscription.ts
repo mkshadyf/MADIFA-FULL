@@ -6,7 +6,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16'
 })
 
-export async function createSubscription(userId: string, planId: PlanId) {
+interface SubscriptionResponse {
+  subscriptionId: string
+  clientSecret?: string
+}
+
+export async function createSubscription(userId: string, planId: PlanId): Promise<SubscriptionResponse> {
   const supabase = createClient()
 
   try {
@@ -48,10 +53,12 @@ export async function createSubscription(userId: string, planId: PlanId) {
       expand: ['latest_invoice.payment_intent']
     })
 
+    const invoice = subscription.latest_invoice as Stripe.Invoice
+    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent
+
     return {
       subscriptionId: subscription.id,
-      clientSecret: (subscription.latest_invoice as Stripe.Invoice)
-        .payment_intent?.client_secret
+      clientSecret: paymentIntent?.client_secret || undefined
     }
   } catch (error) {
     console.error('Error creating subscription:', error)

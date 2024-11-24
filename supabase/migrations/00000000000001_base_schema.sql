@@ -57,4 +57,16 @@ CREATE INDEX idx_episodes_content ON episodes(content_id);
 CREATE INDEX idx_episodes_season ON episodes(season_number);
 CREATE INDEX idx_user_profiles_user ON user_profiles(user_id);
 CREATE INDEX idx_purchases_user ON purchases(user_id);
-CREATE INDEX idx_purchases_content ON purchases(content_id); 
+CREATE INDEX idx_purchases_content ON purchases(content_id);
+
+-- Update content table
+ALTER TABLE content
+  DROP COLUMN IF EXISTS cloudflare_id,
+  DROP COLUMN IF EXISTS cloudflare_status,
+  ADD COLUMN IF NOT EXISTS vimeo_id TEXT UNIQUE,
+  ADD COLUMN IF NOT EXISTS vimeo_showcase_id TEXT,
+  ADD COLUMN IF NOT EXISTS vimeo_privacy JSONB,
+  ADD COLUMN IF NOT EXISTS vimeo_status TEXT;
+
+-- Create index for Vimeo ID
+CREATE INDEX IF NOT EXISTS idx_content_vimeo_id ON content(vimeo_id); 

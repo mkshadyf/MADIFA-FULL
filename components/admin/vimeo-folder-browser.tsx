@@ -20,7 +20,11 @@ interface VimeoFolder {
   }
 }
 
-export default function VimeoFolderBrowser() {
+interface VimeoFolderBrowserProps {
+  onFolderSelect: (folderId: string) => void
+}
+
+export default function VimeoFolderBrowser({ onFolderSelect }: VimeoFolderBrowserProps) {
   const [folders, setFolders] = useState<VimeoFolder[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -79,7 +83,7 @@ export default function VimeoFolderBrowser() {
                 <p>Modified: {new Date(folder.modified_time).toLocaleDateString()}</p>
               </div>
               <button
-                onClick={() => {/* Handle folder selection */}}
+                onClick={() => onFolderSelect(folder.uri)}
                 className="mt-4 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
               >
                 View Videos

@@ -9,10 +9,4 @@ export interface FileOptions {
   upsert?: boolean
   onUploadProgress?: (progress: UploadProgress) => void
   onProgress?: (progress: UploadProgress) => void
-}
-
-export interface UploadResponse {
-  path: string
-  url: string
-  error: Error | null
 } 

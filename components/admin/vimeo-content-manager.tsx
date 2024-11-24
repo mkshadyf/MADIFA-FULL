@@ -4,12 +4,17 @@ import { useState, useEffect } from 'react'
 import { getVideosFromFolder, updateVideoPrivacy } from '@/lib/services/vimeo'
 import type { VimeoVideo } from '@/types/vimeo'
 
-interface VimeoContentManagerProps {
+interface Props {
   onVideoSelect?: (video: VimeoVideo) => void
   folderId?: string
+  onSuccess?: () => void
 }
 
-export default function VimeoContentManager({ onVideoSelect, folderId = 'default' }: VimeoContentManagerProps) {
+export default function VimeoContentManager({ 
+  onVideoSelect, 
+  folderId = 'default',
+  onSuccess 
+}: Props) {
   const [videos, setVideos] = useState<VimeoVideo[]>([])
   const [loading, setLoading] = useState(true)
 
