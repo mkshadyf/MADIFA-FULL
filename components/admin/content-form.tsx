@@ -1,97 +1,75 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import { uploadContent } from '@/lib/utils/content-upload'
+import type { Content } from '@/lib/supabase/types'
+import type { UploadProgress } from '@/lib/types/upload'
 
-type Content = Database['public']['Tables']['content']['Row']
-
-interface ContentFormProps {
-  content?: Content
-  onSuccess: () => void
-  onCancel: () => void
-}
-
-export default function ContentForm({ content, onSuccess, onCancel }: ContentFormProps) {
-  const [title, setTitle] = useState(content?.title || '')
-  const [description, setDescription] = useState(content?.description || '')
-  const [category, setCategory] = useState(content?.category || '')
-  const [releaseYear, setReleaseYear] = useState(content?.release_year || new Date().getFullYear())
+export default function ContentForm() {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState('')
+  const [releaseYear, setReleaseYear] = useState(new Date().getFullYear())
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
   const supabase = createClient()
+
+  const handleUploadProgress = (progress: UploadProgress) => {
+    setUploadProgress((progress.loaded / progress.total) * 100)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!thumbnailFile || !videoFile) {
+      setError('Please select both thumbnail and video files')
+      return
+    }
+
     setLoading(true)
     setError(null)
     setUploadProgress(0)
 
     try {
-      let thumbnailUrl = content?.thumbnail_url
-      let videoUrl = content?.video_url
+      // Upload thumbnail
+      const thumbnailUrl = await uploadContent(thumbnailFile, 'thumbnails', {
+        onProgress: handleUploadProgress
+      })
 
-      // Upload thumbnail if changed
-      if (thumbnailFile) {
-        const thumbnailPath = `thumbnails/${Date.now()}-${thumbnailFile.name}`
-        const { error: uploadError, data } = await supabase.storage
-          .from('content')
-          .upload(thumbnailPath, thumbnailFile, {
-            onUploadProgress: (progress) => {
-              setUploadProgress((progress.loaded / progress.total) * 50)
-            }
-          })
+      // Upload video
+      const videoUrl = await uploadContent(videoFile, 'videos', {
+        onProgress: handleUploadProgress
+      })
 
-        if (uploadError) throw uploadError
-        thumbnailUrl = data.path
-      }
+      // Create content record
+      const { error: dbError } = await supabase
+        .from('content')
+        .insert({
+          title,
+          description,
+          category,
+          release_year: releaseYear,
+          thumbnail_url: thumbnailUrl,
+          video_url: videoUrl,
+          status: 'processing'
+        })
 
-      // Upload video if changed
-      if (videoFile) {
-        const videoPath = `videos/${Date.now()}-${videoFile.name}`
-        const { error: uploadError, data } = await supabase.storage
-          .from('content')
-          .upload(videoPath, videoFile, {
-            onUploadProgress: (progress) => {
-              setUploadProgress(50 + (progress.loaded / progress.total) * 50)
-            }
-          })
+      if (dbError) throw dbError
 
-        if (uploadError) throw uploadError
-        videoUrl = data.path
-      }
-
-      const contentData = {
-        title,
-        description,
-        category,
-        release_year: releaseYear,
-        thumbnail_url: thumbnailUrl,
-        video_url: videoUrl,
-        updated_at: new Date().toISOString()
-      }
-
-      if (content) {
-        const { error } = await supabase
-          .from('content')
-          .update(contentData)
-          .eq('id', content.id)
-
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('content')
-          .insert([contentData])
-
-        if (error) throw error
-      }
-
-      onSuccess()
+      // Reset form
+      setTitle('')
+      setDescription('')
+      setCategory('')
+      setReleaseYear(new Date().getFullYear())
+      setThumbnailFile(null)
+      setVideoFile(null)
+      setUploadProgress(0)
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      console.error('Upload error:', error)
+      setError(error instanceof Error ? error.message : 'Upload failed')
     } finally {
       setLoading(false)
     }
@@ -175,19 +153,11 @@ export default function ContentForm({ content, onSuccess, onCancel }: ContentFor
 
       <div className="flex justify-end space-x-4">
         <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-white bg-gray-700 rounded-md hover:bg-gray-600"
-          disabled={loading}
-        >
-          Cancel
-        </button>
-        <button
           type="submit"
           className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
           disabled={loading}
         >
-          {loading ? 'Saving...' : content ? 'Update' : 'Create'}
+          {loading ? 'Uploading...' : 'Create'}
         </button>
       </div>
     </form>

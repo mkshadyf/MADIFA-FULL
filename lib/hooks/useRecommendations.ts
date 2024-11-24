@@ -1,64 +1,46 @@
-import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getRecommendations, getSimilarContent } from '@/lib/services/recommendations'
 import type { Content } from '@/lib/supabase/types'
 import { useEffect, useState } from 'react'
 
 interface UseRecommendationsProps {
-  userId: string
+  userId?: string
+  contentId?: string
   limit?: number
+  excludeIds?: string[]
 }
 
-export function useRecommendations({ userId, limit = 10 }: UseRecommendationsProps) {
+export function useRecommendations({
+  userId,
+  contentId,
+  limit = 10,
+  excludeIds = []
+}: UseRecommendationsProps = {}) {
+  const { user } = useAuth()
   const [recommendations, setRecommendations] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
     const fetchRecommendations = async () => {
+      if (!user) return
+
       try {
-        // Get user's watch history
-        const { data: history } = await supabase
-          .from('viewing_history')
-          .select('content_id')
-          .eq('user_id', userId)
-          .order('last_watched', { ascending: false })
-          .limit(5)
+        let recommendedContent: Content[]
 
-        // Get categories from recently watched content
-        const recentContentIds = history?.map(h => h.content_id) || []
-
-        if (recentContentIds.length > 0) {
-          const { data: recentContent } = await supabase
-            .from('content')
-            .select('category')
-            .in('id', recentContentIds)
-
-          const categories = [...new Set(recentContent?.map(c => c.category))]
-
-          // Get recommendations based on similar categories
-          const { data: recommendations, error } = await supabase
-            .from('content')
-            .select('*')
-            .in('category', categories)
-            .not('id', 'in', `(${recentContentIds.join(',')})`)
-            .order('created_at', { ascending: false })
-            .limit(limit)
-
-          if (error) throw error
-
-          setRecommendations(recommendations)
+        if (contentId) {
+          // Get similar content if viewing specific content
+          recommendedContent = await getSimilarContent(contentId, limit)
         } else {
-          // If no watch history, get newest content
-          const { data: newContent, error } = await supabase
-            .from('content')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(limit)
-
-          if (error) throw error
-
-          setRecommendations(newContent)
+          // Get personalized recommendations
+          recommendedContent = await getRecommendations({
+            userId: user.id,
+            limit,
+            excludeIds
+          })
         }
+
+        setRecommendations(recommendedContent)
       } catch (error) {
         console.error('Error fetching recommendations:', error)
         setError(error instanceof Error ? error.message : 'Failed to load recommendations')
@@ -67,10 +49,8 @@ export function useRecommendations({ userId, limit = 10 }: UseRecommendationsPro
       }
     }
 
-    if (userId) {
-      fetchRecommendations()
-    }
-  }, [userId, limit])
+    fetchRecommendations()
+  }, [user, contentId, limit, excludeIds])
 
   return {
     recommendations,

@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { getWatchHistory, removeFromHistory, updateWatchProgress } from '@/lib/services/watch-history'
 import type { Content } from '@/lib/supabase/types'
 import { useEffect, useState } from 'react'
 
@@ -10,27 +11,19 @@ interface WatchHistoryItem {
   last_watched: string
 }
 
-export function useWatchHistory() {
+export function useWatchHistory(limit = 20) {
+  const { user } = useAuth()
   const [history, setHistory] = useState<WatchHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
   useEffect(() => {
     const fetchHistory = async () => {
+      if (!user) return
+
       try {
-        const { data, error } = await supabase
-          .from('viewing_history')
-          .select(`
-            *,
-            content:content_id(*)
-          `)
-          .order('last_watched', { ascending: false })
-          .limit(20)
-
-        if (error) throw error
-
-        setHistory(data || [])
+        const data = await getWatchHistory(user.id, limit)
+        setHistory(data)
       } catch (error) {
         console.error('Error fetching watch history:', error)
         setError(error instanceof Error ? error.message : 'Failed to load watch history')
@@ -40,37 +33,36 @@ export function useWatchHistory() {
     }
 
     fetchHistory()
-  }, [])
+  }, [user, limit])
 
   const updateProgress = async (contentId: string, progress: number, duration: number) => {
-    try {
-      const { error } = await supabase
-        .from('viewing_history')
-        .upsert({
-          content_id: contentId,
-          progress,
-          duration,
-          last_watched: new Date().toISOString()
-        })
+    if (!user) return
 
-      if (error) throw error
+    try {
+      await updateWatchProgress(user.id, contentId, progress, duration)
 
       // Update local state
-      setHistory(prev => {
-        const index = prev.findIndex(item => item.content.id === contentId)
-        if (index === -1) return prev
-
-        const updated = [...prev]
-        updated[index] = {
-          ...updated[index],
-          progress,
-          duration,
-          last_watched: new Date().toISOString()
-        }
-        return updated
-      })
+      setHistory(prev => prev.map(item =>
+        item.content.id === contentId
+          ? { ...item, progress, duration, last_watched: new Date().toISOString() }
+          : item
+      ))
     } catch (error) {
-      console.error('Error updating watch progress:', error)
+      console.error('Error updating progress:', error)
+      throw error
+    }
+  }
+
+  const removeItem = async (contentId: string) => {
+    if (!user) return
+
+    try {
+      await removeFromHistory(user.id, contentId)
+
+      // Update local state
+      setHistory(prev => prev.filter(item => item.content.id !== contentId))
+    } catch (error) {
+      console.error('Error removing item:', error)
       throw error
     }
   }
@@ -79,6 +71,7 @@ export function useWatchHistory() {
     history,
     loading,
     error,
-    updateProgress
+    updateProgress,
+    removeItem
   }
 } 

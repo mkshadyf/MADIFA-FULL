@@ -1,91 +1,106 @@
 import { createServerClient } from '@/lib/supabase/client'
-import crypto from 'crypto'
 import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
 
-const PAYFAST_MERCHANT_ID = process.env.PAYFAST_MERCHANT_ID
-const PAYFAST_MERCHANT_KEY = process.env.PAYFAST_MERCHANT_KEY
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16'
+})
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
+  const supabase = createServerClient()
+
   try {
-    const { planId, price, userId, email } = await req.json()
-    const supabase = createServerClient()
+    const { userId, planId, tier, price, billingPeriod } = await request.json()
 
-    // Verify user exists and has permission
-    const { data: user, error: userError } = await supabase
+    // Get user details
+    const { data: profile } = await supabase
       .from('user_profiles')
-      .select('*')
+      .select('email, full_name')
       .eq('user_id', userId)
       .single()
 
-    if (userError || !user) {
-      return NextResponse.json(
-        { message: 'User not found' },
-        { status: 404 }
-      )
+    if (!profile) {
+      throw new Error('User profile not found')
     }
 
-    // Generate unique payment ID
-    const paymentId = crypto.randomUUID()
+    // Create Stripe customer if not exists
+    const { data: customers } = await stripe.customers.search({
+      query: `email:'${profile.email}'`,
+    })
 
-    // Create PayFast payment data
-    const data = {
-      merchant_id: PAYFAST_MERCHANT_ID,
-      merchant_key: PAYFAST_MERCHANT_KEY,
-      return_url: `${SITE_URL}/subscription/success`,
-      cancel_url: `${SITE_URL}/subscription/cancel`,
-      notify_url: `${SITE_URL}/api/payment-webhook`,
-      name_first: user.full_name.split(' ')[0],
-      name_last: user.full_name.split(' ').slice(1).join(' '),
-      email_address: email,
-      m_payment_id: paymentId,
-      amount: price,
-      item_name: `Madifa ${planId} Subscription`,
-      subscription_type: 1, // Monthly subscription
+    let customerId = customers[0]?.id
+
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: profile.email,
+        name: profile.full_name,
+        metadata: {
+          userId
+        }
+      })
+      customerId = customer.id
     }
 
-    // Generate signature
-    const signature = generateSignature(data, PAYFAST_MERCHANT_KEY!)
+    // Create subscription price
+    const priceData = {
+      unit_amount: price * 100, // Convert to cents
+      currency: 'usd',
+      recurring: {
+        interval: billingPeriod === 'monthly' ? 'month' : 'year'
+      },
+      product_data: {
+        name: `Madifa ${tier} Plan`,
+        metadata: {
+          tier,
+          planId
+        }
+      }
+    }
 
-    // Store payment intent in database
-    const { error: paymentError } = await supabase
-      .from('payment_intents')
+    const price = await stripe.prices.create(priceData)
+
+    // Create checkout session
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      line_items: [
+        {
+          price: price.id,
+          quantity: 1
+        }
+      ],
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/subscription/cancel`,
+      metadata: {
+        userId,
+        planId,
+        tier,
+        billingPeriod
+      }
+    })
+
+    // Store session details for verification
+    await supabase
+      .from('payment_sessions')
       .insert({
-        id: paymentId,
+        session_id: session.id,
         user_id: userId,
         plan_id: planId,
+        tier,
+        billing_period: billingPeriod,
         amount: price,
-        status: 'pending',
+        status: 'pending'
       })
 
-    if (paymentError) {
-      throw paymentError
-    }
-
-    // Return PayFast checkout URL
     return NextResponse.json({
-      paymentUrl: `https://sandbox.payfast.co.za/eng/process?${new URLSearchParams({
-        ...data,
-        signature,
-      })}`,
+      sessionId: session.id,
+      url: session.url
     })
   } catch (error) {
-    console.error('Payment creation error:', error)
+    console.error('Payment session creation error:', error)
     return NextResponse.json(
-      { message: 'Payment initialization failed' },
+      { error: 'Failed to create payment session' },
       { status: 500 }
     )
   }
-}
-
-function generateSignature(data: Record<string, any>, merchantKey: string): string {
-  const signatureString = Object.entries(data)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([_, value]) => value)
-    .join('')
-
-  return crypto
-    .createHash('md5')
-    .update(signatureString + merchantKey)
-    .digest('hex')
 } 

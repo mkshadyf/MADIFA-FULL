@@ -1,60 +1,111 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/supabase/types'
+import { useEffect, useRef, useState } from 'react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { initializeStream } from '@/lib/services/streaming'
+import { trackProgress } from '@/lib/services/content-delivery'
+import type { Content } from '@/lib/types/content'
+import type { StreamConfig } from '@/lib/types/streaming'
+import Hls from 'hls.js'
 
 interface VideoPlayerProps {
   content: Content
-  streamUrl: string
   onProgress?: (progress: number) => void
   onComplete?: () => void
+  initialQuality?: '480p' | '720p' | '1080p'
+  startTime?: number
 }
 
-export default function VideoPlayer({ content, streamUrl, onProgress, onComplete }: VideoPlayerProps) {
+export default function VideoPlayer({
+  content,
+  onProgress,
+  onComplete,
+  initialQuality = '1080p',
+  startTime = 0
+}: VideoPlayerProps) {
+  const { user } = useAuth()
   const videoRef = useRef<HTMLVideoElement>(null)
+  const hlsRef = useRef<Hls | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
+  const [currentTime, setCurrentTime] = useState(startTime)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(1)
-  const [quality, setQuality] = useState<string>('auto')
-  const supabase = createClient()
+  const [quality, setQuality] = useState(initialQuality)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Load last watched position
-    const loadProgress = async () => {
-      const { data } = await supabase
-        .from('viewing_history')
-        .select('progress')
-        .eq('content_id', content.id)
-        .single()
+    const initPlayer = async () => {
+      if (!user || !videoRef.current) return
 
-      if (data && videoRef.current) {
-        videoRef.current.currentTime = data.progress
+      try {
+        const config: StreamConfig = {
+          quality,
+          format: 'hls',
+          drm: {
+            type: 'widevine',
+            licenseUrl: '/api/drm/license'
+          }
+        }
+
+        const manifest = await initializeStream(content.id, config)
+
+        if (Hls.isSupported()) {
+          hlsRef.current = new Hls({
+            maxBufferLength: 30,
+            maxMaxBufferLength: 600,
+            enableWorker: true,
+            lowLatencyMode: true
+          })
+
+          hlsRef.current.loadSource(manifest.playbackUrl)
+          hlsRef.current.attachMedia(videoRef.current)
+
+          hlsRef.current.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (videoRef.current) {
+              videoRef.current.currentTime = startTime
+              setLoading(false)
+            }
+          })
+
+          hlsRef.current.on(Hls.Events.ERROR, (_, data) => {
+            if (data.fatal) {
+              setError('Video playback error')
+            }
+          })
+        } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+          // Native HLS support (Safari)
+          videoRef.current.src = manifest.playbackUrl
+          videoRef.current.currentTime = startTime
+          setLoading(false)
+        }
+      } catch (error) {
+        console.error('Player initialization error:', error)
+        setError('Failed to initialize player')
       }
     }
 
-    loadProgress()
+    initPlayer()
 
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy()
+      }
+    }
+  }, [content.id, quality, user])
+
+  useEffect(() => {
     // Save progress periodically
     const progressInterval = setInterval(() => {
-      if (videoRef.current && isPlaying) {
+      if (videoRef.current && isPlaying && user) {
         const progress = videoRef.current.currentTime
         onProgress?.(progress)
-        
-        supabase
-          .from('viewing_history')
-          .upsert({
-            content_id: content.id,
-            progress,
-            duration: videoRef.current.duration,
-            last_watched: new Date().toISOString()
-          })
+        trackProgress(content.id, progress, duration)
       }
     }, 5000)
 
     return () => clearInterval(progressInterval)
-  }, [content.id, isPlaying])
+  }, [content.id, duration, isPlaying, user])
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -100,21 +151,41 @@ export default function VideoPlayer({ content, streamUrl, onProgress, onComplete
     }
   }
 
+  const handleQualityChange = async (newQuality: '480p' | '720p' | '1080p') => {
+    setQuality(newQuality)
+    setLoading(true)
+    // Player will reinitialize with new quality due to useEffect dependency
+  }
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
+  if (error) {
+    return (
+      <div className="aspect-video bg-gray-900 flex items-center justify-center">
+        <div className="text-red-500">{error}</div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative group">
       <video
         ref={videoRef}
-        src={streamUrl}
         className="w-full aspect-video bg-black"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
+        playsInline
       />
+
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
+      )}
 
       {/* Video Controls */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -161,10 +232,9 @@ export default function VideoPlayer({ content, streamUrl, onProgress, onComplete
             {/* Quality Selection */}
             <select
               value={quality}
-              onChange={(e) => setQuality(e.target.value)}
+              onChange={(e) => handleQualityChange(e.target.value as '480p' | '720p' | '1080p')}
               className="bg-transparent text-white text-sm"
             >
-              <option value="auto">Auto</option>
               <option value="1080p">1080p</option>
               <option value="720p">720p</option>
               <option value="480p">480p</option>

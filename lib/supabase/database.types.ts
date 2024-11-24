@@ -53,6 +53,9 @@ export type Database = {
           video_url: string
           category: string
           release_year: number
+          duration: number
+          status: 'processing' | 'ready' | 'failed'
+          error_message?: string
           created_at: string
           updated_at: string
         }
@@ -64,6 +67,7 @@ export type Database = {
           video_url: string
           category: string
           release_year: number
+          duration: number
           created_at?: string
           updated_at?: string
         }
@@ -74,6 +78,7 @@ export type Database = {
           video_url?: string
           category?: string
           release_year?: number
+          duration?: number
           updated_at?: string
         }
       }

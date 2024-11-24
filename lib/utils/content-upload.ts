@@ -1,10 +1,14 @@
-import { createClient } from '@/lib/supabase/client'
-import type { FileOptions, UploadProgress } from '@/lib/types/upload'
+import { createClient } from '@/lib/supabase/client';
+import type { FileOptions, UploadProgress } from '@/lib/types/upload';
+
+interface UploadOptions extends FileOptions {
+  onProgress?: (progress: { loaded: number; total: number }) => void
+}
 
 export async function uploadContent(
   file: File,
   path: string,
-  options?: FileOptions
+  options?: UploadOptions
 ): Promise<string> {
   const supabase = createClient()
   let loaded = 0

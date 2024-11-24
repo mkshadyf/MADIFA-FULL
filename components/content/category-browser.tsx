@@ -1,154 +1,92 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { Category, CategoryWithContent } from '@/lib/types/category'
-import type { Content } from '@/lib/supabase/types'
+import { getCategories } from '@/lib/services/categories'
+import type { Category } from '@/lib/types/content'
 
 export default function CategoryBrowser() {
-  const [categories, setCategories] = useState<CategoryWithContent[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [content, setContent] = useState<Content[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // Fetch categories with content count and stats
-        const { data, error } = await supabase
-          .from('categories')
-          .select(`
-            *,
-            content:content(count),
-            content_stats:content_stats(
-              total_views,
-              average_rating
-            )
-          `)
-          .eq('is_active', true)
-          .order('order', { ascending: true })
-
-        if (error) throw error
-
-        const categoriesWithStats = data?.map(category => ({
-          ...category,
-          content_count: category.content?.[0]?.count || 0,
-          total_views: category.content_stats?.[0]?.total_views || 0,
-          average_rating: category.content_stats?.[0]?.average_rating || 0
-        })) || []
-
-        setCategories(categoriesWithStats)
-
-        // If no category is selected, select the first one
-        if (!selectedCategory && categoriesWithStats.length > 0) {
-          setSelectedCategory(categoriesWithStats[0].id)
-        }
+        const data = await getCategories()
+        setCategories(data)
       } catch (error) {
         console.error('Error fetching categories:', error)
-        setError('Failed to load categories')
+        setError(error instanceof Error ? error.message : 'Failed to load categories')
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchCategories()
   }, [])
 
-  useEffect(() => {
-    const fetchCategoryContent = async () => {
-      if (!selectedCategory) return
-
-      try {
-        setLoading(true)
-        const { data, error } = await supabase
-          .from('content')
-          .select('*')
-          .eq('category_id', selectedCategory)
-          .order('created_at', { ascending: false })
-
-        if (error) throw error
-
-        setContent(data)
-      } catch (error) {
-        console.error('Error fetching category content:', error)
-        setError('Failed to load content')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCategoryContent()
-  }, [selectedCategory])
-
-  return (
-    <div className="space-y-8">
-      {/* Category Navigation */}
-      <div className="flex space-x-4 overflow-x-auto pb-4">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            onClick={() => setSelectedCategory(category.id)}
-            className={`px-4 py-2 rounded-full whitespace-nowrap ${
-              selectedCategory === category.id
-                ? 'bg-indigo-600 text-white'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
-          >
-            {category.name}
-            <span className="ml-2 text-sm opacity-75">
-              ({category.content_count})
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Content Grid */}
-      {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {[...Array(10)].map((_, i) => (
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="aspect-video bg-gray-800 rounded-lg animate-pulse"
+              className="aspect-video bg-gray-800 rounded-lg"
             />
           ))}
         </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {content.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => router.push(`/watch/${item.id}`)}
-              className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden cursor-pointer group"
-            >
-              {item.thumbnail_url && (
-                <img
-                  src={item.thumbnail_url}
-                  alt={item.title}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-medium">{item.title}</h3>
-                  <p className="text-sm text-gray-300">{item.release_year}</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-500 text-center py-4">
+        {error}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {categories.map((category) => (
+          <div
+            key={category.id}
+            onClick={() => router.push(`/category/${category.slug}`)}
+            className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden cursor-pointer group"
+          >
+            {category.thumbnail_url && (
+              <img
+                src={category.thumbnail_url}
+                alt={category.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <h3 className="text-white font-medium">{category.name}</h3>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-sm text-gray-300">
+                    {category.content_count} titles
+                  </span>
+                  {category.total_views && (
+                    <>
+                      <span className="text-gray-500">•</span>
+                      <span className="text-sm text-gray-300">
+                        {category.total_views.toLocaleString()} views
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {error && (
-        <div className="text-red-500 text-center py-4">{error}</div>
-      )}
-
-      {!loading && content.length === 0 && (
-        <div className="text-gray-400 text-center py-8">
-          No content in this category
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 } 

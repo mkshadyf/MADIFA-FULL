@@ -1,204 +1,221 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import ContentStats from './content-stats'
-import ContentCategories from './content-categories'
-import type { Database } from '@/lib/supabase/database.types'
+import { Line, Bar, Doughnut } from 'react-chartjs-2'
+import { getContentAnalytics } from '@/lib/services/analytics'
+import type { ContentPerformance } from '@/lib/services/analytics'
 
-type Content = Database['public']['Tables']['content']['Row']
-
-interface AnalyticsMetrics {
-  totalViews: number
-  uniqueViewers: number
-  averageWatchTime: number
-  completionRate: number
-  popularContent: {
-    content: Content
-    views: number
-    completions: number
-  }[]
-  viewsByCategory: Record<string, number>
-  viewsByDay: number[]
-  viewsByHour: number[]
+interface ContentAnalyticsDashboardProps {
+  contentId: string
 }
 
-export default function ContentAnalyticsDashboard() {
-  const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null)
+export default function ContentAnalyticsDashboard({ contentId }: ContentAnalyticsDashboardProps) {
+  const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d')
+  const [analytics, setAnalytics] = useState<ContentPerformance | null>(null)
   const [loading, setLoading] = useState(true)
-  const [timeRange, setTimeRange] = useState('7d') // '24h', '7d', '30d', 'all'
-  const supabase = createClient()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchMetrics = async () => {
+    const fetchAnalytics = async () => {
       try {
-        let startDate = new Date()
-        switch (timeRange) {
-          case '24h':
-            startDate.setHours(startDate.getHours() - 24)
-            break
-          case '7d':
-            startDate.setDate(startDate.getDate() - 7)
-            break
-          case '30d':
-            startDate.setDate(startDate.getDate() - 30)
-            break
-          case 'all':
-            startDate = new Date(0)
-            break
-        }
-
-        // Get viewing stats
-        const { data: viewingData } = await supabase
-          .from('viewing_history')
-          .select(`
-            *,
-            content:content_id(*)
-          `)
-          .gte('created_at', startDate.toISOString())
-
-        if (!viewingData) return
-
-        // Calculate metrics
-        const totalViews = viewingData.length
-        const uniqueViewers = new Set(viewingData.map(v => v.user_id)).size
-        const totalWatchTime = viewingData.reduce((sum, view) => sum + (view.duration || 0), 0)
-        const averageWatchTime = totalWatchTime / totalViews
-        const completions = viewingData.filter(view => 
-          view.progress && view.duration && (view.progress / view.duration) >= 0.9
-        ).length
-        const completionRate = (completions / totalViews) * 100
-
-        // Calculate views by category
-        const viewsByCategory = viewingData.reduce((acc: Record<string, number>, view) => {
-          const category = view.content?.category
-          if (category) {
-            acc[category] = (acc[category] || 0) + 1
-          }
-          return acc
-        }, {})
-
-        // Calculate views by hour and day
-        const viewsByHour = new Array(24).fill(0)
-        const viewsByDay = new Array(7).fill(0)
-        viewingData.forEach(view => {
-          const date = new Date(view.created_at)
-          viewsByHour[date.getHours()]++
-          viewsByDay[date.getDay()]++
-        })
-
-        // Get popular content
-        const contentViews = viewingData.reduce((acc: Record<string, any>, view) => {
-          const contentId = view.content_id
-          if (!acc[contentId]) {
-            acc[contentId] = {
-              content: view.content,
-              views: 0,
-              completions: 0
-            }
-          }
-          acc[contentId].views++
-          if (view.progress && view.duration && (view.progress / view.duration) >= 0.9) {
-            acc[contentId].completions++
-          }
-          return acc
-        }, {})
-
-        const popularContent = Object.values(contentViews)
-          .sort((a: any, b: any) => b.views - a.views)
-          .slice(0, 5)
-
-        setMetrics({
-          totalViews,
-          uniqueViewers,
-          averageWatchTime,
-          completionRate,
-          popularContent,
-          viewsByCategory,
-          viewsByDay,
-          viewsByHour
-        })
+        const data = await getContentAnalytics(contentId, period)
+        setAnalytics(data)
       } catch (error) {
-        console.error('Error fetching analytics metrics:', error)
+        console.error('Error fetching analytics:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load analytics')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchMetrics()
-  }, [timeRange])
+    fetchAnalytics()
+  }, [contentId, period])
 
-  if (loading) return <div>Loading analytics...</div>
-  if (!metrics) return null
+  if (loading) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-96 bg-gray-800 rounded-lg mb-6"></div>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="h-64 bg-gray-800 rounded-lg"></div>
+          <div className="h-64 bg-gray-800 rounded-lg"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !analytics) {
+    return (
+      <div className="text-red-500 text-center py-4">
+        {error || 'Failed to load analytics'}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">Content Analytics</h1>
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
-          className="bg-gray-800 text-white rounded-md px-3 py-2 border border-gray-700"
-        >
-          <option value="24h">Last 24 Hours</option>
-          <option value="7d">Last 7 Days</option>
-          <option value="30d">Last 30 Days</option>
-          <option value="all">All Time</option>
-        </select>
+      {/* Period Selector */}
+      <div className="flex justify-end space-x-2">
+        {['7d', '30d', '90d'].map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p as '7d' | '30d' | '90d')}
+            className={`px-3 py-1 rounded-md text-sm ${
+              period === p
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            {p}
+          </button>
+        ))}
       </div>
 
-      {/* Overview metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Overview Stats */}
+      <div className="grid grid-cols-3 gap-6">
         <div className="bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-400">Total Views</h3>
-          <p className="mt-2 text-3xl font-bold text-white">{metrics.totalViews}</p>
-        </div>
-
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-400">Unique Viewers</h3>
-          <p className="mt-2 text-3xl font-bold text-white">{metrics.uniqueViewers}</p>
-        </div>
-
-        <div className="bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-400">Avg. Watch Time</h3>
-          <p className="mt-2 text-3xl font-bold text-white">
-            {Math.round(metrics.averageWatchTime / 60)}m
+          <h3 className="text-lg font-medium text-white">Total Views</h3>
+          <p className="text-3xl font-bold text-indigo-500 mt-2">
+            {analytics.metrics.views.toLocaleString()}
           </p>
         </div>
-
         <div className="bg-gray-800 p-6 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-400">Completion Rate</h3>
-          <p className="mt-2 text-3xl font-bold text-white">
-            {Math.round(metrics.completionRate)}%
+          <h3 className="text-lg font-medium text-white">Completion Rate</h3>
+          <p className="text-3xl font-bold text-indigo-500 mt-2">
+            {((analytics.metrics.completions / analytics.metrics.views) * 100).toFixed(1)}%
+          </p>
+        </div>
+        <div className="bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-white">Engagement Rate</h3>
+          <p className="text-3xl font-bold text-indigo-500 mt-2">
+            {(analytics.metrics.engagementRate * 100).toFixed(1)}%
           </p>
         </div>
       </div>
 
-      {/* Popular content */}
-      <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-white mb-4">Popular Content</h3>
-        <div className="space-y-4">
-          {metrics.popularContent.map(({ content, views, completions }) => (
-            <div key={content.id} className="flex justify-between items-center">
-              <div>
-                <p className="text-white font-medium">{content.title}</p>
-                <p className="text-sm text-gray-400">{content.category}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-white">{views} views</p>
-                <p className="text-sm text-gray-400">
-                  {Math.round((completions / views) * 100)}% completion
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Trend Chart */}
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h3 className="text-lg font-medium text-white mb-4">Performance Trends</h3>
+        <Line
+          data={{
+            labels: analytics.trendData.map(d => d.date),
+            datasets: [
+              {
+                label: 'Views',
+                data: analytics.trendData.map(d => d.views),
+                borderColor: 'rgb(99, 102, 241)',
+                tension: 0.1
+              },
+              {
+                label: 'Engagement',
+                data: analytics.trendData.map(d => d.engagement),
+                borderColor: 'rgb(139, 92, 246)',
+                tension: 0.1
+              }
+            ]
+          }}
+          options={{
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { color: 'white' }
+              },
+              x: {
+                ticks: { color: 'white' }
+              }
+            },
+            plugins: {
+              legend: {
+                labels: { color: 'white' }
+              }
+            }
+          }}
+        />
       </div>
 
-      {/* Category distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ContentCategories />
-        <ContentStats contentId={metrics.popularContent[0]?.content.id} />
+      {/* Demographics */}
+      <div className="grid grid-cols-3 gap-6">
+        <div className="bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-white mb-4">Age Distribution</h3>
+          <Doughnut
+            data={{
+              labels: Object.keys(analytics.demographics.ageGroups),
+              datasets: [{
+                data: Object.values(analytics.demographics.ageGroups),
+                backgroundColor: [
+                  '#4F46E5',
+                  '#7C3AED',
+                  '#A78BFA',
+                  '#C4B5FD',
+                  '#DDD6FE'
+                ]
+              }]
+            }}
+            options={{
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { color: 'white' }
+                }
+              }
+            }}
+          />
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-white mb-4">Regional Distribution</h3>
+          <Bar
+            data={{
+              labels: Object.keys(analytics.demographics.regions),
+              datasets: [{
+                label: 'Viewers',
+                data: Object.values(analytics.demographics.regions),
+                backgroundColor: '#4F46E5'
+              }]
+            }}
+            options={{
+              indexAxis: 'y',
+              plugins: {
+                legend: {
+                  display: false
+                }
+              },
+              scales: {
+                x: {
+                  ticks: { color: 'white' }
+                },
+                y: {
+                  ticks: { color: 'white' }
+                }
+              }
+            }}
+          />
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-white mb-4">Device Distribution</h3>
+          <Doughnut
+            data={{
+              labels: Object.keys(analytics.demographics.devices),
+              datasets: [{
+                data: Object.values(analytics.demographics.devices),
+                backgroundColor: [
+                  '#4F46E5',
+                  '#7C3AED',
+                  '#A78BFA'
+                ]
+              }]
+            }}
+            options={{
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { color: 'white' }
+                }
+              }
+            }}
+          />
+        </div>
       </div>
     </div>
   )

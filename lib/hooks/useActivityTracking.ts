@@ -1,75 +1,86 @@
-import { createClient } from '@/lib/supabase/client'
-import { useCallback, useEffect } from 'react'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { trackActivity, type ActivityType } from '@/lib/services/activity-tracking'
+import { useCallback } from 'react'
 
-interface ActivityData {
-  user_id: string
-  content_id?: string
-  action: 'view' | 'search' | 'like' | 'share' | 'download'
-  metadata?: Record<string, any>
+interface UseActivityTrackingOptions {
+  onError?: (error: Error) => void
 }
 
-export function useActivityTracking(userId: string) {
-  const supabase = createClient()
+export function useActivityTracking(options: UseActivityTrackingOptions = {}) {
+  const { user } = useAuth()
+  const { onError } = options
 
-  const trackActivity = useCallback(async (data: Omit<ActivityData, 'user_id'>) => {
-    try {
-      const { error } = await supabase
-        .from('user_activity')
-        .insert({
-          user_id: userId,
-          ...data,
-          created_at: new Date().toISOString()
-        })
-
-      if (error) throw error
-    } catch (error) {
-      console.error('Error tracking activity:', error)
+  const track = useCallback(async (
+    type: ActivityType,
+    data?: {
+      contentId?: string
+      searchQuery?: string
+      oldValue?: string
+      newValue?: string
+      metadata?: Record<string, any>
     }
-  }, [userId])
-
-  const trackPageView = useCallback((path: string) => {
-    trackActivity({
-      action: 'view',
-      metadata: { path }
-    })
-  }, [trackActivity])
-
-  const trackSearch = useCallback((query: string) => {
-    trackActivity({
-      action: 'search',
-      metadata: { query }
-    })
-  }, [trackActivity])
-
-  const trackContentInteraction = useCallback((
-    contentId: string,
-    action: 'view' | 'like' | 'share' | 'download'
   ) => {
-    trackActivity({
-      content_id: contentId,
-      action
+    if (!user) return
+
+    try {
+      await trackActivity(user.id, type, {
+        content_id: data?.contentId,
+        search_query: data?.searchQuery,
+        old_value: data?.oldValue,
+        new_value: data?.newValue,
+        metadata: data?.metadata
+      })
+    } catch (error) {
+      console.error('Activity tracking error:', error)
+      if (error instanceof Error && onError) {
+        onError(error)
+      }
+    }
+  }, [user, onError])
+
+  const trackView = useCallback((contentId: string) => {
+    return track('view', { contentId })
+  }, [track])
+
+  const trackSearch = useCallback((searchQuery: string) => {
+    return track('search', { searchQuery })
+  }, [track])
+
+  const trackLike = useCallback((contentId: string) => {
+    return track('like', { contentId })
+  }, [track])
+
+  const trackWatchlistAdd = useCallback((contentId: string) => {
+    return track('watchlist_add', { contentId })
+  }, [track])
+
+  const trackWatchlistRemove = useCallback((contentId: string) => {
+    return track('watchlist_remove', { contentId })
+  }, [track])
+
+  const trackProfileUpdate = useCallback((oldValue: string, newValue: string) => {
+    return track('profile_update', { oldValue, newValue })
+  }, [track])
+
+  const trackSubscriptionChange = useCallback((oldTier: string, newTier: string) => {
+    return track('subscription_change', {
+      oldValue: oldTier,
+      newValue: newTier
     })
-  }, [trackActivity])
+  }, [track])
 
-  // Track page views automatically
-  useEffect(() => {
-    trackPageView(window.location.pathname)
-
-    const handleRouteChange = (url: string) => {
-      trackPageView(url)
-    }
-
-    window.addEventListener('popstate', () => handleRouteChange(window.location.pathname))
-
-    return () => {
-      window.removeEventListener('popstate', () => handleRouteChange(window.location.pathname))
-    }
-  }, [trackPageView])
+  const trackContentComplete = useCallback((contentId: string) => {
+    return track('content_complete', { contentId })
+  }, [track])
 
   return {
-    trackActivity,
-    trackPageView,
+    trackView,
     trackSearch,
-    trackContentInteraction
+    trackLike,
+    trackWatchlistAdd,
+    trackWatchlistRemove,
+    trackProfileUpdate,
+    trackSubscriptionChange,
+    trackContentComplete
   }
 } 

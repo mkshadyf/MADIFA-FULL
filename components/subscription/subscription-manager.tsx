@@ -1,184 +1,160 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/components/providers/AuthProvider'
-import type { SubscriptionPlan, UserSubscription } from '@/lib/types/subscription'
-
-const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  {
-    id: 'free',
-    name: 'Free',
-    description: 'Basic access with ads',
-    price: 0,
-    features: [
-      'Access to selected content',
-      'Ad-supported streaming',
-      'Standard quality'
-    ],
-    tier: 'free',
-    billingPeriod: 'monthly'
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    description: 'Ad-free experience with HD quality',
-    price: 9.99,
-    features: [
-      'Ad-free streaming',
-      'HD quality',
-      'Download for offline viewing',
-      'Watch on 2 devices simultaneously'
-    ],
-    tier: 'premium',
-    billingPeriod: 'monthly'
-  },
-  {
-    id: 'premium_plus',
-    name: 'Premium Plus',
-    description: 'Ultimate streaming experience',
-    price: 14.99,
-    features: [
-      'Ad-free streaming',
-      '4K Ultra HD quality',
-      'Download for offline viewing',
-      'Watch on 4 devices simultaneously',
-      'Early access to new content'
-    ],
-    tier: 'premium_plus',
-    billingPeriod: 'monthly'
-  }
-]
+import { getCurrentSubscription, getBillingHistory, cancelSubscription } from '@/lib/services/subscription-management'
+import type { UserSubscription, BillingHistory } from '@/lib/types/subscription'
 
 export default function SubscriptionManager() {
   const { user } = useAuth()
-  const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null)
+  const [subscription, setSubscription] = useState<UserSubscription | null>(null)
+  const [billingHistory, setBillingHistory] = useState<BillingHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
+  const [cancelling, setCancelling] = useState(false)
 
   useEffect(() => {
-    const fetchSubscription = async () => {
+    const loadSubscriptionData = async () => {
       if (!user) return
 
       try {
-        const { data, error } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
+        const [subscriptionData, billingData] = await Promise.all([
+          getCurrentSubscription(user.id),
+          getBillingHistory(user.id)
+        ])
 
-        if (error) throw error
-
-        setCurrentSubscription(data)
+        setSubscription(subscriptionData)
+        setBillingHistory(billingData)
       } catch (error) {
-        console.error('Error fetching subscription:', error)
-        setError(error instanceof Error ? error.message : 'Failed to load subscription')
+        console.error('Error loading subscription data:', error)
+        setError(error instanceof Error ? error.message : 'Failed to load subscription data')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchSubscription()
+    loadSubscriptionData()
   }, [user])
 
-  const handleSubscribe = async (plan: SubscriptionPlan) => {
-    if (!user) return
+  const handleCancelSubscription = async () => {
+    if (!subscription) return
+
+    setCancelling(true)
+    setError(null)
 
     try {
-      // Create checkout session
-      const response = await fetch('/api/create-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          plan_id: plan.id,
-          user_id: user.id,
-          price: plan.price,
-          billing_period: plan.billingPeriod
-        }),
-      })
-
-      const { paymentUrl } = await response.json()
-
-      // Redirect to payment page
-      window.location.href = paymentUrl
+      await cancelSubscription(subscription.id)
+      setSubscription(prev => prev ? {
+        ...prev,
+        status: 'cancelled',
+        cancel_at_period_end: true
+      } : null)
     } catch (error) {
-      console.error('Error creating subscription:', error)
-      setError('Failed to process subscription')
+      console.error('Error cancelling subscription:', error)
+      setError(error instanceof Error ? error.message : 'Failed to cancel subscription')
+    } finally {
+      setCancelling(false)
     }
   }
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+      <div className="animate-pulse">
+        <div className="h-32 bg-gray-800 rounded-lg mb-6"></div>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-16 bg-gray-800 rounded-lg"></div>
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h2 className="text-3xl font-bold text-white mb-8">Choose Your Plan</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {SUBSCRIPTION_PLANS.map((plan) => (
-          <div
-            key={plan.id}
-            className={`bg-gray-800 rounded-lg p-6 ${
-              currentSubscription?.tier === plan.tier
-                ? 'ring-2 ring-indigo-500'
-                : ''
-            }`}
-          >
-            <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-            <p className="text-gray-400 mb-4">{plan.description}</p>
-            <p className="text-3xl font-bold text-white mb-6">
-              ${plan.price}
-              <span className="text-sm font-normal text-gray-400">
-                /{plan.billingPeriod}
-              </span>
-            </p>
+    <div className="space-y-8">
+      {/* Current Subscription */}
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h2 className="text-xl font-semibold text-white mb-4">Current Subscription</h2>
+        {subscription ? (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-lg font-medium text-white">{subscription.tier} Plan</p>
+                <p className="text-sm text-gray-400">
+                  {subscription.billing_period === 'monthly' ? 'Monthly' : 'Annual'} billing
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-medium text-white">
+                  ${subscription.price.toFixed(2)}/{subscription.billing_period === 'monthly' ? 'mo' : 'yr'}
+                </p>
+                <p className="text-sm text-gray-400">
+                  Next billing date: {new Date(subscription.current_period_end).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
 
-            <ul className="space-y-3 mb-8">
-              {plan.features.map((feature, index) => (
-                <li key={index} className="flex items-center text-gray-300">
-                  <svg
-                    className="h-5 w-5 text-indigo-500 mr-2"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <button
-              onClick={() => handleSubscribe(plan)}
-              disabled={currentSubscription?.tier === plan.tier}
-              className={`w-full py-2 px-4 rounded-md font-medium ${
-                currentSubscription?.tier === plan.tier
-                  ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
-              }`}
-            >
-              {currentSubscription?.tier === plan.tier
-                ? 'Current Plan'
-                : 'Subscribe'}
-            </button>
+            <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+              <div>
+                <p className="text-sm text-gray-400">Status</p>
+                <p className={`text-sm font-medium ${
+                  subscription.status === 'active' ? 'text-green-500' :
+                  subscription.status === 'past_due' ? 'text-yellow-500' :
+                  'text-red-500'
+                }`}>
+                  {subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)}
+                </p>
+              </div>
+              {subscription.status === 'active' && (
+                <button
+                  onClick={handleCancelSubscription}
+                  disabled={cancelling}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
+                </button>
+              )}
+            </div>
           </div>
-        ))}
+        ) : (
+          <p className="text-gray-400">No active subscription</p>
+        )}
+      </div>
+
+      {/* Billing History */}
+      <div className="bg-gray-800 p-6 rounded-lg">
+        <h2 className="text-xl font-semibold text-white mb-4">Billing History</h2>
+        {billingHistory.length > 0 ? (
+          <div className="space-y-4">
+            {billingHistory.map((bill) => (
+              <div
+                key={bill.id}
+                className="flex justify-between items-center py-3 border-b border-gray-700 last:border-0"
+              >
+                <div>
+                  <p className="text-sm font-medium text-white">${bill.amount.toFixed(2)}</p>
+                  <p className="text-xs text-gray-400">{new Date(bill.created_at).toLocaleDateString()}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-300">{bill.payment_method}</p>
+                  <p className={`text-xs ${
+                    bill.status === 'succeeded' ? 'text-green-500' :
+                    bill.status === 'pending' ? 'text-yellow-500' :
+                    'text-red-500'
+                  }`}>
+                    {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400">No billing history available</p>
+        )}
       </div>
 
       {error && (
-        <div className="text-red-500 text-center mt-4">{error}</div>
+        <div className="text-red-500 text-sm text-center">{error}</div>
       )}
     </div>
   )

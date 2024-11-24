@@ -1,3 +1,5 @@
+import type { Database } from './database.types'
+
 export type Profile = {
   id: string
   user_id: string
