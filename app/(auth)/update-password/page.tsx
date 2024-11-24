@@ -1,15 +1,17 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { updatePassword } from '@/lib/services/auth'
+import Image from 'next/image'
 
-export default function UpdatePassword() {
+export default function UpdatePasswordPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const supabase = createClient()
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,62 +25,112 @@ export default function UpdatePassword() {
     }
 
     try {
-      await updatePassword(password)
+      const { error } = await supabase.auth.updateUser({
+        password
+      })
+
+      if (error) throw error
+
+      // Redirect to sign in with success message
       router.push('/signin?message=Password updated successfully')
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update password')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
-            Update your password
-          </h2>
+    <div className="min-h-screen relative flex flex-col justify-center">
+      {/* Dynamic Background with Overlay */}
+      <div className="fixed inset-0 -z-10">
+        <Image
+          src="/images/auth-bg-4.jpg"
+          alt="Background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
+      </div>
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md px-4">
+        {/* Logo/Brand */}
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent mb-2">
+            Update Password
+          </h1>
+          <p className="text-gray-400 text-lg">
+            Choose a new secure password
+          </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleUpdatePassword}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
+
+        <div className="bg-black/30 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/10">
+          <form onSubmit={handleUpdatePassword} className="space-y-6">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
             <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+                New Password
+              </label>
               <input
+                id="password"
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="New password"
+                className="mt-1 block w-full rounded-lg bg-black/30 border border-gray-600 
+                         px-4 py-2.5 text-gray-300 placeholder-gray-500
+                         focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500
+                         transition-colors duration-200"
+                placeholder="Enter new password"
               />
             </div>
+
             <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+                Confirm Password
+              </label>
               <input
+                id="confirmPassword"
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="mt-1 block w-full rounded-lg bg-black/30 border border-gray-600 
+                         px-4 py-2.5 text-gray-300 placeholder-gray-500
+                         focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500
+                         transition-colors duration-200"
                 placeholder="Confirm new password"
               />
             </div>
-          </div>
 
-          <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full flex justify-center items-center px-4 py-3 rounded-lg
+                       bg-gradient-to-r from-indigo-600 to-purple-600
+                       text-white font-medium shadow-lg shadow-indigo-500/25
+                       hover:from-indigo-500 hover:to-purple-500
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       transition-all duration-200"
             >
-              {loading ? 'Updating...' : 'Update password'}
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  Updating...
+                </div>
+              ) : (
+                'Update Password'
+              )}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   )

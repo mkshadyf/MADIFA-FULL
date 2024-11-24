@@ -1,6 +1,5 @@
 'use client'
 
-import type { ChangeEvent, FormEvent } from 'react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -16,13 +15,8 @@ export default function SignInPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const handleSignIn = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!supabase) {
-      setError('Authentication not available')
-      return
-    }
-
     setLoading(true)
     setError(null)
 
@@ -33,7 +27,6 @@ export default function SignInPage() {
       })
 
       if (error) throw error
-
       router.push('/browse')
       router.refresh()
     } catch (err) {
@@ -45,8 +38,8 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen relative flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      {/* Background Image with Overlay */}
+    <div className="min-h-screen relative flex flex-col justify-center">
+      {/* Dynamic Background with Overlay */}
       <div className="fixed inset-0 -z-10">
         <Image
           src="/images/auth-bg.jpg"
@@ -58,140 +51,164 @@ export default function SignInPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="text-center">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md px-4">
+        {/* Logo/Brand */}
+        <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent mb-2">
             MADIFA
           </h1>
-          <h2 className="text-xl font-medium text-gray-300">
-            Sign in to your account
-          </h2>
+          <p className="text-gray-400 text-lg">
+            Your Premium Streaming Experience
+          </p>
         </div>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-gray-900/50 backdrop-blur-xl py-8 px-4 shadow-2xl ring-1 ring-white/10 sm:rounded-xl sm:px-10">
-          <form className="space-y-6" onSubmit={handleSignIn}>
+        {/* Sign In Form with Glassmorphism */}
+        <div className="bg-black/30 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/10">
+          <form onSubmit={handleSignIn} className="space-y-6">
             {error && (
               <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
-            
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300">
-                Email address
+                Email
               </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700/50 
-                           bg-gray-800/50 px-3 py-2 placeholder-gray-400 shadow-sm 
-                           focus:border-indigo-500 focus:outline-none focus:ring-2 
-                           focus:ring-indigo-500/50 sm:text-sm"
-                />
-              </div>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 block w-full rounded-lg bg-black/30 border border-gray-600 
+                         px-4 py-2.5 text-gray-300 placeholder-gray-500
+                         focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500
+                         transition-colors duration-200"
+                placeholder="Enter your email"
+              />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 Password
               </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full appearance-none rounded-lg border border-gray-700/50 
-                           bg-gray-800/50 px-3 py-2 placeholder-gray-400 shadow-sm 
-                           focus:border-indigo-500 focus:outline-none focus:ring-2 
-                           focus:ring-indigo-500/50 sm:text-sm"
-                />
-              </div>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full rounded-lg bg-black/30 border border-gray-600 
+                         px-4 py-2.5 text-gray-300 placeholder-gray-500
+                         focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500
+                         transition-colors duration-200"
+                placeholder="Enter your password"
+              />
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
+              <label className="flex items-center">
                 <input
-                  id="remember-me"
-                  name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-gray-700/50 bg-gray-800/50 
+                  className="h-4 w-4 rounded border-gray-600 bg-black/30 
                            text-indigo-600 focus:ring-indigo-500"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
-                  Remember me
-                </label>
-              </div>
+                <span className="ml-2 text-sm text-gray-400">Remember me</span>
+              </label>
 
-              <div className="text-sm">
-                <Link 
-                  href="/forgot-password"
-                  className="font-medium text-indigo-400 hover:text-indigo-300 
-                           transition-colors duration-200"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
+              <Link
+                href="/reset-password"
+                className="text-sm text-indigo-400 hover:text-indigo-300 
+                         transition-colors duration-200"
+              >
+                Forgot password?
+              </Link>
             </div>
 
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex w-full justify-center rounded-lg border border-transparent 
-                         bg-indigo-600 py-2.5 px-4 text-sm font-medium text-white 
-                         shadow-lg shadow-indigo-500/25 hover:bg-indigo-700 
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500 
-                         focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed 
-                         transition-all duration-200"
-              >
-                {loading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Signing in...</span>
-                  </div>
-                ) : (
-                  'Sign in'
-                )}
-              </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center items-center px-4 py-3 rounded-lg
+                       bg-gradient-to-r from-indigo-600 to-purple-600
+                       text-white font-medium shadow-lg shadow-indigo-500/25
+                       hover:from-indigo-500 hover:to-purple-500
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       transition-all duration-200"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  Signing in...
+                </div>
+              ) : (
+                'Sign in'
+              )}
+            </button>
+
+            {/* Social Sign In */}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-700" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-black/30 text-gray-400">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className="flex justify-center items-center px-4 py-2.5 rounded-lg
+                           bg-black/30 border border-gray-600 text-gray-300
+                           hover:bg-black/50 hover:border-gray-500
+                           transition-colors duration-200"
+                >
+                  <Image
+                    src="/icons/google.svg"
+                    alt="Google"
+                    width={20}
+                    height={20}
+                    className="mr-2"
+                  />
+                  Google
+                </button>
+
+                <button
+                  type="button"
+                  className="flex justify-center items-center px-4 py-2.5 rounded-lg
+                           bg-black/30 border border-gray-600 text-gray-300
+                           hover:bg-black/50 hover:border-gray-500
+                           transition-colors duration-200"
+                >
+                  <Image
+                    src="/icons/apple.svg"
+                    alt="Apple"
+                    width={20}
+                    height={20}
+                    className="mr-2"
+                  />
+                  Apple
+                </button>
+              </div>
             </div>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700/50" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-gray-900/50 px-2 text-gray-400">
-                  Don't have an account?
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <Link
-                href="/signup"
-                className="flex w-full justify-center rounded-lg border border-gray-700/50 
-                         bg-gray-800/50 py-2.5 px-4 text-sm font-medium text-white 
-                         shadow-lg hover:bg-gray-700/50 focus:outline-none focus:ring-2 
-                         focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200"
-              >
-                Sign up
-              </Link>
-            </div>
-          </div>
+          {/* Sign Up Link */}
+          <p className="mt-8 text-center text-sm text-gray-400">
+            Don't have an account?{' '}
+            <Link
+              href="/signup"
+              className="font-medium text-indigo-400 hover:text-indigo-300 
+                       transition-colors duration-200"
+            >
+              Sign up now
+            </Link>
+          </p>
         </div>
       </div>
     </div>

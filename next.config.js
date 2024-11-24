@@ -20,19 +20,25 @@ const analyzerConfig = withBundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
   images: {
-    domains: ['vimeo.com', 'i.vimeocdn.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'vimeo.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.vimeocdn.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      }
+    ],
+    unoptimized: process.env.NODE_ENV === 'development',
   },
-  server: {
-    https: process.env.NODE_ENV === 'development' && 
-      fs.existsSync(path.join(__dirname, 'localhost-key.pem')) &&
-      fs.existsSync(path.join(__dirname, 'localhost.pem'))
-      ? {
-          key: fs.readFileSync(path.join(__dirname, 'localhost-key.pem')),
-          cert: fs.readFileSync(path.join(__dirname, 'localhost.pem')),
-        }
-      : undefined,
+  experimental: {
+    serverActions: true,
   },
 }
 

@@ -1,53 +1,53 @@
 'use client'
 
-import { useQueryWithCache } from '@/lib/hooks/useQueryWithCache'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { Tables } from '@/types/supabase'
-import Link from 'next/link'
-import Image from 'next/image'
-import LoadingSpinner from '../ui/LoadingSpinner'
+import ContentGrid from '@/components/ui/content-grid'
+import Loading from '@/components/ui/loading'
+
+type Category = Tables<'categories'>
 
 export default function CategoryBrowser() {
-  const { data: categories, isLoading } = useQueryWithCache<Tables<'categories'>['Row'][]>(
-    ['categories'],
-    async () => {
-      const response = await fetch('/api/categories')
-      if (!response.ok) throw new Error('Failed to fetch categories')
-      return response.json()
-    }
-  )
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
-  if (isLoading) return <LoadingSpinner />
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const { data } = await supabase
+          .from('categories')
+          .select('*')
+          .order('order')
+          .eq('is_active', true)
+
+        setCategories(data || [])
+      } catch (error) {
+        console.error('Error loading categories:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCategories()
+  }, [])
+
+  if (loading) return <Loading />
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
-      {categories?.map((category) => (
-        <Link
-          key={category.id}
-          href={`/browse/${category.slug}`}
-          className="group relative overflow-hidden rounded-xl aspect-video transition-transform duration-300 hover:scale-105"
-        >
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            <Image
-              src={category.thumbnail_url || '/images/category-placeholder.jpg'}
-              alt={category.name}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-110"
-            />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          </div>
-
-          {/* Content */}
-          <div className="relative h-full flex flex-col justify-end p-4">
-            <h3 className="text-xl font-bold text-white mb-2">{category.name}</h3>
-            {category.description && (
-              <p className="text-sm text-gray-300 line-clamp-2">
-                {category.description}
-              </p>
-            )}
-          </div>
-        </Link>
+    <div className="space-y-12">
+      {categories.map((category) => (
+        <section key={category.id} className="animate-fade-in">
+          <h2 className="text-2xl font-bold text-white mb-6">
+            {category.name}
+          </h2>
+          <ContentGrid
+            items={[]} // You'll need to load content for each category
+            aspectRatio="poster"
+            showLoadMore={false}
+          />
+        </section>
       ))}
     </div>
   )

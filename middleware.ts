@@ -1,7 +1,5 @@
-import type { CookieOptions } from '@supabase/ssr'
-import { createServerClient } from '@supabase/ssr'
-import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -10,9 +8,18 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Check if environment variables are available
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables')
+    return response
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -23,7 +30,6 @@ export async function middleware(request: NextRequest) {
             name,
             value,
             ...options,
-            path: options.path || '/',
           })
         },
         remove(name: string, options: CookieOptions) {
@@ -31,24 +37,19 @@ export async function middleware(request: NextRequest) {
             name,
             value: '',
             ...options,
-            path: options.path || '/',
           })
         },
       },
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session && request.nextUrl.pathname.startsWith('/browse')) {
-    return NextResponse.redirect(new URL('/signin', request.url))
-  }
+  await supabase.auth.getSession()
 
   return response
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public|auth).*)',
   ],
 } 

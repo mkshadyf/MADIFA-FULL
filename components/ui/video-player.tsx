@@ -2,157 +2,85 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { initializeStream } from '@/lib/services/streaming'
+import { useRouter } from 'next/navigation'
+import type { Content } from '@/lib/types/content'
 import { trackProgress } from '@/lib/services/content-delivery'
-import type { Tables } from '@/types/supabase'
-import type { VideoPlayerInstance } from '@/types/video'
-import { createVideoPlayer, destroyVideoPlayer, loadSource } from '@/lib/services/video-player'
-import { useAds } from '@/lib/hooks/useAds'
-import BannerAd from '@/components/ads/BannerAd'
 
 interface VideoPlayerProps {
-  content: Tables<'content'>['Row']
+  content: Content
+  startTime?: number
   onProgress?: (progress: number) => void
   onComplete?: () => void
-  initialQuality?: '480p' | '720p' | '1080p'
-  startTime?: number
 }
 
 export default function VideoPlayer({
   content,
+  startTime = 0,
   onProgress,
-  onComplete,
-  initialQuality = '1080p',
-  startTime = 0
+  onComplete
 }: VideoPlayerProps) {
-  const { user } = useAuth()
   const videoRef = useRef<HTMLVideoElement>(null)
-  const playerInstanceRef = useRef<VideoPlayerInstance | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(startTime)
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(1)
-  const [quality, setQuality] = useState(initialQuality)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const playerRef = useRef<HTMLDivElement>(null)
-  const { showInterstitial, adsEnabled, getAdStats } = useAds()
-  const [nextAdTime, setNextAdTime] = useState<number | null>(null)
+  const [showControls, setShowControls] = useState(true)
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>()
+  const { user } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
-    const initPlayer = async () => {
-      if (!user || !videoRef.current) return
+    const video = videoRef.current
+    if (!video) return
 
-      try {
-        const config = {
-          quality,
-          format: 'hls' as const,
-          drm: {
-            type: 'widevine' as const,
-            licenseUrl: '/api/drm/license'
-          }
-        }
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime)
+      onProgress?.(video.currentTime)
 
-        const manifest = await initializeStream(content.id, config)
-        
-        playerInstanceRef.current = createVideoPlayer(videoRef.current)
-        loadSource(playerInstanceRef.current, manifest.playbackUrl)
-
-        videoRef.current.currentTime = startTime
-        setLoading(false)
-      } catch (error) {
-        console.error('Player initialization error:', error)
-        setError('Failed to initialize player')
+      // Track progress every 10 seconds
+      if (Math.floor(video.currentTime) % 10 === 0) {
+        trackProgress(content.id, video.currentTime, video.duration)
       }
     }
 
-    initPlayer()
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration)
+      video.currentTime = startTime
+    }
+
+    const handleEnded = () => {
+      onComplete?.()
+    }
+
+    video.addEventListener('timeupdate', handleTimeUpdate)
+    video.addEventListener('loadedmetadata', handleLoadedMetadata)
+    video.addEventListener('ended', handleEnded)
 
     return () => {
-      if (playerInstanceRef.current) {
-        destroyVideoPlayer(playerInstanceRef.current)
-      }
+      video.removeEventListener('timeupdate', handleTimeUpdate)
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      video.removeEventListener('ended', handleEnded)
     }
-  }, [content.id, quality, user, startTime])
-
-  useEffect(() => {
-    // Save progress periodically
-    const progressInterval = setInterval(() => {
-      if (videoRef.current && isPlaying && user) {
-        const progress = videoRef.current.currentTime
-        onProgress?.(progress)
-        trackProgress(content.id, progress, duration)
-      }
-    }, 5000)
-
-    return () => clearInterval(progressInterval)
-  }, [content.id, duration, isPlaying, user])
-
-  useEffect(() => {
-    if (!playerRef.current || !adsEnabled) return
-
-    const stats = getAdStats('interstitial')
-    if (!stats.canShow) {
-      setNextAdTime(Date.now() + (stats.timeUntilNext || 0))
-      return
-    }
-
-    let adShown = false
-    const showAdAfterDelay = async () => {
-      if (!adShown && adsEnabled) {
-        // Show ad after 5 minutes or at 25% of video duration
-        const adTriggerTime = Math.min(5 * 60, duration * 0.25)
-        if (currentTime >= adTriggerTime) {
-          const shown = await showInterstitial()
-          if (shown) {
-            adShown = true
-            const stats = getAdStats('interstitial')
-            setNextAdTime(Date.now() + (stats.timeUntilNext || 0))
-          }
-        }
-      }
-    }
-
-    const adCheckInterval = setInterval(showAdAfterDelay, 1000)
-
-    return () => {
-      clearInterval(adCheckInterval)
-    }
-  }, [adsEnabled, showInterstitial, currentTime, duration])
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime)
-      
-      // Check if video is complete
-      if (videoRef.current.currentTime >= videoRef.current.duration - 1) {
-        onComplete?.()
-      }
-    }
-  }
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration)
-    }
-  }
+  }, [content.id, startTime, onProgress, onComplete])
 
   const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause()
-      } else {
-        videoRef.current.play()
-      }
-      setIsPlaying(!isPlaying)
+    const video = videoRef.current
+    if (!video) return
+
+    if (video.paused) {
+      video.play()
+      setIsPlaying(true)
+    } else {
+      video.pause()
+      setIsPlaying(false)
     }
   }
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value)
-    setVolume(newVolume)
+    const value = parseFloat(e.target.value)
+    setVolume(value)
     if (videoRef.current) {
-      videoRef.current.volume = newVolume
+      videoRef.current.volume = value
     }
   }
 
@@ -164,45 +92,42 @@ export default function VideoPlayer({
     }
   }
 
-  const handleQualityChange = async (newQuality: '480p' | '720p' | '1080p') => {
-    setQuality(newQuality)
-    setLoading(true)
-    // Player will reinitialize with new quality due to useEffect dependency
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.floor(seconds % 60)
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
   }
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
-
-  if (error) {
-    return (
-      <div className="aspect-video bg-gray-900 flex items-center justify-center">
-        <div className="text-red-500">{error}</div>
-      </div>
-    )
+  const showControlsTemporarily = () => {
+    setShowControls(true)
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current)
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      if (isPlaying) {
+        setShowControls(false)
+      }
+    }, 3000)
   }
 
   return (
-    <div className="relative group">
+    <div 
+      className="relative group"
+      onMouseMove={showControlsTemporarily}
+      onMouseLeave={() => setShowControls(false)}
+    >
       <video
         ref={videoRef}
+        src={content.video_url}
         className="w-full aspect-video bg-black"
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        playsInline
+        onClick={togglePlay}
       />
 
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-        </div>
-      )}
-
       {/* Video Controls */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="flex flex-col space-y-2">
+      <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
+        showControls ? 'opacity-100' : 'opacity-0'
+      }`}>
+        <div className="absolute bottom-0 left-0 right-0 p-4 space-y-4">
           {/* Progress Bar */}
           <input
             type="range"
@@ -216,15 +141,28 @@ export default function VideoPlayer({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* Play/Pause Button */}
-              <button
-                onClick={togglePlay}
-                className="text-white hover:text-gray-300"
-              >
-                {isPlaying ? 'Pause' : 'Play'}
+              <button onClick={togglePlay} className="text-white hover:text-gray-300">
+                {isPlaying ? (
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                  </svg>
+                ) : (
+                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
               </button>
+
+              {/* Time Display */}
+              <div className="text-white text-sm">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </div>
 
               {/* Volume Control */}
               <div className="flex items-center space-x-2">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M15.5 14.4c1.5-1.4 2.5-3.4 2.5-5.4 0-2-.9-4-2.5-5.4l-1.5 1.5c1.1 1.1 1.9 2.6 1.9 3.9s-.7 2.8-1.9 3.9l1.5 1.5zM12 16.5l-3.9-3.9H3v-3h5.1L12 5.7v10.8z" />
+                </svg>
                 <input
                   type="range"
                   min={0}
@@ -235,34 +173,19 @@ export default function VideoPlayer({
                   className="w-20"
                 />
               </div>
-
-              {/* Time Display */}
-              <div className="text-white text-sm">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </div>
             </div>
 
-            {/* Quality Selection */}
-            <select
-              value={quality}
-              onChange={(e) => handleQualityChange(e.target.value as '480p' | '720p' | '1080p')}
-              className="bg-transparent text-white text-sm"
-            >
-              <option value="1080p">1080p</option>
-              <option value="720p">720p</option>
-              <option value="480p">480p</option>
-            </select>
+            {/* Right Controls */}
+            <div className="flex items-center space-x-4">
+              <button className="text-white hover:text-gray-300">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-      {adsEnabled && nextAdTime && (
-        <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full text-sm">
-          Next ad in: {Math.ceil((nextAdTime - Date.now()) / 1000)}s
-        </div>
-      )}
-
-      {adsEnabled && <BannerAd />}
     </div>
   )
 } 

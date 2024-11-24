@@ -9,6 +9,7 @@
     "analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "db:setup": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" node scripts/db-setup.ts",
     "db:seed": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" node scripts/seed-data.ts",
     "db:reset": "npm run db:setup && npm run db:seed",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.7",
+    "@headlessui/react": "^2.2.0",
     "@next/bundle-analyzer": "^15.0.3",
     "@stripe/stripe-js": "^2.2.0",
     "@supabase/auth-helpers-nextjs": "^0.8.7",
@@ -27,6 +29,7 @@
     "@vimeo/player": "^2.20.1",
     "@vimeo/vimeo": "^3.0.3",
     "dotenv": "^16.4.5",
+    "framer-motion": "^11.11.17",
     "hls.js": "^1.5.17",
     "next": "14.0.4",
     "next-pwa": "^5.6.0",

@@ -75,19 +75,12 @@ export interface Content {
   description: string
   thumbnail_url: string
   video_url: string
-  category: string
+  preview_url?: string
+  duration?: number
   release_year: number
-  duration: number
-  status: 'processing' | 'ready' | 'failed'
-  error_message?: string
+  category: string
+  is_featured?: boolean
+  views: number
   created_at: string
   updated_at: string
-  metadata?: ContentMetadata
-  tags?: string[]
-  series_id?: string
-  season_number?: number
-  episode_number?: number
-  content_count?: number
-  total_views?: number
-  average_rating?: number
 } 

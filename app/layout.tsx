@@ -1,49 +1,39 @@
 import { Suspense } from 'react'
-import Providers from '@/components/providers/Providers'
-import Navigation from '@/components/layout/Navigation'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { Providers } from '@/components/providers'
+import { LoadingSpinner } from '@/components/ui/loading'
 import { createClient } from '@/lib/supabase/server'
-import './globals.css'
 import { Inter } from 'next/font/google'
+import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
+
+export const metadata = {
+  title: 'MADIFA - Premium Streaming Platform',
+  description: 'Your premium video streaming platform for African content',
+}
 
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  let session = null
+
+  try {
+    const supabase = createClient()
+    const { data } = await supabase.auth.getSession()
+    session = data.session
+  } catch (error) {
+    console.error('Error getting session:', error)
+  }
 
   return (
-    <html lang="en" className={`h-full ${inter.className}`}>
-      <head>
-        <meta name="application-name" content="Madifa" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="Madifa" />
-        <meta name="description" content="Your premium video streaming platform" />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#4F46E5" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="shortcut icon" href="/favicon.ico" />
-      </head>
+    <html lang="en" className={inter.className}>
       <body className="min-h-screen bg-[rgb(var(--background))]">
         <Providers>
-          <div className="flex min-h-screen">
-            {session && (
-              <aside className="w-64 border-r border-[rgb(var(--text))]/10">
-                <Navigation />
-              </aside>
-            )}
-            <main className="flex-1">
-              <Suspense fallback={<LoadingSpinner />}>
-                {children}
-              </Suspense>
-            </main>
-          </div>
+          <Suspense fallback={<LoadingSpinner />}>
+            {children}
+          </Suspense>
         </Providers>
       </body>
     </html>
