@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 17, 24, 39;
+  --text: 229, 231, 235;
+  --text-secondary: 156, 163, 175;
+  --primary: 99, 102, 241;
+  --secondary: 139, 92, 246;
+  --accent: 244, 114, 182;
+}
+
+@layer base {
+  body {
+    @apply bg-[rgb(var(--background))] text-[rgb(var(--text))] antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-black/30 backdrop-blur-sm rounded-2xl border border-white/10 shadow-xl;
+  }
+
+  .input {
+    @apply block w-full rounded-lg bg-black/30 border border-gray-600 
+           px-4 py-2.5 text-gray-300 placeholder-gray-500
+           focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500
+           transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply flex justify-center items-center px-4 py-3 rounded-lg
+           bg-gradient-to-r from-indigo-600 to-purple-600;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  .bg-gradient {
+    @apply bg-gradient-to-r from-indigo-600 to-purple-600;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.5s ease-out;
+}
+
+/* Video Player Styles */
+.video-player-controls {
+  @apply absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent;
+}
+
+.video-progress-bar {
+  @apply w-full h-1 bg-gray-700 rounded-full overflow-hidden cursor-pointer;
+}
+
+.video-progress-bar-fill {
+  @apply h-full bg-indigo-500 transition-all duration-100;
+}
+
+/* Content Card Hover Effects */
+.content-card {
+  @apply relative overflow-hidden rounded-lg transition-transform duration-300;
+}
+
+.content-card:hover {
+  @apply transform scale-105;
+}
+
+.content-card-overlay {
+  @apply absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent 
+         opacity-0 transition-opacity duration-300;
+}
+
+.content-card:hover .content-card-overlay {
+  @apply opacity-100;
+} 
