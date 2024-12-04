@@ -4,22 +4,22 @@ import { useErrorHandler } from './useErrorHandler'
 
 interface ValidationOptions<T> {
   schema: z.ZodType<T>
-  onSuccess?: (data: T) => void | Promise<void>
+  onSuccess: (data: T) => void | Promise<void>
   onError?: (error: z.ZodError) => void
 }
 
-export function useFormValidation<T>() {
+export function useFormValidation() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { handleError } = useErrorHandler()
 
-  const validateForm = useCallback(async (
+  const validateForm = useCallback(async <T extends Record<string, any>>(
     data: unknown,
     options: ValidationOptions<T>
   ) => {
     try {
       const validData = await options.schema.parseAsync(data)
       setErrors({})
-      await options.onSuccess?.(validData)
+      await options.onSuccess(validData)
       return { success: true as const, data: validData }
     } catch (error) {
       if (error instanceof z.ZodError) {

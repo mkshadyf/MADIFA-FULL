@@ -1,111 +1,101 @@
-import type { VideoQuality, VimeoVideo } from '@/types/vimeo'
+import { createClient } from '@/lib/supabase/client'
+import type { VimeoVideo } from '@/types/vimeo'
 import { Vimeo } from '@vimeo/vimeo'
-import { getSubscriptionStatus } from './subscription'
 
-const vimeoClient = new Vimeo(
-  process.env.NEXT_PUBLIC_VIMEO_CLIENT_ID!,
-  process.env.NEXT_PUBLIC_VIMEO_CLIENT_SECRET!,
-  process.env.NEXT_PUBLIC_VIMEO_ACCESS_TOKEN!
-)
+class VimeoService {
+  private client: Vimeo
+  private supabase = createClient()
 
-export async function getVideoDetails(videoId: string): Promise<VimeoVideo> {
-  return new Promise((resolve, reject) => {
-    vimeoClient.request({
-      method: 'GET',
-      path: `/videos/${videoId}`,
-      query: {
-        fields: 'uri,name,description,duration,pictures,files,privacy,status'
-      }
-    }, (error, result) => {
-      if (error) reject(error)
-      else resolve(result as VimeoVideo)
-    })
-  })
-}
-
-export async function uploadVideo(
-  file: File,
-  options: {
-    name: string
-    description?: string
-    privacy?: 'anybody' | 'disable' | 'unlisted'
-  }
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    vimeoClient.upload(
-      file,
-      {
-        name: options.name,
-        description: options.description,
-        privacy: { view: options.privacy || 'disable' }
-      },
-      (uri) => resolve(uri.split('/').pop()!),
-      (error) => reject(error),
-      (bytesUploaded, bytesTotal) => {
-        const progress = Math.round((bytesUploaded / bytesTotal) * 100)
-        console.log(`Upload progress: ${progress}%`)
-      }
+  constructor() {
+    this.client = new Vimeo(
+      process.env.VITE_VIMEO_CLIENT_ID!,
+      process.env.VITE_VIMEO_CLIENT_SECRET!,
+      process.env.VITE_VIMEO_ACCESS_TOKEN!
     )
-  })
-}
-
-export async function getPlaybackUrl(
-  videoId: string,
-  quality: VideoQuality = '720p',
-  userId?: string
-): Promise<string> {
-  if (userId) {
-    const subscription = await getSubscriptionStatus(userId)
-    if (subscription?.status !== 'active') {
-      throw new Error('Active subscription required')
-    }
   }
 
-  const video = await getVideoDetails(videoId)
-  const file = video.files.find(f => f.quality === quality) || video.files[0]
-  return file.link
-}
-
-export async function updateVideoPrivacy(videoId: string, makePublic: boolean): Promise<void> {
-  return new Promise((resolve, reject) => {
-    vimeoClient.request({
-      method: 'PATCH',
-      path: `/videos/${videoId}`,
-      query: {
-        privacy: {
-          view: makePublic ? 'anybody' : 'disable'
-        }
-      }
-    }, (error) => {
-      if (error) reject(error)
-      else resolve()
+  async getFolders(): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      this.client.request({
+        method: 'GET',
+        path: '/me/projects'
+      }, (error, result) => {
+        if (error) reject(error)
+        resolve(result.data)
+      })
     })
-  })
-}
+  }
 
-export async function getVideosFromFolder(folderId: string): Promise<VimeoVideo[]> {
-  return new Promise((resolve, reject) => {
-    vimeoClient.request({
-      method: 'GET',
-      path: `/me/folders/${folderId}/videos`,
-      query: {
-        fields: 'uri,name,description,duration,pictures,files,privacy,status'
-      }
-    }, (error: Error | null, result: any) => {
-      if (error) {
-        reject(error)
-        return
-      }
-      resolve(result.data)
+  async getVideosByFolder(folderId: string): Promise<VimeoVideo[]> {
+    return new Promise((resolve, reject) => {
+      this.client.request({
+        method: 'GET',
+        path: `/me/projects/${folderId}/videos`
+      }, (error, result) => {
+        if (error) reject(error)
+        resolve(result.data)
+      })
     })
-  })
+  }
+
+  async getVideoStream(videoId: string): Promise<string> {
+    const video = await this.getVideoMetadata(videoId)
+    const file = video.files.find(f => f.quality === '720p')
+    if (!file) throw new Error('No HD stream available')
+    return file.link
+  }
+
+  async getVideoMetadata(videoId: string): Promise<VimeoVideo> {
+    return new Promise((resolve, reject) => {
+      this.client.request({
+        method: 'GET',
+        path: `/videos/${videoId}`
+      }, (error, result) => {
+        if (error) reject(error)
+        resolve(result)
+      })
+    })
+  }
+
+  async syncFolders(): Promise<void> {
+    const folders = await this.getFolders()
+    await this.syncFoldersToDatabase(folders)
+  }
+
+  async syncVideos(folderId: string): Promise<void> {
+    const videos = await this.getVideosByFolder(folderId)
+    await this.syncVideosToDatabase(videos, folderId)
+  }
+
+  private async syncFoldersToDatabase(folders: any[]) {
+    const { error } = await this.supabase
+      .from('vimeo_folders')
+      .upsert(
+        folders.map(folder => ({
+          folder_id: folder.uri.split('/').pop(),
+          name: folder.name,
+          sync_status: 'synced'
+        }))
+      )
+    if (error) throw error
+  }
+
+  private async syncVideosToDatabase(videos: VimeoVideo[], folderId: string) {
+    const { error } = await this.supabase
+      .from('content')
+      .upsert(
+        videos.map(video => ({
+          video_id: video.uri.split('/').pop(),
+          title: video.name,
+          description: video.description,
+          duration: video.duration,
+          folder_id: folderId,
+          thumbnail_url: video.pictures.sizes[3].link,
+          video_url: video.files[0].link
+        }))
+      )
+    if (error) throw error
+  }
 }
 
-export async function updateVideosPrivacy(
-  videoIds: string[],
-  makePublic: boolean
-): Promise<void> {
-  await Promise.all(
-    videoIds.map(id => updateVideoPrivacy(id, makePublic))
-  )
-} 
+export const vimeoService = new VimeoService() 

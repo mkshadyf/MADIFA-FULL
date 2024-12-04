@@ -1,115 +1,183 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '../lib/supabase/client'
-import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/database.types'
+import { useToast } from '@/hooks/useToast'
+import { useNavigate } from 'react-router-dom'
+import LoadingState from '@/components/ui/loading-state'
 
-export interface UserProfile {
-  id: string
-  user_id: string
-  full_name: string
-  email: string
-  role: string
-  subscription_tier: string
-  subscription_status: string
-}
+type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
-export interface AuthState {
+interface AuthState {
   user: User | null
   profile: UserProfile | null
   loading: boolean
-  signIn: (credentials: { email: string; password: string }) => Promise<void>
-  signUp: (credentials: { email: string; password: string; fullName: string }) => Promise<void>
-  signOut: () => Promise<void>
+  isInitialized: boolean
 }
 
-const AuthContext = createContext<AuthState | undefined>(undefined)
+interface AuthContextType extends AuthState {
+  signOut: () => Promise<void>
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>
+}
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+export const AuthContext = createContext<AuthContextType | null>(null)
+
+const supabase = createClient()
+
+export default function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<AuthState>({
+    user: null,
+    profile: null,
+    loading: true,
+    isInitialized: false
+  })
+  const navigate = useNavigate()
+  const { showToast } = useToast()
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      setState(prev => ({ ...prev, loading: true }))
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) throw error
+
+      setState(prev => ({
+        ...prev,
+        profile: data,
+        loading: false
+      }))
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+      showToast('Failed to load user profile', 'error')
+      setState(prev => ({ ...prev, loading: false }))
+    }
+  }
 
   useEffect(() => {
-    // Check active sessions and subscribe to auth changes
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
-      }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
-        setUser(session?.user ?? null)
+    const initializeAuth = async () => {
+      try {
+        // Check for existing session
+        const { data: { session } } = await supabase.auth.getSession()
+        
         if (session?.user) {
-          fetchProfile(session.user.id)
+          setState(prev => ({ ...prev, user: session.user }))
+          await fetchProfile(session.user.id)
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        showToast('Authentication error', 'error')
+      } finally {
+        setState(prev => ({ ...prev, isInitialized: true, loading: false }))
+      }
+    }
+
+    initializeAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event)
+
+        if (session?.user) {
+          setState(prev => ({ ...prev, user: session.user }))
+          await fetchProfile(session.user.id)
+
+          switch (event) {
+            case 'SIGNED_IN':
+              showToast('Successfully signed in!', 'success')
+              navigate('/browse')
+              break
+            case 'USER_UPDATED':
+              showToast('Profile updated', 'success')
+              break
+          }
         } else {
-          setProfile(null)
+          setState(prev => ({ 
+            ...prev, 
+            user: null, 
+            profile: null 
+          }))
+
+          if (event === 'SIGNED_OUT') {
+            showToast('Successfully signed out', 'success')
+            navigate('/auth/signin')
+          }
         }
       }
     )
 
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const fetchProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single()
-
-      if (error) throw error
-      setProfile(data)
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
-    } finally {
-      setLoading(false)
+    return () => {
+      subscription.unsubscribe()
     }
-  }
-
-  const signIn = async ({ email, password }: { email: string; password: string }) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-  }
-
-  const signUp = async ({ email, password, fullName }: { email: string; password: string; fullName: string }) => {
-    const { error: signUpError, data } = await supabase.auth.signUp({ email, password })
-    if (signUpError) throw signUpError
-
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert([
-          {
-            user_id: data.user.id,
-            full_name: fullName,
-            email,
-            role: 'user',
-            subscription_tier: 'free',
-            subscription_status: 'active'
-          }
-        ])
-      if (profileError) throw profileError
-    }
-  }
+  }, [navigate, showToast])
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      setState(prev => ({ ...prev, loading: true }))
+      await supabase.auth.signOut()
+      setState({
+        user: null,
+        profile: null,
+        loading: false,
+        isInitialized: true
+      })
+      navigate('/auth/signin')
+    } catch (error) {
+      console.error('Sign out error:', error)
+      showToast('Error signing out', 'error')
+      setState(prev => ({ ...prev, loading: false }))
+    }
+  }
+
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (!state.user) return
+
+    try {
+      setState(prev => ({ ...prev, loading: true }))
+      const { error } = await supabase
+        .from('user_profiles')
+        .update(updates)
+        .eq('id', state.user.id)
+
+      if (error) throw error
+
+      setState(prev => ({
+        ...prev,
+        profile: prev.profile ? { ...prev.profile, ...updates } : null,
+        loading: false
+      }))
+      
+      showToast('Profile updated successfully', 'success')
+    } catch (error) {
+      console.error('Profile update error:', error)
+      showToast('Error updating profile', 'error')
+      setState(prev => ({ ...prev, loading: false }))
+    }
+  }
+
+  // Show loading state only during initial load
+  if (!state.isInitialized) {
+    return <LoadingState text="Initializing..." />
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      ...state,
+      signOut,
+      updateProfile
+    }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth(): AuthState {
+export function useAuth() {
   const context = useContext(AuthContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context

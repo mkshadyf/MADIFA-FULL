@@ -1,26 +1,37 @@
-import type { PlanId } from '@/lib/config/subscription-plans'
+import { env } from '@/config/env'
 import { createClient } from '@/lib/supabase/client'
+import type { SubscriptionDetails, SubscriptionPlan } from '@/types/subscription'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16'
-})
+const stripe = new Stripe(env.VITE_STRIPE_SECRET_KEY!)
 
-interface SubscriptionResponse {
-  subscriptionId: string
-  clientSecret?: string
-}
+class SubscriptionService {
+  private supabase = createClient()
 
-export async function createSubscription(userId: string, planId: PlanId): Promise<SubscriptionResponse> {
-  const supabase = createClient()
+  async getPlans(): Promise<SubscriptionPlan[]> {
+    const { data, error } = await this.supabase
+      .from('subscription_plans')
+      .select('*')
+      .order('price')
 
-  try {
-    // Get user's email
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError) throw userError
+    if (error) throw error
+    return data
+  }
 
-    // Create Stripe customer if doesn't exist
-    const { data: profile } = await supabase
+  async getCurrentSubscription(userId: string): Promise<SubscriptionDetails | null> {
+    const { data, error } = await this.supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  async createSubscription(userId: string, planId: string) {
+    // Get user's customer ID or create one
+    const { data: profile } = await this.supabase
       .from('user_profiles')
       .select('stripe_customer_id')
       .eq('user_id', userId)
@@ -30,72 +41,117 @@ export async function createSubscription(userId: string, planId: PlanId): Promis
 
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: user?.email,
-        metadata: {
-          supabase_user_id: userId
-        }
+        metadata: { userId }
       })
       customerId = customer.id
 
-      // Save Stripe customer ID
-      await supabase
+      await this.supabase
         .from('user_profiles')
         .update({ stripe_customer_id: customerId })
         .eq('user_id', userId)
     }
 
+    // Get plan details
+    const { data: plan } = await this.supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', planId)
+      .single()
+
+    if (!plan) throw new Error('Plan not found')
+
     // Create subscription
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
-      items: [{ price: process.env[`STRIPE_${planId.toUpperCase()}_PRICE_ID`]! }],
+      items: [{ price: plan.stripe_price_id }],
       payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent']
     })
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent
+    // Save subscription details
+    await this.supabase.from('subscriptions').insert({
+      user_id: userId,
+      plan_id: planId,
+      status: subscription.status,
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: customerId,
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      cancel_at_period_end: subscription.cancel_at_period_end
+    })
 
     return {
       subscriptionId: subscription.id,
-      clientSecret: paymentIntent?.client_secret || undefined
+      clientSecret: (subscription.latest_invoice as any).payment_intent?.client_secret
     }
-  } catch (error) {
-    console.error('Error creating subscription:', error)
-    throw error
   }
-}
 
-export async function cancelSubscription(subscriptionId: string) {
-  try {
-    await stripe.subscriptions.cancel(subscriptionId)
-  } catch (error) {
-    console.error('Error canceling subscription:', error)
-    throw error
-  }
-}
+  async cancelSubscription(userId: string): Promise<void> {
+    const subscription = await this.getCurrentSubscription(userId)
+    if (!subscription) throw new Error('No active subscription')
 
-export async function getSubscriptionStatus(userId: string) {
-  const supabase = createClient()
-
-  try {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('stripe_customer_id')
-      .eq('user_id', userId)
-      .single()
-
-    if (!profile?.stripe_customer_id) return null
-
-    const subscriptions = await stripe.subscriptions.list({
-      customer: profile.stripe_customer_id,
-      status: 'active',
-      expand: ['data.plan']
+    await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+      cancel_at_period_end: true
     })
 
-    return subscriptions.data[0] || null
-  } catch (error) {
-    console.error('Error getting subscription status:', error)
-    throw error
+    await this.supabase
+      .from('subscriptions')
+      .update({ cancel_at_period_end: true })
+      .eq('user_id', userId)
   }
-} 
+
+  async reactivateSubscription(userId: string): Promise<void> {
+    const subscription = await this.getCurrentSubscription(userId)
+    if (!subscription) throw new Error('No subscription to reactivate')
+
+    await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+      cancel_at_period_end: false
+    })
+
+    await this.supabase
+      .from('subscriptions')
+      .update({ cancel_at_period_end: false })
+      .eq('user_id', userId)
+  }
+
+  async handleWebhook(event: Stripe.Event): Promise<void> {
+    switch (event.type) {
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription
+        await this.updateSubscriptionStatus(subscription)
+        break
+      }
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice
+        if (invoice.subscription) {
+          await this.updateSubscriptionStatus(await stripe.subscriptions.retrieve(invoice.subscription as string))
+        }
+        break
+      }
+    }
+  }
+
+  private async updateSubscriptionStatus(subscription: Stripe.Subscription): Promise<void> {
+    await this.supabase
+      .from('subscriptions')
+      .update({
+        status: subscription.status,
+        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+        cancel_at_period_end: subscription.cancel_at_period_end
+      })
+      .eq('stripe_subscription_id', subscription.id)
+  }
+
+  async checkAccess(userId: string, contentId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .rpc('check_subscription_access', {
+        user_id: userId,
+        content_id: contentId
+      })
+
+    if (error) throw error
+    return data || false
+  }
+}
+
+export const subscriptionService = new SubscriptionService() 

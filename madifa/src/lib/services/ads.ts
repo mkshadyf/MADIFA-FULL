@@ -1,19 +1,24 @@
 import { env } from '@/config/env'
 
-declare global {
-  interface Window {
-    adsbygoogle: any[]
-  }
+interface AdConfig {
+  unitId: string
+  format: 'banner' | 'interstitial' | 'rewarded'
+  position?: 'top' | 'bottom'
 }
 
-export class AdService {
+interface AdEvent {
+  type: 'impression' | 'click' | 'revenue'
+  adUnitId: string
+  data?: Record<string, any>
+}
+
+class AdService {
   private static instance: AdService
-  private adsInitialized = false
+  private isInitialized = false
+  private eventListeners: ((event: AdEvent) => void)[] = []
 
   private constructor() {
-    if (env.VITE_AD_ENABLED) {
-      this.initializeAds()
-    }
+    this.initializeSDK()
   }
 
   static getInstance(): AdService {
@@ -23,31 +28,73 @@ export class AdService {
     return AdService.instance
   }
 
-  private initializeAds() {
-    if (this.adsInitialized || typeof document === 'undefined') return
-
-    // Initialize Google AdSense
-    if (env.VITE_ADSENSE_ID) {
-      const script = document.createElement('script') as HTMLScriptElement
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${env.VITE_ADSENSE_ID}`
-      script.async = true
-      script.crossOrigin = 'anonymous'
-      document.head?.appendChild(script)
-    }
-
-    this.adsInitialized = true
-  }
-
-  refreshAds() {
-    if (!env.VITE_AD_ENABLED || typeof window === 'undefined') return
+  private async initializeSDK() {
+    if (this.isInitialized) return
 
     try {
-      if (window.adsbygoogle) {
-        window.adsbygoogle.push({})
-      }
+      await this.loadApplovinSDK()
+      window.applovin.initializeSdk({
+        sdkKey: env.VITE_APPLOVIN_SDK_KEY
+      })
+      this.isInitialized = true
     } catch (error) {
-      console.error('Error refreshing ads:', error)
+      console.error('Failed to initialize ad SDK:', error)
     }
+  }
+
+  private loadApplovinSDK(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = 'https://sdk.applovin.com/js/applovin.min.js'
+      script.async = true
+      script.onload = () => resolve()
+      script.onerror = () => reject(new Error('Failed to load AppLovin SDK'))
+      document.head.appendChild(script)
+    })
+  }
+
+  async showAd(config: AdConfig): Promise<boolean> {
+    if (!this.isInitialized) {
+      await this.initializeSDK()
+    }
+
+    return new Promise((resolve) => {
+      window.applovin.showAd(config.unitId, {
+        onAdLoadSuccess: () => {
+          this.trackEvent({
+            type: 'impression',
+            adUnitId: config.unitId
+          })
+        },
+        onAdLoadFailed: () => resolve(false),
+        onAdDisplayed: () => resolve(true)
+      })
+    })
+  }
+
+  async showPreRollAd(): Promise<boolean> {
+    return this.showAd({
+      unitId: env.VITE_APPLOVIN_INTERSTITIAL_ID,
+      format: 'interstitial'
+    })
+  }
+
+  async showMidRollAd(): Promise<boolean> {
+    return this.showAd({
+      unitId: env.VITE_APPLOVIN_REWARDED_ID,
+      format: 'rewarded'
+    })
+  }
+
+  onEvent(callback: (event: AdEvent) => void) {
+    this.eventListeners.push(callback)
+    return () => {
+      this.eventListeners = this.eventListeners.filter(cb => cb !== callback)
+    }
+  }
+
+  private trackEvent(event: AdEvent) {
+    this.eventListeners.forEach(callback => callback(event))
   }
 }
 

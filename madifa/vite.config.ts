@@ -49,6 +49,22 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    port: 3000,
+    strictPort: false,
+    host: true,
+    watch: {
+      usePolling: true,
+      interval: 100
+    },
+    open: true,
+    cors: true
+  },
+  preview: {
+    port: 3000,
+    host: true,
+    strictPort: true
+  },
   test: {
     globals: true,
     environment: 'jsdom',

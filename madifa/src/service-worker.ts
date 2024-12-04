@@ -6,7 +6,7 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { ExpirationPlugin } from 'workbox-expiration'
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
 import { registerRoute } from 'workbox-routing'
-import { CacheFirst, NetworkFirst } from 'workbox-strategies'
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies'
 
 declare let self: ServiceWorkerGlobalScope
 
@@ -65,4 +65,76 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     self.clients.openWindow(event.notification.data ?? '/')
   )
+})
+
+// Cache video thumbnails
+registerRoute(
+  ({ url }) => url.pathname.includes('/thumbnails/'),
+  new CacheFirst({
+    cacheName: 'video-thumbnails',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200]
+      }),
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
+      })
+    ]
+  })
+)
+
+// Cache video metadata
+registerRoute(
+  ({ url }) => url.pathname.includes('/api/content/'),
+  new NetworkFirst({
+    cacheName: 'content-metadata',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200]
+      }),
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 24 * 60 * 60 // 1 day
+      })
+    ]
+  })
+)
+
+// Cache video segments
+registerRoute(
+  ({ url }) => url.pathname.includes('/video-segments/'),
+  new StaleWhileRevalidate({
+    cacheName: 'video-segments',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200]
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 2 * 24 * 60 * 60 // 2 days
+      })
+    ]
+  })
+)
+
+// Handle offline fallback
+const offlineFallbackPage = '/offline.html'
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open('offline-cache').then((cache) => {
+      return cache.add(offlineFallbackPage)
+    })
+  )
+})
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(offlineFallbackPage)
+      })
+    )
+  }
 }) 

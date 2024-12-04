@@ -5,6 +5,7 @@ import { useToast } from './useToast'
 interface ErrorOptions {
   showToast?: boolean
   logToServer?: boolean
+  context?: string
 }
 
 export function useErrorHandler() {
@@ -12,15 +13,16 @@ export function useErrorHandler() {
 
   const handleError = async (error: unknown, options: ErrorOptions = {}) => {
     const appError = AppError.fromUnknown(error)
+    const context = options.context ? `[${options.context}] ` : ''
 
     // Log error in development
     if (env.NODE_ENV === 'development') {
-      console.error(`[${appError.code}]`, appError)
+      console.error(`${context}[${appError.code}]`, appError)
     }
 
     // Show toast notification
     if (options.showToast !== false) {
-      showToast(appError.message, 'error')
+      showToast(`${context}${appError.message}`, 'error')
     }
 
     // Log to server in production
@@ -33,7 +35,7 @@ export function useErrorHandler() {
             code: appError.code,
             message: appError.message,
             stack: appError.stack,
-            meta: appError.meta
+            meta: { ...appError.meta, context: options.context }
           })
         })
       } catch (err) {

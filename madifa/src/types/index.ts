@@ -1,7 +1,9 @@
+import type { Database } from '@/lib/supabase/database.types';
+
 export * from './supabase';
 
 // User related types
-export interface UserProfile {
+export interface Profile {
   id: string
   user_id: string
   full_name: string
@@ -9,6 +11,7 @@ export interface UserProfile {
   role: 'admin' | 'user'
   subscription_tier: 'free' | 'premium' | 'premium_plus'
   subscription_status: 'active' | 'inactive' | 'cancelled'
+  avatar_url?: string
   created_at: string
   updated_at: string
 }
@@ -20,11 +23,32 @@ export interface Content {
   description: string
   thumbnail_url: string
   video_url: string
-  category: 'movies' | 'series' | 'music'
+  category: string
+  duration?: number
   release_year: number
   created_at: string
   updated_at: string
+  metadata?: {
+    width?: number
+    height?: number
+    fps?: number
+    quality?: string
+    status?: string
+  }
 }
+
+// Subscription types
+export interface SubscriptionPlan {
+  id: 'free' | 'premium' | 'premium_plus'
+  name: string
+  price: number
+  features: string[]
+}
+
+// Database types
+export type DbTables = Database['public']['Tables']
+export type DbContent = DbTables['content']['Row']
+export type DbProfile = DbTables['user_profiles']['Row']
 
 // Auth related types
 export interface AuthCredentials {

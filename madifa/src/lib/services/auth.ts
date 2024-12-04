@@ -1,103 +1,56 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Provider } from '@supabase/supabase-js'
 
-export async function signIn(email: string, password: string) {
-  const supabase = createClient()
-  if (!supabase) throw new Error('Auth client not available')
+class AuthService {
+  private supabase = createClient()
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  })
-
-  if (error) throw error
-  return data
-}
-
-export async function signUp(email: string, password: string, fullName: string) {
-  const supabase = createClient()
-  if (!supabase) throw new Error('Auth client not available')
-
-  // Create auth user
-  const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: fullName
-      }
-    }
-  })
-
-  if (signUpError) throw signUpError
-
-  if (user) {
-    // Create user profile with proper types
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert({
-        id: user.id,
-        full_name: fullName,
-        email,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-
-    if (profileError) throw profileError
+  async signIn(email: string, password: string) {
+    const { data, error } = await this.supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+    if (error) throw error
+    return data
   }
 
-  return user
-}
-
-export async function signInWithProvider(provider: Provider) {
-  const supabase = createClient()
-  if (!supabase) throw new Error('Auth client not available')
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
+  async signUp(email: string, password: string) {
+    const { data, error } = await this.supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       }
+    })
+    if (error) throw error
+
+    if (data.user) {
+      await this.createUserProfile(data.user.id, email)
     }
-  })
 
-  if (error) throw error
-  return data
+    return data
+  }
+
+  async signOut() {
+    const { error } = await this.supabase.auth.signOut()
+    if (error) throw error
+  }
+
+  async getCurrentSession() {
+    const { data: { session }, error } = await this.supabase.auth.getSession()
+    if (error) throw error
+    return session
+  }
+
+  async createUserProfile(userId: string, email: string) {
+    const { error } = await this.supabase
+      .from('user_profiles')
+      .insert({
+        user_id: userId,
+        email,
+        subscription_tier: 'free',
+        subscription_status: 'active'
+      })
+    if (error) throw error
+  }
 }
 
-export async function signOut() {
-  const supabase = createClient()
-  if (!supabase) throw new Error('Auth client not available')
-
-  const { error } = await supabase.auth.signOut()
-  if (error) throw error
-}
-
-export async function resetPassword(email: string) {
-  const supabase = createClient()
-  if (!supabase) throw new Error('Auth client not available')
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/update-password`
-  })
-
-  if (error) throw error
-}
-
-export async function updatePassword(password: string) {
-  const supabase = createClient()
-  if (!supabase) throw new Error('Auth client not available')
-
-  const { error } = await supabase.auth.updateUser({
-    password
-  })
-
-  if (error) throw error
-}
-
-export async function signInWithGoogle() {
-  return signInWithProvider('google')
-} 
+export const authService = new AuthService() 

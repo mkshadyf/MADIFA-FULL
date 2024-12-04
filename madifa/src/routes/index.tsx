@@ -1,77 +1,99 @@
 import React from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { useAuth } from '@/providers/AuthProvider'
-import MainLayout from '@/components/layouts/MainLayout'
-import AdminLayout from '@/components/layouts/AdminLayout'
-import AuthLayout from '@/components/layouts/AuthLayout'
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuth'
+import MainLayout from '@/components/layout/MainLayout'
+import AdminLayout from '@/components/layout/AdminLayout'
+import AuthLayout from '@/components/layout/AuthLayout'
 
-// Main pages
-import HomePage from '@/pages/home'
-import BrowsePage from '@/pages/browse'
-import SearchPage from '@/pages/search'
-import WatchPage from '@/pages/watch/[id]'
-import ProfilePage from '@/pages/profile'
-import FavoritesPage from '@/pages/favorites'
+// Lazy load pages for better performance
+const HomePage = React.lazy(() => import('@/pages/home'))
+const BrowsePage = React.lazy(() => import('@/pages/browse'))
+const SearchPage = React.lazy(() => import('@/pages/search'))
+const WatchPage = React.lazy(() => import('@/pages/watch/[id]'))
+const ProfilePage = React.lazy(() => import('@/pages/profile'))
+const FavoritesPage = React.lazy(() => import('@/pages/favorites'))
+const SignInPage = React.lazy(() => import('@/pages/auth/signin'))
+const SignUpPage = React.lazy(() => import('@/pages/auth/signup'))
+const ResetPasswordPage = React.lazy(() => import('@/pages/auth/reset-password'))
+const AdminDashboard = React.lazy(() => import('@/pages/admin/dashboard'))
+const AdminVimeo = React.lazy(() => import('@/pages/admin/vimeo'))
+const SubscriptionPage = React.lazy(() => import('@/pages/subscription'))
 
-// Admin pages
-import AdminDashboard from '@/pages/admin/dashboard'
-import AdminVimeo from '@/pages/admin/vimeo'
-
-// Auth pages
-import SignIn from '@/pages/auth/signin'
-import SignUp from '@/pages/auth/signup'
-
-// Protected route wrapper
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+// Auth guard for protected routes
+function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
   
-  if (loading) return <div>Loading...</div>
-  if (!user) return <Navigate to="/auth/signin" replace />
+  if (loading) {
+    return <div>Loading...</div>
+  }
   
+  if (!user) {
+    return <Navigate to="/auth/signin" state={{ from: location.pathname }} />
+  }
+
   return <>{children}</>
 }
 
-// Admin route wrapper
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+// Admin guard
+function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth()
   
-  if (loading) return <div>Loading...</div>
-  if (!user || profile?.role !== 'admin') return <Navigate to="/auth/signin" replace />
+  if (loading) {
+    return <div>Loading...</div>
+  }
   
+  if (!user || profile?.role !== 'admin') {
+    return <Navigate to="/auth/signin" />
+  }
+
   return <>{children}</>
 }
 
-export const router = createBrowserRouter([
+// Subscription guard
+function RequireSubscription({ children }: { children: React.ReactNode }) {
+  const { profile } = useAuth()
+  
+  if (profile?.subscription_status !== 'active') {
+    return <Navigate to="/subscription" />
+  }
+
+  return <>{children}</>
+}
+
+// Export the router instance as default
+const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { 
-        path: 'browse',
-        element: <ProtectedRoute><BrowsePage /></ProtectedRoute>
-      },
-      { 
-        path: 'search',
-        element: <ProtectedRoute><SearchPage /></ProtectedRoute>
-      },
-      { 
-        path: 'watch/:id',
-        element: <ProtectedRoute><WatchPage /></ProtectedRoute>
-      },
-      { 
-        path: 'profile',
-        element: <ProtectedRoute><ProfilePage /></ProtectedRoute>
-      },
-      { 
-        path: 'favorites',
-        element: <ProtectedRoute><FavoritesPage /></ProtectedRoute>
+      {
+        element: <RequireAuth><Outlet /></RequireAuth>,
+        children: [
+          { path: 'browse', element: <BrowsePage /> },
+          { path: 'search', element: <SearchPage /> },
+          {
+            path: 'watch/:id',
+            element: (
+              <RequireSubscription>
+                <WatchPage />
+              </RequireSubscription>
+            )
+          },
+          { path: 'profile', element: <ProfilePage /> },
+          { path: 'favorites', element: <FavoritesPage /> },
+          { path: 'subscription', element: <SubscriptionPage /> }
+        ]
       }
     ]
   },
   {
     path: '/admin',
-    element: <AdminRoute><AdminLayout /></AdminRoute>,
+    element: (
+      <RequireAdmin>
+        <AdminLayout />
+      </RequireAdmin>
+    ),
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
       { path: 'dashboard', element: <AdminDashboard /> },
@@ -82,12 +104,15 @@ export const router = createBrowserRouter([
     path: '/auth',
     element: <AuthLayout />,
     children: [
-      { path: 'signin', element: <SignIn /> },
-      { path: 'signup', element: <SignUp /> }
+      { path: 'signin', element: <SignInPage /> },
+      { path: 'signup', element: <SignUpPage /> },
+      { path: 'reset-password', element: <ResetPasswordPage /> }
     ]
   },
   {
     path: '*',
     element: <Navigate to="/" replace />
   }
-]) 
+])
+
+export default router 
