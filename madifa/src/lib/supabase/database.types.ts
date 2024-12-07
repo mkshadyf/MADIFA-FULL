@@ -50,8 +50,19 @@ export interface Database {
           full_name: string
           email: string
           role: string
-          subscription_tier: string
-          subscription_status: string
+          subscription_tier: string | null
+          subscription_status: 'active' | 'cancelled' | 'past_due' | null
+          created_at: string
+          updated_at: string
+        }
+      }
+      subscription_tiers: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          price: number
+          features: string[]
           created_at: string
           updated_at: string
         }

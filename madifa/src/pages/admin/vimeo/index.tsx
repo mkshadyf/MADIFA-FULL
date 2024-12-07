@@ -1,84 +1,91 @@
-import React from 'react'
-import { useVimeoContent } from '@/hooks/useVimeoContent'
+import { useEffect, useState } from 'react'
+
+import { BatchUploader } from '@/components/admin/BatchUploader'
+import { VideoCard } from '@/components/admin/VideoCard'
 import { vimeoService } from '@/lib/services/vimeo'
-import { useQuery } from '@tanstack/react-query'
-import LoadingState from '@/components/ui/loading-state'
+import { toast } from '@/components/ui/toast'
+import type { VimeoVideo } from '@/types/vimeo'
 
 export default function VimeoManagement() {
-  const [selectedFolder, setSelectedFolder] = React.useState<string>('')
-  const { data: folders, isLoading: foldersLoading } = useQuery({
-    queryKey: ['vimeo-folders'],
-    queryFn: () => vimeoService.getFolders()
-  })
+  const [videos, setVideos] = useState<VimeoVideo[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const { data: videos, isLoading: videosLoading } = useQuery({
-    queryKey: ['vimeo-videos', selectedFolder],
-    queryFn: () => vimeoService.getVideosByFolder(selectedFolder),
-    enabled: !!selectedFolder
-  })
+  const fetchVideos = async () => {
+    try {
+      setLoading(true)
+      const response = await vimeoService.getVideos()
+      setVideos(Array.isArray(response) ? response : [])
+    } catch (error) {
+      console.error('Failed to fetch videos:', error)
+      toast.error('Failed to fetch videos')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  if (foldersLoading) return <LoadingState />
+  useEffect(() => {
+    fetchVideos()
+  }, [])
+
+  const handleDelete = async (videoId: string) => {
+    try {
+      await vimeoService.deleteVideo(videoId)
+      toast.success('Video deleted successfully')
+      fetchVideos()
+    } catch (error) {
+      console.error('Failed to delete video:', error)
+      toast.error('Failed to delete video')
+    }
+  }
+
+  const handleSecurityUpdate = async (videoId: string, security: any) => {
+    try {
+      await vimeoService.updateVideoPrivacy(videoId, security)
+      toast.success('Security settings updated')
+      fetchVideos()
+    } catch (error) {
+      console.error('Failed to update security settings:', error)
+      toast.error('Failed to update security settings')
+    }
+  }
+
+  const handleUpdateThumbnail = async (video: VimeoVideo, thumbnailUrl: string) => {
+    try {
+      await vimeoService.updateVideoMetadata(video.uri.split('/').pop()!, {
+        pictures: {
+          active: true,
+          uri: thumbnailUrl
+        }
+      })
+      toast.success('Thumbnail updated successfully')
+      fetchVideos()
+    } catch (error) {
+      console.error('Failed to update thumbnail:', error)
+      toast.error('Failed to update thumbnail')
+    }
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   return (
-    <div className="space-y-8">
+    <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Content Management</h1>
-        <button
-          onClick={() => {/* Add new folder/video */}}
-          className="btn-primary"
-        >
-          Add New
-        </button>
+        <h1 className="text-2xl font-bold">Video Management</h1>
+        <BatchUploader onComplete={fetchVideos} />
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* Folders sidebar */}
-        <div className="col-span-3 bg-gray-800 p-4 rounded-lg">
-          <h2 className="text-lg font-semibold mb-4">Folders</h2>
-          <ul className="space-y-2">
-            {folders?.map((folder) => (
-              <li
-                key={folder.uri}
-                className={`cursor-pointer p-2 rounded ${
-                  selectedFolder === folder.uri
-                    ? 'bg-indigo-600'
-                    : 'hover:bg-gray-700'
-                }`}
-                onClick={() => setSelectedFolder(folder.uri)}
-              >
-                {folder.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Videos grid */}
-        <div className="col-span-9">
-          {videosLoading ? (
-            <LoadingState />
-          ) : (
-            <div className="grid grid-cols-3 gap-6">
-              {videos?.map((video) => (
-                <div
-                  key={video.uri}
-                  className="bg-gray-800 rounded-lg overflow-hidden"
-                >
-                  <img
-                    src={video.pictures.sizes[0].link}
-                    alt={video.name}
-                    className="w-full aspect-video object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="font-semibold">{video.name}</h3>
-                    <p className="text-sm text-gray-400">
-                      {video.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {videos.map((video) => (
+          <VideoCard
+            key={video.uri}
+            video={video}
+            onDelete={() => handleDelete(video.uri.split('/').pop()!)}
+            onSecurityUpdate={(security) => handleSecurityUpdate(video.uri.split('/').pop()!, security)}
+            onThumbnailUpdate={(url) => handleUpdateThumbnail(video, url)}
+          />
+        ))}
       </div>
     </div>
   )

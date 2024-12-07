@@ -1,24 +1,13 @@
-import { env } from '@/config/env'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import type { Database } from './database.types'
 
-let client: ReturnType<typeof createSupabaseClient<Database>> | null = null
+const supabaseUrl = process.env.VITE_SUPABASE_URL!
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY!
 
-export function createClient() {
-  if (!client) {
-    client = createSupabaseClient<Database>(
-      env.VITE_SUPABASE_URL,
-      env.VITE_SUPABASE_ANON_KEY,
-      {
-        auth: {
-          persistSession: true,
-          storage: window.localStorage,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-          flowType: 'pkce'
-        }
-      }
-    )
-  }
-  return client
-} 
+export const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey)
+
+export const createClient = (customToken?: string): SupabaseClient => {
+  return createSupabaseClient(supabaseUrl, customToken || supabaseAnonKey)
+}
+
+export default supabase

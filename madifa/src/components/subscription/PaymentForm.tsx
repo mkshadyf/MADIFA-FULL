@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CardElement, useStripe, useElements } from '@stripe/stripe-react-js'
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import type { SubscriptionPlan } from '@/types/subscription'
 import { useSubscription } from '@/hooks/useSubscription'
 

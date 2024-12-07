@@ -1,40 +1,22 @@
 import { create } from 'zustand'
 
-export type ToastType = 'success' | 'error' | 'info' | 'warning'
+type ToastType = 'success' | 'error' | 'info' | 'warning'
 
-interface Toast {
-  id: string
-  message: string
+interface ToastState {
+  message: string | null
   type: ToastType
+  showToast: (message: string, type: ToastType) => void
+  hideToast: () => void
 }
 
-interface ToastStore {
-  toasts: Toast[]
-  addToast: (message: string, type: ToastType) => void
-  removeToast: (id: string) => void
-}
-
-export const useToastStore = create<ToastStore>((set) => ({
-  toasts: [],
-  addToast: (message, type) => {
-    const id = Math.random().toString(36).substring(7)
-    set((state) => ({
-      toasts: [...state.toasts, { id, message, type }]
-    }))
+export const useToast = create<ToastState>((set) => ({
+  message: null,
+  type: 'info',
+  showToast: (message: string, type: ToastType) => {
+    set({ message, type })
+    setTimeout(() => {
+      set({ message: null, type: 'info' })
+    }, 3000)
   },
-  removeToast: (id) =>
-    set((state) => ({
-      toasts: state.toasts.filter((toast) => toast.id !== id)
-    }))
-}))
-
-export function useToast() {
-  const { addToast } = useToastStore()
-
-  return {
-    success: (message: string) => addToast(message, 'success'),
-    error: (message: string) => addToast(message, 'error'),
-    info: (message: string) => addToast(message, 'info'),
-    warning: (message: string) => addToast(message, 'warning')
-  }
-} 
+  hideToast: () => set({ message: null, type: 'info' })
+})) 

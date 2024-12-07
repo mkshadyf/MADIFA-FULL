@@ -1,33 +1,79 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { useAuth } from '@/hooks/useAuth'
 import { motion } from 'framer-motion'
+import { Button } from '@/components/ui/Button'
+import { useAuth } from '@/providers/AuthProvider'
+import { useToast } from '@/hooks/useToast'
+import type { OnboardingState } from '@/lib/services/onboarding'
+import type { UserProfile } from '@/lib/types/auth'
+import type { StreamingQuality } from '@/lib/types/onboarding'
 
 interface ProfileCompletionStepProps {
-  onComplete: () => void
+  onNext: (data: Partial<OnboardingState>) => Promise<void>
+  onBack: () => void
+  data: Partial<OnboardingState>
 }
 
 interface ProfileForm {
   fullName: string
   displayName: string
-  preferences: {
-    categories: string[]
-    languages: string[]
-  }
+  genres: string[]
+  languages: string[]
+  notifications: boolean
+  quality: StreamingQuality
 }
 
-export default function ProfileCompletionStep({ onComplete }: ProfileCompletionStepProps) {
-  const { user } = useAuth()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { register, handleSubmit, formState: { errors } } = useForm<ProfileForm>()
+const AVAILABLE_GENRES = [
+  'Action', 'Comedy', 'Drama', 'Documentary', 'Horror', 
+  'Sci-Fi', 'Thriller', 'Romance', 'Animation'
+]
 
-  const onSubmit = async (data: ProfileForm) => {
-    setIsSubmitting(true)
+const AVAILABLE_LANGUAGES = [
+  'English', 'Spanish', 'French', 'German', 'Italian', 
+  'Portuguese', 'Chinese', 'Japanese', 'Korean'
+]
+
+export default function ProfileCompletionStep({ onNext, onBack, data }: ProfileCompletionStepProps) {
+  const [form, setForm] = useState<ProfileForm>({
+    fullName: data.profile?.fullName || '',
+    displayName: data.profile?.displayName || '',
+    genres: data.preferences?.genres || [],
+    languages: data.preferences?.languages || [],
+    notifications: data.preferences?.notifications ?? true,
+    quality: data.preferences?.quality || 'auto'
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { updateProfile } = useAuth()
+  const { showToast } = useToast()
+
+  const handleSubmit = async () => {
     try {
-      await updateUserProfile(user!.id, data)
-      onComplete()
+      setIsSubmitting(true)
+
+      if (!form.fullName || !form.displayName) {
+        showToast('Please fill in all required fields', 'error')
+        return
+      }
+
+      await updateProfile({
+        full_name: form.fullName,
+        display_name: form.displayName
+      } as Partial<UserProfile>)
+
+      await onNext({
+        profile: {
+          fullName: form.fullName,
+          displayName: form.displayName
+        },
+        preferences: {
+          genres: form.genres,
+          languages: form.languages,
+          notifications: form.notifications,
+          quality: form.quality
+        }
+      })
     } catch (error) {
-      toast.error('Failed to update profile')
+      console.error('Error updating profile:', error)
+      showToast('Failed to update profile', 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -35,58 +81,163 @@ export default function ProfileCompletionStep({ onComplete }: ProfileCompletionS
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8"
     >
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-white">Complete Your Profile</h2>
-        <p className="text-gray-400 mt-2">
+        <h2 className="text-3xl font-bold text-white">Complete Your Profile</h2>
+        <p className="mt-2 text-gray-400">
           Help us personalize your experience
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-400">
-            Full Name
-          </label>
-          <input
-            type="text"
-            {...register('fullName', { required: 'Full name is required' })}
-            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
-          />
-          {errors.fullName && (
-            <p className="mt-1 text-sm text-red-500">{errors.fullName.message}</p>
-          )}
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Basic Information */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-white">Basic Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400">
+                Full Name
+              </label>
+              <input
+                aria-label="fullName"
+                type="text"
+                value={form.fullName}
+                onChange={(e) => setForm(prev => ({ ...prev, fullName: e.target.value }))}
+                className="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 
+                         text-white px-4 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400">
+                Display Name
+              </label>
+              <input
+                aria-label="displayName"
+                type="text"
+                value={form.displayName}
+                onChange={(e) => setForm(prev => ({ ...prev, displayName: e.target.value }))}
+                className="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 
+                         text-white px-4 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-400">
-            Display Name
-          </label>
-          <input
-            type="text"
-            {...register('displayName', { required: 'Display name is required' })}
-            className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white"
-          />
-          {errors.displayName && (
-            <p className="mt-1 text-sm text-red-500">{errors.displayName.message}</p>
-          )}
-        </div>
+        {/* Preferences */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-white">Preferences</h3>
+          
+          {/* Genres */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Favorite Genres
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {AVAILABLE_GENRES.map(genre => (
+                <button
+                  key={genre}
+                  onClick={() => setForm(prev => ({
+                    ...prev,
+                    genres: prev.genres.includes(genre)
+                      ? prev.genres.filter(g => g !== genre)
+                      : [...prev.genres, genre]
+                  }))}
+                  className={`px-3 py-1 rounded-full text-sm transition-colors
+                    ${form.genres.includes(genre)
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg
-                     hover:bg-indigo-700 transition-colors
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Completing Setup...' : 'Complete Setup'}
-          </button>
+          {/* Languages */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Preferred Languages
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {AVAILABLE_LANGUAGES.map(language => (
+                <button
+                  key={language}
+                  onClick={() => setForm(prev => ({
+                    ...prev,
+                    languages: prev.languages.includes(language)
+                      ? prev.languages.filter(l => l !== language)
+                      : [...prev.languages, language]
+                  }))}
+                  className={`px-3 py-1 rounded-full text-sm transition-colors
+                    ${form.languages.includes(language)
+                      ? 'bg-indigo-500 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+                >
+                  {language}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Streaming Quality */}
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              Preferred Streaming Quality
+            </label>
+            <select
+              aria-label="streamingQuality"
+              value={form.quality}
+              onChange={(e) => setForm(prev => ({ 
+                ...prev, 
+                quality: e.target.value as ProfileForm['quality']
+              }))}
+              className="mt-1 block w-full rounded-md bg-gray-800 border border-gray-700 
+                       text-white px-4 py-2 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="auto">Auto (Recommended)</option>
+              <option value="low">Low (Data Saver)</option>
+              <option value="medium">Medium</option>
+              <option value="high">High (Best Quality)</option>
+            </select>
+          </div>
+
+          {/* Notifications */}
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="notifications"
+              aria-label="notifications"
+              checked={form.notifications}
+              onChange={(e) => setForm(prev => ({ 
+                ...prev, 
+                notifications: e.target.checked 
+              }))}
+              className="h-4 w-4 rounded border-gray-700 text-indigo-500 
+                       focus:ring-indigo-500 bg-gray-800"
+            />
+            <label htmlFor="notifications" className="text-sm text-gray-400">
+              Receive notifications about new content and updates
+            </label>
+          </div>
         </div>
-      </form>
+      </div>
+
+      <div className="flex justify-between mt-8">
+        <Button variant="secondary" onClick={onBack}>
+          Back
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          loading={isSubmitting}
+          disabled={!form.fullName || !form.displayName}
+        >
+          Complete Setup
+        </Button>
+      </div>
     </motion.div>
   )
 } 

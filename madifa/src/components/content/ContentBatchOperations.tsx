@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useContent } from '@/hooks/useContent'
-import { IconButton } from '@/components/ui/button'
+import { IconButton } from '@/components/ui/Button'
 import type { Content } from '@/types'
 import { contentManager } from '@/lib/services/content-manager'
 import { useToast } from '@/hooks/useToast'
@@ -156,6 +156,7 @@ export default function ContentBatchOperations({
               className="flex items-center space-x-2 p-2 hover:bg-gray-800 rounded-lg"
             >
               <input
+                aria-label={content.title}
                 type="checkbox"
                 checked={selectedItems.has(content.id)}
                 onChange={() => handleSelect(content.id)}

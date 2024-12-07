@@ -1,23 +1,27 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/providers/AuthProvider'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useToast } from '@/hooks/useToast'
+import LoadingState from '@/components/ui/loading-state'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const { showToast } = useToast()
 
   useEffect(() => {
-    if (user) {
-      navigate('/browse')
-    }
-  }, [user, navigate])
+    const error = searchParams.get('error')
+    const errorDescription = searchParams.get('error_description')
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold text-white">Completing sign in...</h2>
-        <p className="mt-2 text-gray-400">Please wait while we redirect you.</p>
-      </div>
-    </div>
-  )
+    if (error) {
+      showToast(errorDescription || 'Authentication failed', 'error')
+      navigate('/auth/signin')
+      return
+    }
+
+    // Handle successful auth
+    showToast('Successfully authenticated', 'success')
+    navigate('/onboarding')
+  }, [navigate, searchParams, showToast])
+
+  return <LoadingState text="Completing authentication..." />
 } 

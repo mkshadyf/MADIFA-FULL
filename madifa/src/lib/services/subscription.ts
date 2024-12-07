@@ -1,156 +1,159 @@
-import { env } from '@/config/env'
-import { createClient } from '@/lib/supabase/client'
-import type { SubscriptionDetails, SubscriptionPlan } from '@/types/subscription'
-import Stripe from 'stripe'
+import { createAPIError } from '@/lib/error'
+import { supabase } from '@/lib/supabase/client'
+import type { PaymentMethod, Subscription, SubscriptionTier } from '@/types/subscription'
 
-const stripe = new Stripe(env.VITE_STRIPE_SECRET_KEY!)
-
-class SubscriptionService {
-  private supabase = createClient()
-
-  async getPlans(): Promise<SubscriptionPlan[]> {
-    const { data, error } = await this.supabase
-      .from('subscription_plans')
-      .select('*')
-      .order('price')
-
-    if (error) throw error
-    return data
-  }
-
-  async getCurrentSubscription(userId: string): Promise<SubscriptionDetails | null> {
-    const { data, error } = await this.supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-
-    if (error) throw error
-    return data
-  }
-
-  async createSubscription(userId: string, planId: string) {
-    // Get user's customer ID or create one
-    const { data: profile } = await this.supabase
-      .from('user_profiles')
-      .select('stripe_customer_id')
-      .eq('user_id', userId)
-      .single()
-
-    let customerId = profile?.stripe_customer_id
-
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        metadata: { userId }
-      })
-      customerId = customer.id
-
-      await this.supabase
-        .from('user_profiles')
-        .update({ stripe_customer_id: customerId })
+export class SubscriptionService {
+  async getCurrentSubscription(userId: string): Promise<Subscription | null> {
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*, subscription_tier(*)')
         .eq('user_id', userId)
-    }
+        .single()
 
-    // Get plan details
-    const { data: plan } = await this.supabase
-      .from('subscription_plans')
-      .select('*')
-      .eq('id', planId)
-      .single()
-
-    if (!plan) throw new Error('Plan not found')
-
-    // Create subscription
-    const subscription = await stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: plan.stripe_price_id }],
-      payment_behavior: 'default_incomplete',
-      expand: ['latest_invoice.payment_intent']
-    })
-
-    // Save subscription details
-    await this.supabase.from('subscriptions').insert({
-      user_id: userId,
-      plan_id: planId,
-      status: subscription.status,
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: customerId,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancel_at_period_end: subscription.cancel_at_period_end
-    })
-
-    return {
-      subscriptionId: subscription.id,
-      clientSecret: (subscription.latest_invoice as any).payment_intent?.client_secret
+      if (error) throw error
+      return data
+    } catch (error) {
+      throw createAPIError(500, 'Failed to get subscription', 'GET_SUBSCRIPTION_ERROR', error)
     }
   }
 
-  async cancelSubscription(userId: string): Promise<void> {
-    const subscription = await this.getCurrentSubscription(userId)
-    if (!subscription) throw new Error('No active subscription')
+  async getSubscriptionTiers(): Promise<SubscriptionTier[]> {
+    try {
+      const { data, error } = await supabase
+        .from('subscription_tiers')
+        .select('*')
+        .order('price')
 
-    await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
-      cancel_at_period_end: true
-    })
-
-    await this.supabase
-      .from('subscriptions')
-      .update({ cancel_at_period_end: true })
-      .eq('user_id', userId)
+      if (error) throw error
+      return data
+    } catch (error) {
+      throw createAPIError(500, 'Failed to get subscription tiers', 'GET_TIERS_ERROR', error)
+    }
   }
 
-  async reactivateSubscription(userId: string): Promise<void> {
-    const subscription = await this.getCurrentSubscription(userId)
-    if (!subscription) throw new Error('No subscription to reactivate')
+  async createSubscription(userId: string, tierId: string, paymentMethod: PaymentMethod): Promise<Subscription> {
+    try {
+      // Create payment intent with Stripe
+      const paymentIntent = await this.createPaymentIntent(tierId, paymentMethod)
 
-    await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
-      cancel_at_period_end: false
-    })
+      // Create subscription record
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .insert({
+          user_id: userId,
+          tier_id: tierId,
+          payment_id: paymentIntent.id,
+          status: 'active',
+          current_period_start: new Date(),
+          current_period_end: this.calculatePeriodEnd(new Date()),
+          cancel_at_period_end: false
+        })
+        .select()
+        .single()
 
-    await this.supabase
-      .from('subscriptions')
-      .update({ cancel_at_period_end: false })
-      .eq('user_id', userId)
+      if (error) throw error
+      return data
+    } catch (error) {
+      throw createAPIError(500, 'Failed to create subscription', 'CREATE_SUBSCRIPTION_ERROR', error)
+    }
   }
 
-  async handleWebhook(event: Stripe.Event): Promise<void> {
-    switch (event.type) {
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription
-        await this.updateSubscriptionStatus(subscription)
-        break
+  async updateSubscription(subscriptionId: string, updates: Partial<Subscription>): Promise<Subscription> {
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .update(updates)
+        .eq('id', subscriptionId)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      throw createAPIError(500, 'Failed to update subscription', 'UPDATE_SUBSCRIPTION_ERROR', error)
+    }
+  }
+
+  async cancelSubscription(subscriptionId: string, cancelImmediately: boolean = false): Promise<void> {
+    try {
+      if (cancelImmediately) {
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'cancelled',
+            cancelled_at: new Date()
+          })
+          .eq('id', subscriptionId)
+      } else {
+        await supabase
+          .from('subscriptions')
+          .update({
+            cancel_at_period_end: true
+          })
+          .eq('id', subscriptionId)
       }
-      case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice
-        if (invoice.subscription) {
-          await this.updateSubscriptionStatus(await stripe.subscriptions.retrieve(invoice.subscription as string))
-        }
-        break
-      }
+    } catch (error) {
+      throw createAPIError(500, 'Failed to cancel subscription', 'CANCEL_SUBSCRIPTION_ERROR', error)
     }
   }
 
-  private async updateSubscriptionStatus(subscription: Stripe.Subscription): Promise<void> {
-    await this.supabase
-      .from('subscriptions')
-      .update({
-        status: subscription.status,
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end
-      })
-      .eq('stripe_subscription_id', subscription.id)
+  async reactivateSubscription(subscriptionId: string): Promise<void> {
+    try {
+      await supabase
+        .from('subscriptions')
+        .update({
+          cancel_at_period_end: false,
+          status: 'active'
+        })
+        .eq('id', subscriptionId)
+    } catch (error) {
+      throw createAPIError(500, 'Failed to reactivate subscription', 'REACTIVATE_SUBSCRIPTION_ERROR', error)
+    }
   }
 
-  async checkAccess(userId: string, contentId: string): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .rpc('check_subscription_access', {
-        user_id: userId,
-        content_id: contentId
-      })
+  async getSubscriptionUsage(subscriptionId: string): Promise<{
+    storage_used: number
+    bandwidth_used: number
+    video_count: number
+  }> {
+    try {
+      const { data, error } = await supabase
+        .from('subscription_usage')
+        .select('*')
+        .eq('subscription_id', subscriptionId)
+        .single()
 
-    if (error) throw error
-    return data || false
+      if (error) throw error
+      return data
+    } catch (error) {
+      throw createAPIError(500, 'Failed to get subscription usage', 'GET_USAGE_ERROR', error)
+    }
+  }
+
+  async updatePaymentMethod(subscriptionId: string, paymentMethod: PaymentMethod): Promise<void> {
+    try {
+      await supabase
+        .from('subscriptions')
+        .update({
+          payment_method: paymentMethod
+        })
+        .eq('id', subscriptionId)
+    } catch (error) {
+      throw createAPIError(500, 'Failed to update payment method', 'UPDATE_PAYMENT_ERROR', error)
+    }
+  }
+
+  private async createPaymentIntent(tierId: string, paymentMethod: PaymentMethod): Promise<any> {
+    // Implement Stripe payment intent creation
+    // This is a placeholder - actual implementation would integrate with Stripe
+    return { id: 'mock_payment_intent_id' }
+  }
+
+  private calculatePeriodEnd(startDate: Date): Date {
+    const endDate = new Date(startDate)
+    endDate.setMonth(endDate.getMonth() + 1)
+    return endDate
   }
 }
 

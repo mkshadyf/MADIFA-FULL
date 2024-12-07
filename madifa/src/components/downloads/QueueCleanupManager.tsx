@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
 import { useStorageQuota } from '@/hooks/useStorageQuota'
-import { IconButton } from '../ui/button'
+import { IconButton } from '../ui/Button'
 import { formatBytes } from '@/lib/utils/format'
 
 interface QueueCleanupManagerProps {
@@ -84,6 +84,7 @@ export default function QueueCleanupManager({
             Cleanup Mode
           </label>
           <select
+            aria-label="Cleanup Mode"
             value={cleanupMode}
             onChange={e => setCleanupMode(e.target.value as any)}
             className="w-full bg-gray-800 text-white rounded-lg p-2 border border-gray-700"

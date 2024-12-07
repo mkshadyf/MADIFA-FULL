@@ -1,24 +1,24 @@
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'incomplete' | 'incomplete_expired'
+export type BillingPeriod = 'monthly' | 'yearly'
 
-export interface Subscription {
-  id: string
-  userId: string
-  stripeSubscriptionId: string
-  stripePriceId: string
-  status: SubscriptionStatus
-  currentPeriodStart: string
-  currentPeriodEnd: string
-  cancelAtPeriodEnd: boolean
-  createdAt: string
-  updatedAt: string
-}
+export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'incomplete'
 
-export interface SubscriptionPlan {
+export interface SubscriptionTier {
   id: string
   name: string
   description: string
   price: number
-  interval: 'month' | 'year'
   features: string[]
-  stripePriceId: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Subscription {
+  userId: string
+  tier: SubscriptionTier
+  status: SubscriptionStatus
+  currentPeriodStart: string
+  currentPeriodEnd: string
+  cancelAtPeriodEnd: boolean
+  billingPeriod: BillingPeriod
+  paymentMethodId?: string
 } 

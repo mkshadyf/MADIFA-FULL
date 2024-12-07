@@ -1,36 +1,51 @@
-export type SubscriptionTier = 'free' | 'basic' | 'premium'
-
-export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'incomplete'
-
-export interface PaymentMethod {
-  id: string
-  type: 'card' | 'paypal'
-  last4?: string
-  brand?: string
-  expMonth?: number
-  expYear?: number
-}
-
-export interface SubscriptionPlan {
+export type SubscriptionTier = {
   id: string
   name: string
-  tier: SubscriptionTier
+  description: string
   price: number
-  interval: 'month' | 'year'
+  interval: 'monthly' | 'yearly'
   features: string[]
-  maxQuality: '720p' | '1080p' | '4k'
-  downloadEnabled: boolean
-  adFree: boolean
-  stripePriceId: string
+  limits?: {
+    storage?: number
+    bandwidth?: number
+    videos?: number
+    quality?: string[]
+  }
 }
 
-export interface SubscriptionDetails {
+export type Subscription = {
   id: string
-  userId: string
-  planId: string
-  status: SubscriptionStatus
-  currentPeriodEnd: string
-  cancelAtPeriodEnd: boolean
-  stripeSubscriptionId: string
-  stripeCustomerId: string
+  user_id: string
+  tier_id: string
+  status: 'active' | 'canceled' | 'past_due' | 'incomplete'
+  current_period_start: string
+  current_period_end: string
+  cancel_at_period_end: boolean
+  canceled_at?: string
+  ended_at?: string
+  trial_start?: string
+  trial_end?: string
+  metadata?: Record<string, any>
+}
+
+export type PaymentMethod = {
+  id: string
+  type: 'card' | 'paypal' | 'bank_transfer'
+  details: {
+    last4?: string
+    brand?: string
+    exp_month?: number
+    exp_year?: number
+    email?: string
+    bank_name?: string
+  }
+  is_default: boolean
+}
+
+export type SubscriptionEvent = {
+  id: string
+  subscription_id: string
+  type: 'created' | 'updated' | 'canceled' | 'payment_succeeded' | 'payment_failed'
+  data: Record<string, any>
+  created_at: string
 } 

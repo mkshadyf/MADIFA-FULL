@@ -1,118 +1,75 @@
-import React from 'react'
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
-import MainLayout from '@/components/layout/MainLayout'
-import AdminLayout from '@/components/layout/AdminLayout'
-import AuthLayout from '@/components/layout/AuthLayout'
+import { lazy, Suspense } from 'react'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import Loading from '@/components/ui/loading'
+import AuthGuard from '@/components/guards/AuthGuard'
 
-// Lazy load pages for better performance
-const HomePage = React.lazy(() => import('@/pages/home'))
-const BrowsePage = React.lazy(() => import('@/pages/browse'))
-const SearchPage = React.lazy(() => import('@/pages/search'))
-const WatchPage = React.lazy(() => import('@/pages/watch/[id]'))
-const ProfilePage = React.lazy(() => import('@/pages/profile'))
-const FavoritesPage = React.lazy(() => import('@/pages/favorites'))
-const SignInPage = React.lazy(() => import('@/pages/auth/signin'))
-const SignUpPage = React.lazy(() => import('@/pages/auth/signup'))
-const ResetPasswordPage = React.lazy(() => import('@/pages/auth/reset-password'))
-const AdminDashboard = React.lazy(() => import('@/pages/admin/dashboard'))
-const AdminVimeo = React.lazy(() => import('@/pages/admin/vimeo'))
-const SubscriptionPage = React.lazy(() => import('@/pages/subscription'))
+// Lazy load components
+const Layout = lazy(() => import('@/components/layout'))
+const Login = lazy(() => import('@/pages/auth/login'))
+const Register = lazy(() => import('@/pages/auth/register'))
+const Dashboard = lazy(() => import('@/pages/dashboard'))
+const Profile = lazy(() => import('@/pages/profile'))
+const Settings = lazy(() => import('@/pages/settings'))
+const NotFound = lazy(() => import('@/pages/not-found'))
 
-// Auth guard for protected routes
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
-  
-  if (loading) {
-    return <div>Loading...</div>
-  }
-  
-  if (!user) {
-    return <Navigate to="/auth/signin" state={{ from: location.pathname }} />
-  }
+// Wrap lazy components with Suspense
+const withSuspense = (Component: React.ComponentType) => (
+  <Suspense
+    fallback={
+      <Loading message="Loading page..." fullScreen />
+    }
+  >
+    <Component />
+  </Suspense>
+)
 
-  return <>{children}</>
-}
+// Protected route wrapper
+const withAuth = (Component: React.ComponentType, requiredRole?: string) => (
+  <AuthGuard requiredRole={requiredRole}>
+    {withSuspense(Component)}
+  </AuthGuard>
+)
 
-// Admin guard
-function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading } = useAuth()
-  
-  if (loading) {
-    return <div>Loading...</div>
-  }
-  
-  if (!user || profile?.role !== 'admin') {
-    return <Navigate to="/auth/signin" />
-  }
-
-  return <>{children}</>
-}
-
-// Subscription guard
-function RequireSubscription({ children }: { children: React.ReactNode }) {
-  const { profile } = useAuth()
-  
-  if (profile?.subscription_status !== 'active') {
-    return <Navigate to="/subscription" />
-  }
-
-  return <>{children}</>
-}
-
-// Export the router instance as default
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: '/',
-    element: <MainLayout />,
+    element: withSuspense(Layout),
     children: [
-      { index: true, element: <HomePage /> },
       {
-        element: <RequireAuth><Outlet /></RequireAuth>,
-        children: [
-          { path: 'browse', element: <BrowsePage /> },
-          { path: 'search', element: <SearchPage /> },
-          {
-            path: 'watch/:id',
-            element: (
-              <RequireSubscription>
-                <WatchPage />
-              </RequireSubscription>
-            )
-          },
-          { path: 'profile', element: <ProfilePage /> },
-          { path: 'favorites', element: <FavoritesPage /> },
-          { path: 'subscription', element: <SubscriptionPage /> }
-        ]
-      }
-    ]
-  },
-  {
-    path: '/admin',
-    element: (
-      <RequireAdmin>
-        <AdminLayout />
-      </RequireAdmin>
-    ),
-    children: [
-      { index: true, element: <Navigate to="/admin/dashboard" replace /> },
-      { path: 'dashboard', element: <AdminDashboard /> },
-      { path: 'vimeo/*', element: <AdminVimeo /> }
-    ]
+        index: true,
+        element: <Navigate to="/dashboard" replace />,
+      },
+      {
+        path: 'dashboard',
+        element: withAuth(Dashboard),
+      },
+      {
+        path: 'profile',
+        element: withAuth(Profile),
+      },
+      {
+        path: 'settings',
+        element: withAuth(Settings),
+      },
+    ],
   },
   {
     path: '/auth',
-    element: <AuthLayout />,
     children: [
-      { path: 'signin', element: <SignInPage /> },
-      { path: 'signup', element: <SignUpPage /> },
-      { path: 'reset-password', element: <ResetPasswordPage /> }
-    ]
+      {
+        path: 'login',
+        element: withSuspense(Login),
+      },
+      {
+        path: 'register',
+        element: withSuspense(Register),
+      },
+    ],
   },
   {
     path: '*',
-    element: <Navigate to="/" replace />
-  }
+    element: withSuspense(NotFound),
+  },
 ])
 
 export default router 

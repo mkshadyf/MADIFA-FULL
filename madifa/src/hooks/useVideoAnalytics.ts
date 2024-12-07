@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth'
-import { analyticsService } from '@/lib/services/analytics'
-import type { AnalyticsEvent, ViewSession } from '@/types/analytics'
+import { createClient } from '@/lib/supabase/client'
+import type { ViewSession } from '@/types/analytics'
 import type { VimeoPlayer } from '@/types/vimeo'
 import { useCallback, useEffect, useRef } from 'react'
 
@@ -11,6 +11,14 @@ interface ViewingStats {
   qualityChanges: number
   bufferingEvents: number
   averageBufferDuration: number
+}
+
+interface VideoEvent {
+  video_id: string
+  user_id?: string
+  event_type: 'play' | 'pause' | 'seek' | 'complete' | 'quality_change' | 'error'
+  timestamp: string
+  data?: Record<string, any>
 }
 
 export function useVideoAnalytics(player: VimeoPlayer | null, videoId: string) {
@@ -25,102 +33,157 @@ export function useVideoAnalytics(player: VimeoPlayer | null, videoId: string) {
     averageBufferDuration: 0
   })
   const bufferStartTimeRef = useRef<number>()
+  const supabase = createClient()
+  const lastProgressRef = useRef(0)
+  const watchStartTimeRef = useRef<Date | null>(null)
+  const progressIntervalRef = useRef<NodeJS.Timeout>()
 
-  const trackEvent = useCallback(async (event: Omit<AnalyticsEvent, 'user_id' | 'timestamp'>) => {
+  const trackEvent = async (event: VideoEvent) => {
+    try {
+      const { error } = await supabase
+        .from('video_analytics')
+        .insert({
+          ...event,
+          user_id: user?.id,
+          timestamp: new Date().toISOString()
+        })
+
+      if (error) throw error
+    } catch (error) {
+      console.error('Failed to track video event:', error)
+    }
+  }
+
+  const updateWatchProgress = async (progress: number) => {
     if (!user) return
 
     try {
-      await analyticsService.trackEvent({
-        ...event,
-        user_id: user.id,
-        timestamp: Date.now()
-      })
+      const { error } = await supabase
+        .from('watch_history')
+        .upsert({
+          user_id: user.id,
+          video_id: videoId,
+          progress,
+          last_watched: new Date().toISOString(),
+          completed: progress >= 0.95
+        })
+
+      if (error) throw error
     } catch (error) {
-      console.error('Failed to track analytics event:', error)
+      console.error('Failed to update watch progress:', error)
     }
-  }, [user])
+  }
 
   const trackProgress = useCallback(async () => {
-    if (!player || !sessionRef.current) return
+    if (!player) return
 
     try {
-      const [currentTime, duration] = await Promise.all([
-        player.getCurrentTime(),
-        player.getDuration()
-      ])
-
+      const currentTime = await player.getCurrentTime()
+      const duration = await player.getDuration()
       const progress = currentTime / duration
-      if (Math.abs(progress - lastProgressRef.current) > 0.05) {
-        await analyticsService.updateViewProgress(sessionRef.current, progress)
+
+      // Update progress every 10% change
+      if (Math.abs(progress - lastProgressRef.current) >= 0.1) {
         lastProgressRef.current = progress
+        await updateWatchProgress(progress)
+
+        // Track completion
+        if (progress >= 0.95) {
+          await trackEvent({
+            video_id: videoId,
+            event_type: 'complete',
+            timestamp: new Date().toISOString()
+          })
+        }
       }
     } catch (error) {
-      console.error('Failed to track progress:', error)
+      console.error('Error tracking progress:', error)
     }
-  }, [player])
+  }, [player, videoId])
 
   useEffect(() => {
     if (!player || !user) return
 
-    const initializeSession = async () => {
-      try {
-        await analyticsService.trackView(videoId, user.id)
-        progressIntervalRef.current = setInterval(trackProgress, 5000)
-      } catch (error) {
-        console.error('Failed to initialize analytics session:', error)
-      }
-    }
-
     const handlePlay = () => {
+      watchStartTimeRef.current = new Date()
       trackEvent({
-        event_type: 'play',
-        video_id: videoId
-      })
-    }
-
-    const handlePause = () => {
-      trackEvent({
-        event_type: 'pause',
-        video_id: videoId
-      })
-    }
-
-    const handleSeek = (data: { seconds: number }) => {
-      trackEvent({
-        event_type: 'seek',
         video_id: videoId,
-        data: { position: data.seconds }
+        event_type: 'play',
+        timestamp: new Date().toISOString()
+      })
+
+      // Start progress tracking
+      progressIntervalRef.current = setInterval(trackProgress, 5000)
+    }
+
+    const handlePause = async () => {
+      const currentTime = await player.getCurrentTime()
+      const duration = await player.getDuration()
+      const progress = currentTime / duration
+
+      trackEvent({
+        video_id: videoId,
+        event_type: 'pause',
+        timestamp: new Date().toISOString(),
+        data: { progress }
+      })
+
+      // Stop progress tracking
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+
+      await updateWatchProgress(progress)
+    }
+
+    const handleSeeked = async () => {
+      const currentTime = await player.getCurrentTime()
+      const duration = await player.getDuration()
+
+      trackEvent({
+        video_id: videoId,
+        event_type: 'seek',
+        timestamp: new Date().toISOString(),
+        data: {
+          position: currentTime,
+          percentage: (currentTime / duration) * 100
+        }
       })
     }
 
     const handleQualityChange = (data: { quality: string }) => {
       trackEvent({
-        event_type: 'quality_change',
         video_id: videoId,
+        event_type: 'quality_change',
+        timestamp: new Date().toISOString(),
         data: { quality: data.quality }
       })
     }
 
     const handleError = (error: Error) => {
       trackEvent({
-        event_type: 'error',
         video_id: videoId,
-        data: { message: error.message }
+        event_type: 'error',
+        timestamp: new Date().toISOString(),
+        data: {
+          message: error.message,
+          name: error.name
+        }
       })
     }
 
-    initializeSession()
-
+    // Add event listeners
     player.on('play', handlePlay)
     player.on('pause', handlePause)
-    player.on('seeked', handleSeek)
+    player.on('seeked', handleSeeked)
     player.on('qualitychange', handleQualityChange)
     player.on('error', handleError)
 
+    // Cleanup
     return () => {
       player.off('play', handlePlay)
       player.off('pause', handlePause)
-      player.off('seeked', handleSeek)
+      player.off('seeked', handleSeeked)
       player.off('qualitychange', handleQualityChange)
       player.off('error', handleError)
 
@@ -128,5 +191,5 @@ export function useVideoAnalytics(player: VimeoPlayer | null, videoId: string) {
         clearInterval(progressIntervalRef.current)
       }
     }
-  }, [player, user, videoId, trackEvent, trackProgress])
+  }, [player, user, videoId, trackProgress])
 } 

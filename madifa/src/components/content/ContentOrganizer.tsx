@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useContent } from '@/hooks/useContent'
 import { useQueuePriority } from '@/hooks/useQueuePriority'
 import type { Content } from '@/types'
-import { IconButton } from '../ui/button'
+import { IconButton } from '../ui/Button'
 
 interface ContentOrganizerProps {
   className?: string
@@ -88,6 +88,7 @@ export default function ContentOrganizer({
             Organization Method
           </label>
           <select
+            aria-label="Organization Method"
             value={organizationMethod}
             onChange={e => setOrganizationMethod(e.target.value as any)}
             className="w-full bg-gray-800 text-white rounded-lg p-2 border border-gray-700"

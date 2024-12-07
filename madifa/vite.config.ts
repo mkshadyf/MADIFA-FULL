@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -7,6 +8,34 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// CSP Configuration
+const CSP = {
+  'default-src': ["'self'"],
+  'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://player.vimeo.com'],
+  'style-src': ["'self'", "'unsafe-inline'"],
+  'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+  'media-src': ["'self'", 'https:', 'blob:'],
+  'connect-src': [
+    "'self'",
+    'https://api.vimeo.com',
+    'https://player.vimeo.com',
+    'https://*.supabase.co',
+    'wss://*.supabase.co',
+    'https://*.sentry.io'
+  ],
+  'frame-src': ["'self'", 'https://player.vimeo.com'],
+  'worker-src': ["'self'", 'blob:'],
+  'font-src': ["'self'", 'data:'],
+  'object-src': ["'none'"],
+  'base-uri': ["'self'"]
+}
+
+const generateCSP = () => {
+  return Object.entries(CSP)
+    .map(([key, values]) => `${key} ${values.join(' ')}`)
+    .join('; ')
+}
 
 export default defineConfig({
   plugins: [
@@ -47,6 +76,14 @@ export default defineConfig({
         enabled: true,
         type: 'module'
       }
+    }),
+    sentryVitePlugin({
+      org: 'madifa',
+      project: 'madifa-web',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: {
+        assets: './dist/**',
+      },
     })
   ],
   server: {
@@ -58,12 +95,28 @@ export default defineConfig({
       interval: 100
     },
     open: true,
-    cors: true
+    cors: true,
+    headers: {
+      'Content-Security-Policy': generateCSP(),
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+    }
   },
   preview: {
     port: 3000,
     host: true,
-    strictPort: true
+    strictPort: true,
+    headers: {
+      'Content-Security-Policy': generateCSP(),
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+    }
   },
   test: {
     globals: true,
@@ -78,6 +131,20 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
+    }
+  },
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          vimeo: ['@vimeo/player', '@vimeo/vimeo'],
+          ui: ['@headlessui/react', 'framer-motion'],
+          charts: ['d3', 'recharts'],
+          utils: ['class-variance-authority', 'clsx', 'tailwind-merge']
+        }
+      }
     }
   }
 })

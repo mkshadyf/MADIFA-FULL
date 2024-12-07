@@ -1,74 +1,106 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
 import { motion } from 'framer-motion'
+import { Button } from '@/components/ui/Button'
+import { useAuth } from '@/providers/AuthProvider'
+import { useToast } from '@/hooks/useToast'
+import type { OnboardingState } from '@/lib/services/onboarding'
+import type { User } from '@/lib/types/auth'
 
 interface EmailVerificationStepProps {
-  onNext: () => void
+  onNext: (data: Partial<OnboardingState>) => Promise<void>
+  onBack: () => void
+  data: Partial<OnboardingState>
 }
 
-export default function EmailVerificationStep({ onNext }: EmailVerificationStepProps) {
-  const { user } = useAuth()
+export default function EmailVerificationStep({ onNext, onBack, data }: EmailVerificationStepProps) {
   const [isVerified, setIsVerified] = useState(false)
-  const [isChecking, setIsChecking] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const { user } = useAuth() as { user: User | null }
+  const { showToast } = useToast()
 
   useEffect(() => {
-    const checkVerification = async () => {
-      if (!user) return
-      setIsChecking(true)
-      try {
-        const session = await user.getSession()
-        if (session?.user.email_verified) {
-          setIsVerified(true)
-          onNext()
-        }
-      } finally {
-        setIsChecking(false)
-      }
-    }
+    checkVerificationStatus()
+  }, [])
 
-    const interval = setInterval(checkVerification, 3000)
-    return () => clearInterval(interval)
-  }, [user, onNext])
+  const checkVerificationStatus = async () => {
+    if (!user) return
+    setIsVerified(user.email_verified || false)
+  }
 
   const handleResendEmail = async () => {
-    if (!user?.email) return
     try {
-      await user.resendVerificationEmail()
-      toast.success('Verification email sent!')
+      setIsResending(true)
+      await user?.sendEmailVerification()
+      showToast('Verification email sent!', 'success')
     } catch (error) {
-      toast.error('Failed to send verification email')
+      console.error('Error sending verification email:', error)
+      showToast('Failed to send verification email', 'error')
+    } finally {
+      setIsResending(false)
     }
   }
 
+  const handleContinue = async () => {
+    if (!isVerified) {
+      showToast('Please verify your email before continuing', 'error')
+      return
+    }
+    await onNext({})
+  }
+
   return (
-    <div className="space-y-6 text-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h2 className="text-2xl font-bold text-white">Verify Your Email</h2>
-        <p className="text-gray-400 mt-2">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-8"
+    >
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-white">Verify Your Email</h2>
+        <p className="mt-2 text-gray-400">
           We've sent a verification email to {user?.email}
         </p>
-      </motion.div>
+      </div>
 
-      <div className="flex flex-col items-center space-y-4">
-        {isChecking ? (
-          <div className="text-gray-400">Checking verification status...</div>
-        ) : (
-          <>
-            <button
-              onClick={handleResendEmail}
-              className="text-indigo-400 hover:text-indigo-300"
-            >
-              Resend verification email
-            </button>
-            <p className="text-sm text-gray-500">
-              Didn't receive the email? Check your spam folder
+      <div className="max-w-md mx-auto bg-gray-800/50 p-8 rounded-xl border border-gray-700">
+        {isVerified ? (
+          <div className="text-center space-y-4">
+            <div className="text-green-500 text-6xl">✓</div>
+            <p className="text-white font-medium">Email Verified!</p>
+            <p className="text-gray-400">
+              Your email has been successfully verified. You can now continue with the setup.
             </p>
-          </>
+          </div>
+        ) : (
+          <div className="text-center space-y-4">
+            <div className="text-yellow-500 text-6xl">!</div>
+            <p className="text-white font-medium">Verification Required</p>
+            <p className="text-gray-400">
+              Please check your email and click the verification link to continue.
+            </p>
+            <Button
+              variant="secondary"
+              onClick={handleResendEmail}
+              isLoading={isResending}
+              className="mt-4"
+            >
+              Resend Verification Email
+            </Button>
+          </div>
         )}
       </div>
-    </div>
+
+      <div className="flex justify-between mt-8">
+        <Button variant="secondary" onClick={onBack}>
+          Back
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleContinue}
+          disabled={!isVerified}
+        >
+          Continue
+        </Button>
+      </div>
+    </motion.div>
   )
 } 

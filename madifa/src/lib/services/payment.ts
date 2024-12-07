@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 import type { BillingPeriod, SubscriptionTier } from '@/lib/types/subscription'
+import md5 from 'md5'
+import { subscriptionService } from './subscription'
 
 interface CreatePaymentSessionParams {
   userId: string
@@ -8,6 +10,97 @@ interface CreatePaymentSessionParams {
   price: number
   billingPeriod: BillingPeriod
 }
+
+interface PaymentNotification {
+  m_payment_id: string
+  pf_payment_id: string
+  payment_status: string
+  amount_gross: string
+  amount_fee: string
+  amount_net: string
+  signature: string
+  [key: string]: string
+}
+
+export class PaymentService {
+  private supabase = createClient()
+
+  async handlePaymentNotification(data: PaymentNotification): Promise<void> {
+    try {
+      // Verify signature
+      const isValid = this.validateSignature(data)
+      if (!isValid) {
+        throw new Error('Invalid payment signature')
+      }
+
+      // Extract user and plan IDs from m_payment_id
+      const [userId, planId] = data.m_payment_id.split('_')
+
+      if (!userId || !planId) {
+        throw new Error('Invalid payment ID format')
+      }
+
+      // Update subscription based on payment status
+      switch (data.payment_status) {
+        case 'COMPLETE':
+          await subscriptionService.updateSubscription(userId, planId)
+          break
+        case 'CANCELLED':
+          await subscriptionService.cancelSubscription(userId)
+          break
+        case 'FAILED':
+          // Log failed payment
+          await this.logPaymentFailure(userId, data)
+          break
+      }
+
+      // Log payment notification
+      await this.logPaymentNotification(userId, data)
+    } catch (error) {
+      console.error('Error handling payment notification:', error)
+      throw error
+    }
+  }
+
+  private validateSignature(data: PaymentNotification): boolean {
+    const passPhrase = import.meta.env.VITE_PAYFAST_PASSPHRASE
+    const receivedSignature = data.signature
+    const dataForSignature = { ...data }
+    delete (dataForSignature as Partial<PaymentNotification>).signature
+
+    const dataString = Object.entries(dataForSignature)
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([key, value]) => `${key}=${encodeURIComponent(value.trim())}`)
+      .join('&')
+
+    const calculatedSignature = md5(dataString + '&passphrase=' + passPhrase)
+    return calculatedSignature === receivedSignature
+  }
+
+  private async logPaymentNotification(userId: string, data: PaymentNotification) {
+    await this.supabase.from('payment_logs').insert({
+      user_id: userId,
+      payment_id: data.pf_payment_id,
+      status: data.payment_status,
+      amount: parseFloat(data.amount_gross),
+      data: data,
+      created_at: new Date().toISOString()
+    })
+  }
+
+  private async logPaymentFailure(userId: string, data: PaymentNotification) {
+    await this.supabase.from('payment_failures').insert({
+      user_id: userId,
+      payment_id: data.pf_payment_id,
+      amount: parseFloat(data.amount_gross),
+      reason: data.payment_status,
+      data: data,
+      created_at: new Date().toISOString()
+    })
+  }
+}
+
+export const paymentService = new PaymentService()
 
 export async function createPaymentSession({
   userId,

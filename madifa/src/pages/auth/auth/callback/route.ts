@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if (code) {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-    
+
     // Exchange code for session
     await supabase.auth.exchangeCodeForSession(code)
   }

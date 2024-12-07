@@ -5,14 +5,17 @@ import type { Database } from '@/lib/supabase/database.types'
 import { useToast } from '@/hooks/useToast'
 import { useNavigate } from 'react-router-dom'
 import LoadingState from '@/components/ui/loading-state'
+import { sessionService } from '@/lib/services/session'
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 interface AuthState {
   user: User | null
   profile: UserProfile | null
-  loading: boolean
+  isAuthenticated: boolean
+  isLoading: boolean
   isInitialized: boolean
+  error: string | null
 }
 
 interface AuthContextType extends AuthState {
@@ -25,127 +28,160 @@ export const AuthContext = createContext<AuthContextType | null>(null)
 const supabase = createClient()
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<AuthState>({
+  const [authState, setAuthState] = useState<AuthState>({
     user: null,
     profile: null,
-    loading: true,
-    isInitialized: false
-  })
+    isAuthenticated: false,
+    isLoading: true,
+    isInitialized: false,
+    error: null
+  });
   const navigate = useNavigate()
   const { showToast } = useToast()
 
-  const fetchProfile = async (userId: string) => {
+  const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      setState(prev => ({ ...prev, loading: true }))
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', userId)
+        .eq('user_id', userId)
+        .single()
+
+      if (error) throw error
+      return data
+    } catch (error) {
+      console.error('Error loading user profile:', error)
+      return null
+    }
+  }
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true }))
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
         .single()
 
       if (error) throw error
 
-      setState(prev => ({
+      setAuthState(prev => ({
         ...prev,
         profile: data,
-        loading: false
+        isLoading: false,
+        isAuthenticated: true
       }))
     } catch (error) {
       console.error('Error fetching profile:', error)
       showToast('Failed to load user profile', 'error')
-      setState(prev => ({ ...prev, loading: false }))
+      setAuthState(prev => ({ 
+        ...prev, 
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to load profile'
+      }))
     }
   }
 
   useEffect(() => {
-    const initializeAuth = async () => {
+    const initAuth = async () => {
       try {
-        // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession()
+        setAuthState(prev => ({ ...prev, isLoading: true }))
+        const session = await sessionService.initialize()
         
         if (session?.user) {
-          setState(prev => ({ ...prev, user: session.user }))
-          await fetchProfile(session.user.id)
+          const profile = await loadUserProfile(session.user.id)
+          setAuthState({
+            user: session.user as User,
+            profile,
+            isAuthenticated: true,
+            isLoading: false,
+            isInitialized: true,
+            error: null
+          })
+        } else {
+          setAuthState({
+            user: null,
+            profile: null,
+            isAuthenticated: false,
+            isLoading: false,
+            isInitialized: true,
+            error: null
+          })
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
-        showToast('Authentication error', 'error')
-      } finally {
-        setState(prev => ({ ...prev, isInitialized: true, loading: false }))
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          isInitialized: true,
+          error: error instanceof Error ? error.message : 'Failed to initialize auth'
+        }))
       }
     }
 
-    initializeAuth()
+    initAuth()
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event)
-
-        if (session?.user) {
-          setState(prev => ({ ...prev, user: session.user }))
-          await fetchProfile(session.user.id)
-
-          switch (event) {
-            case 'SIGNED_IN':
-              showToast('Successfully signed in!', 'success')
-              navigate('/browse')
-              break
-            case 'USER_UPDATED':
-              showToast('Profile updated', 'success')
-              break
-          }
-        } else {
-          setState(prev => ({ 
-            ...prev, 
-            user: null, 
-            profile: null 
+    const subscription = sessionService.onAuthStateChange((user) => {
+      if (user) {
+        loadUserProfile(user.id).then(profile => {
+          setAuthState(prev => ({
+            ...prev,
+            user,
+            profile,
+            isAuthenticated: true,
+            isLoading: false
           }))
-
-          if (event === 'SIGNED_OUT') {
-            showToast('Successfully signed out', 'success')
-            navigate('/auth/signin')
-          }
-        }
+        })
+      } else {
+        setAuthState(prev => ({
+          ...prev,
+          user: null,
+          profile: null,
+          isAuthenticated: false,
+          isLoading: false
+        }))
       }
-    )
+    })
 
     return () => {
-      subscription.unsubscribe()
+      subscription.data.subscription.unsubscribe()
     }
-  }, [navigate, showToast])
+  }, [])
 
   const signOut = async () => {
     try {
-      setState(prev => ({ ...prev, loading: true }))
+      setAuthState(prev => ({ ...prev, isLoading: true }))
       await supabase.auth.signOut()
-      setState({
+      setAuthState({
         user: null,
         profile: null,
-        loading: false,
-        isInitialized: true
+        isAuthenticated: false,
+        isLoading: false,
+        isInitialized: true,
+        error: null
       })
       navigate('/auth/signin')
     } catch (error) {
       console.error('Sign out error:', error)
       showToast('Error signing out', 'error')
-      setState(prev => ({ ...prev, loading: false }))
+      setAuthState(prev => ({ ...prev, isLoading: false }))
     }
   }
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!state.user) return
+    if (!authState.user) return
 
     try {
-      setState(prev => ({ ...prev, loading: true }))
+      setAuthState(prev => ({ ...prev, loading: true }))
       const { error } = await supabase
         .from('user_profiles')
         .update(updates)
-        .eq('id', state.user.id)
+        .eq('id', authState.user.id)
 
       if (error) throw error
 
-      setState(prev => ({
+      setAuthState(prev => ({
         ...prev,
         profile: prev.profile ? { ...prev.profile, ...updates } : null,
         loading: false
@@ -155,18 +191,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     } catch (error) {
       console.error('Profile update error:', error)
       showToast('Error updating profile', 'error')
-      setState(prev => ({ ...prev, loading: false }))
+      setAuthState(prev => ({ ...prev, loading: false }))
     }
   }
 
   // Show loading state only during initial load
-  if (!state.isInitialized) {
+  if (!authState.isInitialized) {
     return <LoadingState text="Initializing..." />
   }
 
   return (
     <AuthContext.Provider value={{ 
-      ...state,
+      ...authState,
       signOut,
       updateProfile
     }}>

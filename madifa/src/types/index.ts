@@ -1,76 +1,43 @@
-import type { Database } from '@/lib/supabase/database.types';
+export * from './analytics'
+export * from './auth'
+export * from './vimeo'
 
-export * from './supabase';
-
-// User related types
-export interface Profile {
-  id: string
-  user_id: string
-  full_name: string
-  email: string
-  role: 'admin' | 'user'
-  subscription_tier: 'free' | 'premium' | 'premium_plus'
-  subscription_status: 'active' | 'inactive' | 'cancelled'
-  avatar_url?: string
-  created_at: string
-  updated_at: string
-}
-
-// Content related types
 export interface Content {
   id: string
   title: string
-  description: string
-  thumbnail_url: string
-  video_url: string
-  category: string
-  duration?: number
-  release_year: number
-  created_at: string
-  updated_at: string
-  metadata?: {
-    width?: number
-    height?: number
-    fps?: number
-    quality?: string
-    status?: string
+  description?: string
+  category?: string
+  tags?: string[]
+  release_year?: number
+  expiration_date?: string
+  availability_window?: {
+    start: string
+    end: string
   }
+  is_public: boolean
+  custom_fields?: Record<string, any>
 }
 
-// Subscription types
-export interface SubscriptionPlan {
-  id: 'free' | 'premium' | 'premium_plus'
+export interface ContentMetadata {
+  title: string
+  description?: string
+  category?: string
+  tags?: string[]
+  custom_fields?: Record<string, any>
+}
+
+export interface Playlist {
+  id: string
   name: string
-  price: number
-  features: string[]
+  description?: string
+  contents: Content[]
 }
 
-// Database types
-export type DbTables = Database['public']['Tables']
-export type DbContent = DbTables['content']['Row']
-export type DbProfile = DbTables['user_profiles']['Row']
-
-// Auth related types
-export interface AuthCredentials {
-  email: string
-  password: string
+export interface Series {
+  id: string
+  title: string
+  description?: string
+  episodes: Content[]
+  season_number?: number
 }
 
-export interface SignUpCredentials extends AuthCredentials {
-  fullName: string
-}
-
-// API response types
-export interface ApiResponse<T> {
-  data: T | null
-  error: string | null
-}
-
-// Navigation types
-export interface NavItem {
-  name: string
-  href: string
-  icon?: React.ReactNode
-  requiresAuth?: boolean
-  requiresAdmin?: boolean
-}

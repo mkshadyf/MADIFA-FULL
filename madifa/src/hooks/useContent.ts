@@ -1,17 +1,29 @@
-import * as contentService from '@/lib/services/content'
-import type { Database } from '@/lib/supabase/database.types'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase/client'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { useAuth } from './useAuth'
-import { useToast } from './useToast'
 
-type Content = Database['public']['Tables']['content']['Row']
+export interface Content {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail_url: string;
+  video_url: string;
+  category: string;
+  release_year: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export function useContent(id?: string) {
-  const queryClient = useQueryClient()
-
   return useQuery({
     queryKey: ['content', id],
-    queryFn: () => contentService.getContent(id!),
+    queryFn: async () => {
+      if (!id) throw new Error('Content ID is required')
+      const response = await fetch(`/api/content/${id}`)
+      if (!response.ok) throw new Error('Failed to fetch content')
+      return response.json()
+    },
     enabled: !!id,
     gcTime: 30 * 60 * 1000, // 30 minutes
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -23,7 +35,11 @@ export function useContent(id?: string) {
 export function useSearch(query: string) {
   return useQuery({
     queryKey: ['search', query],
-    queryFn: () => contentService.searchContent(query),
+    queryFn: async () => {
+      const response = await fetch(`/api/content/search?q=${encodeURIComponent(query)}`)
+      if (!response.ok) throw new Error('Failed to search content')
+      return response.json()
+    },
     enabled: !!query,
     staleTime: 1 * 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -32,81 +48,69 @@ export function useSearch(query: string) {
 }
 
 export function useFavorites() {
-  const { user } = useAuth()
-  const { showToast } = useToast()
-  const queryClient = useQueryClient()
+  const [favorites, setFavorites] = useState<Content[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { profile } = useAuth();
+  const supabase = createClient();
 
-  const favoritesQuery = useQuery({
-    queryKey: ['favorites', user?.id],
-    queryFn: () => contentService.getFavorites(user!.id),
-    enabled: !!user,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 1
-  })
-
-  const addMutation = useMutation({
-    mutationFn: (contentId: string) =>
-      contentService.addToFavorites(user!.id, contentId),
-    onMutate: async (contentId) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['favorites', user?.id] })
-
-      // Snapshot the previous value
-      const previousFavorites = queryClient.getQueryData(['favorites', user?.id])
-
-      // Optimistically update to the new value
-      queryClient.setQueryData(['favorites', user?.id], (old: Content[] = []) => {
-        const newContent = queryClient.getQueryData<Content>(['content', contentId])
-        return newContent ? [...old, newContent] : old
-      })
-
-      return { previousFavorites }
-    },
-    onSuccess: () => {
-      showToast('Added to favorites', 'success')
-    },
-    onError: (error, _, context) => {
-      queryClient.setQueryData(['favorites', user?.id], context?.previousFavorites)
-      showToast('Failed to add to favorites', 'error')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] })
+  useEffect(() => {
+    if (profile) {
+      fetchFavorites();
     }
-  })
+  }, [profile]);
 
-  const removeMutation = useMutation({
-    mutationFn: (contentId: string) =>
-      contentService.removeFromFavorites(user!.id, contentId),
-    onMutate: async (contentId) => {
-      await queryClient.cancelQueries({ queryKey: ['favorites', user?.id] })
-      const previousFavorites = queryClient.getQueryData(['favorites', user?.id])
+  const fetchFavorites = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('*')
+        .eq('user_id', profile?.id);
 
-      queryClient.setQueryData(['favorites', user?.id], (old: Content[] = []) =>
-        old.filter(content => content.id !== contentId)
-      )
-
-      return { previousFavorites }
-    },
-    onSuccess: () => {
-      showToast('Removed from favorites', 'success')
-    },
-    onError: (error, _, context) => {
-      queryClient.setQueryData(['favorites', user?.id], context?.previousFavorites)
-      showToast('Failed to remove from favorites', 'error')
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['favorites', user?.id] })
+      if (error) throw error;
+      setFavorites(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch favorites'));
+    } finally {
+      setIsLoading(false);
     }
-  })
+  };
+
+  const addToFavorites = async (content: Content) => {
+    try {
+      const { error } = await supabase
+        .from('favorites')
+        .insert([{ ...content, user_id: profile?.id }]);
+
+      if (error) throw error;
+      setFavorites([...favorites, content]);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to add to favorites'));
+      throw err;
+    }
+  };
+
+  const removeFromFavorites = async (contentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('id', contentId)
+        .eq('user_id', profile?.id);
+
+      if (error) throw error;
+      setFavorites(favorites.filter(fav => fav.id !== contentId));
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to remove from favorites'));
+      throw err;
+    }
+  };
 
   return {
-    favorites: favoritesQuery.data || [],
-    isLoading: favoritesQuery.isLoading,
-    error: favoritesQuery.error,
-    addToFavorites: addMutation.mutate,
-    removeFromFavorites: removeMutation.mutate,
-    isAdding: addMutation.isPending,
-    isRemoving: removeMutation.isPending
-  }
+    favorites,
+    isLoading,
+    error,
+    addToFavorites,
+    removeFromFavorites
+  };
 }

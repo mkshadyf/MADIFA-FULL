@@ -1,45 +1,22 @@
-import { useState } from 'react'
-import WelcomeStep from './steps/WelcomeStep'
-import PlanSelectionStep from './steps/PlanSelectionStep'
-import PaymentStep from './steps/PaymentStep'
-import EmailVerificationStep from './steps/EmailVerificationStep'
-import ProfileCompletionStep from './steps/ProfileCompletionStep'
+import { motion } from 'framer-motion'
+import type { OnboardingState } from '@/lib/services/onboarding'
 
-const steps = [
-  'welcome',
-  'plan-selection',
-  'payment',
-  'email-verification',
-  'profile-completion'
-] as const
+interface OnboardingContentProps {
+  currentStep: OnboardingState['step']
+  children: React.ReactNode
+}
 
-type Step = typeof steps[number]
-
-export default function OnboardingContent() {
-  const [currentStep, setCurrentStep] = useState<Step>('welcome')
-
-  const renderStep = () => {
-    switch (currentStep) {
-      case 'welcome':
-        return <WelcomeStep onNext={() => setCurrentStep('plan-selection')} />
-      case 'plan-selection':
-        return <PlanSelectionStep onNext={() => setCurrentStep('payment')} />
-      case 'payment':
-        return <PaymentStep onNext={() => setCurrentStep('email-verification')} />
-      case 'email-verification':
-        return <EmailVerificationStep onNext={() => setCurrentStep('profile-completion')} />
-      case 'profile-completion':
-        return <ProfileCompletionStep onComplete={() => window.location.href = '/browse'} />
-    }
-  }
-
+export default function OnboardingContent({ currentStep, children }: OnboardingContentProps) {
   return (
-    <div className="space-y-8">
-      <StepIndicator
-        steps={steps}
-        currentStep={steps.indexOf(currentStep)}
-      />
-      {renderStep()}
-    </div>
+    <motion.div
+      key={currentStep}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-3xl mx-auto px-4 py-8"
+    >
+      {children}
+    </motion.div>
   )
 } 

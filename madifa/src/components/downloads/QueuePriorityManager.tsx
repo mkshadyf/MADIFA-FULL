@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useQueuePriority } from '@/hooks/useQueuePriority'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
-import { IconButton } from '../ui/button'
+import { IconButton } from '../ui/Button'
 import { formatBytes } from '@/lib/utils/format'
 
 interface QueuePriorityManagerProps {
@@ -80,6 +80,7 @@ export default function QueuePriorityManager({
             Priority Mode
           </label>
           <select
+            aria-label="Priority Mode"
             value={priorityMode}
             onChange={e => setPriorityMode(e.target.value as any)}
             className="w-full bg-gray-800 text-white rounded-lg p-2 border border-gray-700"

@@ -48,6 +48,7 @@ declare module '@vimeo/player' {
     color?: string
     controls?: boolean
     dnt?: boolean
+    keyboard?: boolean
     loop?: boolean
     muted?: boolean
     pip?: boolean
@@ -55,8 +56,25 @@ declare module '@vimeo/player' {
     portrait?: boolean
     responsive?: boolean
     speed?: boolean
+    texttrack?: string
     title?: boolean
     transparent?: boolean
+  }
+
+  export interface PlayerEventMap {
+    loaded: void
+    play: void
+    playing: void
+    pause: void
+    ended: void
+    timeupdate: { seconds: number }
+    progress: { seconds: number }
+    seeked: void
+    texttrackchange: { kind: string; label: string; language: string }
+    volumechange: { volume: number }
+    error: Error
+    bufferstart: void
+    bufferend: void
   }
 
   export default class Player {
@@ -67,7 +85,18 @@ declare module '@vimeo/player' {
     getDuration(): Promise<number>
     getCurrentTime(): Promise<number>
     setCurrentTime(seconds: number): Promise<number>
-    on(event: string, callback: Function): void
-    off(event: string, callback?: Function): void
+    getPaused(): Promise<boolean>
+    play(): Promise<void>
+    pause(): Promise<void>
+    setVolume(volume: number): Promise<number>
+    getVolume(): Promise<number>
+    setPlaybackRate(rate: number): Promise<number>
+    getPlaybackRate(): Promise<number>
+    setQuality(quality: string): Promise<string>
+    getQuality(): Promise<string>
+    loadVideo(id: number): Promise<number>
+    ready(): Promise<void>
+    on<K extends keyof PlayerEventMap>(event: K, callback: (data: PlayerEventMap[K]) => void): void
+    off<K extends keyof PlayerEventMap>(event: K, callback?: (data: PlayerEventMap[K]) => void): void
   }
-} 
+}

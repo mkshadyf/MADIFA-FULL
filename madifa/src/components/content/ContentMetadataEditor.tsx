@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useContent } from '@/hooks/useContent'
-import { IconButton } from '../ui/button'
+import { IconButton } from '../ui/Button'
 import { contentManager } from '@/lib/services/content-manager'
 import { useToast } from '@/hooks/useToast'
 
@@ -129,6 +129,7 @@ export default function ContentMetadataEditor({
             <div>
               <label className="text-sm text-gray-400 block mb-1">Title</label>
               <input
+                aria-label="title"
                 type="text"
                 value={metadata.title}
                 onChange={e => setMetadata(prev => ({ ...prev, title: e.target.value }))}
@@ -139,6 +140,7 @@ export default function ContentMetadataEditor({
             <div>
               <label className="text-sm text-gray-400 block mb-1">Description</label>
               <textarea
+                aria-label="description"
                 value={metadata.description}
                 onChange={e => setMetadata(prev => ({ ...prev, description: e.target.value }))}
                 className="w-full bg-gray-800 text-white rounded-lg p-2 border border-gray-700 min-h-[100px]"
@@ -149,6 +151,7 @@ export default function ContentMetadataEditor({
               <div>
                 <label className="text-sm text-gray-400 block mb-1">Category</label>
                 <input
+                  aria-label="category"
                   type="text"
                   value={metadata.category}
                   onChange={e => setMetadata(prev => ({ ...prev, category: e.target.value }))}
@@ -159,6 +162,7 @@ export default function ContentMetadataEditor({
               <div>
                 <label className="text-sm text-gray-400 block mb-1">Release Year</label>
                 <input
+                  aria-label="releaseYear"
                   type="number"
                   value={metadata.releaseYear}
                   onChange={e => setMetadata(prev => ({ ...prev, releaseYear: Number(e.target.value) }))}
@@ -170,6 +174,7 @@ export default function ContentMetadataEditor({
             <div>
               <label className="text-sm text-gray-400 block mb-1">Tags (comma-separated)</label>
               <input
+                aria-label="tags"
                 type="text"
                 value={metadata.tags.join(', ')}
                 onChange={e => handleTagsChange(e.target.value)}
@@ -181,6 +186,7 @@ export default function ContentMetadataEditor({
               <div>
                 <label className="text-sm text-gray-400 block mb-1">Expiration Date</label>
                 <input
+                  aria-label="expirationDate"
                   type="date"
                   value={metadata.expirationDate}
                   onChange={e => setMetadata(prev => ({ ...prev, expirationDate: e.target.value }))}
@@ -191,6 +197,7 @@ export default function ContentMetadataEditor({
               <div>
                 <label className="text-sm text-gray-400 block mb-1">Availability (days)</label>
                 <input
+                  aria-label="availabilityWindow"
                   type="number"
                   value={metadata.availabilityWindow}
                   onChange={e => setMetadata(prev => ({ ...prev, availabilityWindow: Number(e.target.value) }))}
@@ -201,6 +208,7 @@ export default function ContentMetadataEditor({
 
             <div className="flex items-center space-x-2">
               <input
+                aria-label="isPublic"
                 type="checkbox"
                 checked={metadata.isPublic}
                 onChange={e => setMetadata(prev => ({ ...prev, isPublic: e.target.checked }))}
@@ -223,6 +231,7 @@ export default function ContentMetadataEditor({
                 <div key={key} className="flex items-center space-x-2 mb-2">
                   <span className="text-sm text-gray-400">{key}:</span>
                   <input
+                    aria-label={key}
                     type="text"
                     value={value}
                     onChange={e => setMetadata(prev => ({

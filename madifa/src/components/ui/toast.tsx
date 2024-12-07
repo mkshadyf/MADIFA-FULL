@@ -1,55 +1,52 @@
-import { useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useToastStore } from '@/hooks/useToast'
+import React from 'react'
+import { Toaster as HotToaster } from 'react-hot-toast'
+import { toast as hotToast } from 'react-hot-toast'
 
-const toastTypeStyles = {
-  success: 'bg-green-500',
-  error: 'bg-red-500',
-  info: 'bg-blue-500',
-  warning: 'bg-yellow-500'
+export const Toaster = () => {
+  return (
+    <HotToaster
+      position="top-right"
+      toastOptions={{
+        className: 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100',
+        duration: 5000,
+        style: {
+          background: 'white',
+          color: 'black',
+          padding: '16px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        },
+        success: {
+          duration: 3000,
+          iconTheme: {
+            primary: '#10B981',
+            secondary: 'white',
+          },
+        },
+        error: {
+          duration: 4000,
+          iconTheme: {
+            primary: '#EF4444',
+            secondary: 'white',
+          },
+        },
+      }}
+    />
+  )
 }
 
-export default function Toast() {
-  const { toasts, removeToast } = useToastStore()
+interface Toast {
+  success: (message: string) => void
+  error: (message: string) => void
+  loading: (message: string) => void
+  dismiss: () => void
+}
 
-  // Auto-remove toasts after 3 seconds
-  useEffect(() => {
-    const timeouts = toasts.map(toast => {
-      return setTimeout(() => {
-        removeToast(toast.id)
-      }, 3000)
-    })
+export const toast: Toast = {
+  success: (message) => hotToast.success(message),
+  error: (message) => hotToast.error(message),
+  loading: (message) => hotToast.loading(message),
+  dismiss: () => hotToast.dismiss(),
+}
 
-    return () => {
-      timeouts.forEach(timeout => clearTimeout(timeout))
-    }
-  }, [toasts, removeToast])
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <AnimatePresence>
-        {toasts.map((toast) => (
-          <motion.div
-            key={toast.id}
-            initial={{ opacity: 0, y: 20, x: 20 }}
-            animate={{ opacity: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            className={`
-              ${toastTypeStyles[toast.type]}
-              text-white px-6 py-3 rounded-lg shadow-lg mb-2
-              flex items-center justify-between min-w-[300px]
-            `}
-          >
-            <span className="mr-4">{toast.message}</span>
-            <button
-              onClick={() => removeToast(toast.id)}
-              className="text-white/80 hover:text-white"
-            >
-              ×
-            </button>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  )
-} 
+export default toast 
