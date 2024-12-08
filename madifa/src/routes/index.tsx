@@ -2,34 +2,46 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Loading from '@/components/ui/loading'
 import AuthGuard from '@/components/guards/AuthGuard'
+import type { UserRole } from '@/types/auth'
 
-// Lazy load components
-const Layout = lazy(() => import('@/components/layout'))
-const Login = lazy(() => import('@/pages/auth/login'))
-const Register = lazy(() => import('@/pages/auth/register'))
+// Lazy load components with prefetching
+const Layout = lazy(() => import(/* webpackPrefetch: true */ '@/components/layout'))
+const Login = lazy(() => import(/* webpackPrefetch: true */ '@/pages/auth/login'))
+const Register = lazy(() => import(/* webpackPrefetch: true */ '@/pages/auth/register'))
+
+// Admin routes
+const VimeoPage = lazy(() => import('@/pages/admin/vimeo'))
+const AnalyticsPage = lazy(() => import('@/pages/admin/analytics'))
+const PerformanceDashboard = lazy(() => import('@/components/admin/PerformanceDashboard'))
+
+// User routes
 const Dashboard = lazy(() => import('@/pages/dashboard'))
 const Profile = lazy(() => import('@/pages/profile'))
 const Settings = lazy(() => import('@/pages/settings'))
+const Watch = lazy(() => import('@/pages/watch/[id]'))
+
+// Error pages
 const NotFound = lazy(() => import('@/pages/not-found'))
 
-// Wrap lazy components with Suspense
-const withSuspense = (Component: React.ComponentType) => (
+// Wrap lazy components with Suspense and loading indicator
+const withSuspense = (Component: React.ComponentType, loadingMessage = 'Loading...') => (
   <Suspense
     fallback={
-      <Loading message="Loading page..." fullScreen />
+      <Loading message={loadingMessage} fullScreen />
     }
   >
     <Component />
   </Suspense>
 )
 
-// Protected route wrapper
-const withAuth = (Component: React.ComponentType, requiredRole?: string) => (
+// Protected route wrapper with role-based access
+const withAuth = (Component: React.ComponentType, requiredRole?: UserRole) => (
   <AuthGuard requiredRole={requiredRole}>
     {withSuspense(Component)}
   </AuthGuard>
 )
 
+// Route configuration with code splitting
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -51,6 +63,27 @@ export const router = createBrowserRouter([
         path: 'settings',
         element: withAuth(Settings),
       },
+      {
+        path: 'watch/:id',
+        element: withAuth(Watch),
+      },
+      {
+        path: 'admin',
+        children: [
+          {
+            path: 'vimeo',
+            element: withAuth(VimeoPage, 'admin'),
+          },
+          {
+            path: 'analytics',
+            element: withAuth(AnalyticsPage, 'admin'),
+          },
+          {
+            path: 'performance',
+            element: withAuth(PerformanceDashboard, 'admin'),
+          }
+        ]
+      }
     ],
   },
   {

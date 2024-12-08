@@ -1,7 +1,7 @@
 import { createAPIError } from '@/lib/error'
 import { supabase } from '@/lib/supabase/client'
 import type { AuthSettings, Session } from '@/types/auth'
-import UAParser from 'ua-parser-js'
+import { UAParser } from 'ua-parser-js'
 
 const DEFAULT_SESSION_DURATION = 24 * 60 * 60 // 24 hours in seconds
 const MAX_SESSIONS_PER_USER = 5

@@ -1,12 +1,23 @@
 /// <reference lib="webworker" />
 
+import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { clientsClaim } from 'workbox-core'
 import { ExpirationPlugin } from 'workbox-expiration'
-import { createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching'
-import { registerRoute } from 'workbox-routing'
-import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies'
+import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
+import {
+  CacheFirst,
+  NetworkFirst,
+  StaleWhileRevalidate,
+} from 'workbox-strategies'
 
 declare const self: ServiceWorkerGlobalScope
+
+// Add SyncEvent type definition
+interface SyncEvent extends Event {
+  tag: string
+  waitUntil(promise: Promise<any>): void
+}
 
 // Take control of all pages immediately
 clientsClaim()
@@ -14,66 +25,106 @@ clientsClaim()
 // Precache all static assets
 precacheAndRoute(self.__WB_MANIFEST)
 
-// Set up App Shell-style routing
-const fileExtensionRegexp = new RegExp('/[^/?]+\\.[^/]+$')
-registerRoute(
-  // Return false if the route shouldn't be handled by this strategy
-  ({ request, url }: { request: Request; url: URL }) => {
-    if (request.mode !== 'navigate') {
-      return false
-    }
+// Clean up old caches
+cleanupOutdatedCaches()
 
-    if (url.pathname.startsWith('/_')) {
-      return false
-    }
+// Cache configuration
+const CACHE_NAMES = {
+  static: 'static-assets-v1',
+  images: 'images-v1',
+  api: 'api-v1',
+  pages: 'pages-v1',
+  videos: 'videos-v1'
+}
 
-    if (url.pathname.match(fileExtensionRegexp)) {
-      return false
-    }
-
-    return true
-  },
-  createHandlerBoundToURL('/index.html')
-)
-
-// Cache images
-registerRoute(
-  ({ request }) => request.destination === 'image',
-  new CacheFirst({
-    cacheName: 'images',
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 60,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-      }),
-    ],
-  })
-)
-
-// Cache API responses
+// API routes cache strategy
 registerRoute(
   ({ url }) => url.pathname.startsWith('/api/'),
-  new StaleWhileRevalidate({
-    cacheName: 'api-cache',
+  new NetworkFirst({
+    cacheName: CACHE_NAMES.api,
     plugins: [
       new ExpirationPlugin({
-        maxEntries: 100,
-        maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        maxEntries: 50,
+        maxAgeSeconds: 5 * 60, // 5 minutes
+      }),
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
       }),
     ],
   })
 )
 
-// Cache static assets (JS, CSS, fonts)
+// Static assets cache strategy
 registerRoute(
   ({ request }) =>
     request.destination === 'script' ||
     request.destination === 'style' ||
     request.destination === 'font',
-  new StaleWhileRevalidate({
-    cacheName: 'static-resources',
+  new CacheFirst({
+    cacheName: CACHE_NAMES.static,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 60,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
   })
 )
+
+// Image cache strategy
+registerRoute(
+  ({ request }) => request.destination === 'image',
+  new StaleWhileRevalidate({
+    cacheName: CACHE_NAMES.images,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+      }),
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+  })
+)
+
+// Video cache strategy
+registerRoute(
+  ({ request }) => request.destination === 'video',
+  new StaleWhileRevalidate({
+    cacheName: CACHE_NAMES.videos,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 24 * 60 * 60, // 1 day
+      }),
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+  })
+)
+
+// Page cache strategy
+const navigationRoute = new NavigationRoute(
+  new NetworkFirst({
+    cacheName: CACHE_NAMES.pages,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 10 * 60, // 10 minutes
+      }),
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+  })
+)
+
+registerRoute(navigationRoute)
 
 // Handle offline fallback
 self.addEventListener('install', (event) => {
@@ -84,6 +135,51 @@ self.addEventListener('install', (event) => {
         return cache.put(offlinePage, response)
       })
     })
+  )
+})
+
+// Background sync for failed requests
+self.addEventListener('sync', ((event: SyncEvent) => {
+  if (event.tag === 'sync-failed-requests') {
+    event.waitUntil(syncFailedRequests())
+  }
+}) as EventListener)
+
+async function syncFailedRequests() {
+  try {
+    const cache = await caches.open('failed-requests')
+    const requests = await cache.keys()
+
+    await Promise.all(
+      requests.map(async (request) => {
+        try {
+          const response = await fetch(request)
+          if (response.ok) {
+            await cache.delete(request)
+          }
+        } catch (error) {
+          console.error('Failed to sync request:', error)
+        }
+      })
+    )
+  } catch (error) {
+    console.error('Failed to sync failed requests:', error)
+  }
+}
+
+// Cache cleanup
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    Promise.all([
+      cleanupOutdatedCaches(),
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((cacheName) => !Object.values(CACHE_NAMES).includes(cacheName))
+            .map((cacheName) => caches.delete(cacheName))
+        )
+      }),
+    ])
   )
 })
 

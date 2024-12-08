@@ -5,10 +5,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
+  icon?: React.ReactNode
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', loading, disabled, children, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', loading, disabled, children, icon, ...props }, ref) => {
     const baseStyles = 'inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors'
     const sizeStyles = {
       sm: 'px-3 py-1.5 text-sm',
@@ -58,10 +59,33 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             />
           </svg>
         )}
+        {icon && <span className="mr-2">{icon}</span>}
         {children}
       </button>
     )
   }
 )
 
-Button.displayName = 'Button' 
+Button.displayName = 'Button'
+
+export interface IconButtonProps extends Omit<ButtonProps, 'children'> {
+  icon: React.ReactNode
+  'aria-label': string
+}
+
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  ({ icon, className, ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        className={cn('p-2', className)}
+        icon={icon}
+        {...props}
+      />
+    )
+  }
+)
+
+IconButton.displayName = 'IconButton'
+
+export default Button 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { IconButton } from '../ui/button'
-import { Slider } from '../ui/slider'
+import { IconButton } from '@/components/ui/Button'
+import { Slider } from '@/components/ui/Slider'
 import { formatDuration } from '@/lib/utils/format'
 import type { VideoQuality } from '@/types/vimeo'
 import QualitySelector from './QualitySelector'
@@ -79,9 +79,9 @@ export default function VideoControls({
           onMouseLeave={onProgressLeave}
         >
           <Slider
-            value={currentTime}
+            value={[currentTime]}
             max={duration}
-            onChange={onSeek}
+            onValueChange={(values) => onSeek(values[0])}
             className="h-1 bg-gray-600 group-hover:h-2 transition-all"
           />
         </div>
@@ -93,6 +93,7 @@ export default function VideoControls({
               icon={isPlaying ? 'pause' : 'play'}
               onClick={onPlayPause}
               className="text-white hover:text-indigo-400"
+              aria-label={isPlaying ? 'Pause video' : 'Play video'}
             />
             
             <div className="text-sm text-white">
@@ -114,6 +115,7 @@ export default function VideoControls({
                 isPiPActive ? 'text-indigo-400' : ''
               }`}
               disabled={!document.pictureInPictureEnabled}
+              aria-label={isPiPActive ? 'Exit picture in picture' : 'Enter picture in picture'}
             />
 
             <IconButton
@@ -122,6 +124,7 @@ export default function VideoControls({
               className={`text-white hover:text-indigo-400 ${
                 isFullscreen ? 'text-indigo-400' : ''
               }`}
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             />
           </div>
         </div>

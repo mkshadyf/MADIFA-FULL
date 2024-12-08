@@ -1,9 +1,10 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '@/components/providers/AuthProvider'
+import { useAuth } from '@/hooks/useAuth'
+import type { UserRole } from '@/types/auth'
 
 interface AuthGuardProps {
   children: React.ReactNode
-  requiredRole?: string
+  requiredRole?: UserRole
 }
 
 export default function AuthGuard({ children, requiredRole }: AuthGuardProps) {

@@ -1,40 +1,66 @@
-import React from 'react'
-import ErrorBoundary from '@/components/ui/error-boundary'
-import { createAPIError } from '@/lib/utils/api-error'
+import React, { useEffect, useCallback } from 'react'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { errorMonitoring } from '@/lib/services/error-monitoring'
+import { useToast } from '@/hooks/useToast'
 
 interface Props {
   children: React.ReactNode
 }
 
 export default function ErrorBoundaryProvider({ children }: Props) {
-  const handleError = (error: Error) => {
-    // Log error to your error tracking service (e.g., Sentry)
-    console.error('Caught in ErrorBoundaryProvider:', error)
+  const { showToast } = useToast()
 
-    // You can add additional error handling logic here
-    // For example, sending error reports to your backend
-    if (process.env.NODE_ENV === 'production') {
-      // Send error to your error tracking service
-      // sendErrorToTrackingService(error)
+  useEffect(() => {
+    // Initialize error monitoring
+    errorMonitoring.init(import.meta.env.VITE_SENTRY_DSN || '')
+
+    // Set up global error handlers
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      event.preventDefault()
+      errorMonitoring.captureError(event.reason, {
+        action: 'unhandledRejection'
+      })
+      showToast('An unexpected error occurred', 'error')
     }
-  }
+
+    const handleUnhandledError = (event: ErrorEvent) => {
+      event.preventDefault()
+      errorMonitoring.captureError(event.error, {
+        action: 'unhandledError'
+      })
+      showToast('An unexpected error occurred', 'error')
+    }
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    window.addEventListener('error', handleUnhandledError)
+
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      window.removeEventListener('error', handleUnhandledError)
+    }
+  }, [showToast])
+
+  const handleReset = useCallback(() => {
+    showToast('Attempting to recover from error...', 'info')
+  }, [showToast])
 
   return (
-    <ErrorBoundary onError={handleError}>
+    <ErrorBoundary onReset={handleReset} component="root">
       {children}
     </ErrorBoundary>
   )
 }
 
-// Add the provider to the main App component
+// HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
-  WrappedComponent: React.ComponentType<P>
+  WrappedComponent: React.ComponentType<P>,
+  componentName?: string
 ) {
   return function WithErrorBoundaryWrapper(props: P) {
     return (
-      <ErrorBoundaryProvider>
+      <ErrorBoundary component={componentName}>
         <WrappedComponent {...props} />
-      </ErrorBoundaryProvider>
+      </ErrorBoundary>
     )
   }
 } 

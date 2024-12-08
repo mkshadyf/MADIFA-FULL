@@ -1,165 +1,105 @@
-import React, { useState } from 'react'
-import { useDataFetch } from '@/hooks/useDataFetch'
-import { getPerformanceMetrics, getPerformanceStats } from '@/lib/services/performance'
-import type { PerformanceMetric } from '@/lib/services/performance'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts'
+import React from 'react'
+import { usePerformanceMetrics, type PerformanceMetrics } from '@/hooks/usePerformanceMetrics'
+import { RealTimeStats } from '@/components/analytics/RealTimeStats'
 
-const metricColors = {
-  CLS: '#3B82F6',
-  FCP: '#10B981',
-  FID: '#F59E0B',
-  LCP: '#EF4444',
-  TTFB: '#8B5CF6'
-}
+function PerformanceDashboard() {
+  const { data, isLoading, error } = usePerformanceMetrics()
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleString()
-}
+  if (isLoading) {
+    return <div>Loading performance metrics...</div>
+  }
 
-export function PerformanceDashboard() {
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date().toISOString()
-  })
+  if (error) {
+    return <div>Error loading performance metrics: {error.message}</div>
+  }
 
-  const { data: metrics } = useDataFetch(
-    ['performance-metrics', dateRange],
-    () => getPerformanceMetrics(dateRange)
-  )
+  if (!data) {
+    return <div>No performance data available</div>
+  }
 
-  const { data: stats } = useDataFetch(
-    'performance-stats',
-    () => getPerformanceStats()
-  )
+  const metrics: PerformanceMetrics = data
 
-  const chartData = metrics?.reduce((acc: any[], metric: PerformanceMetric) => {
-    const existingPoint = acc.find(
-      point => point.timestamp === metric.timestamp
-    )
-
-    if (existingPoint) {
-      existingPoint[metric.name] = metric.value
-    } else {
-      acc.push({
-        timestamp: metric.timestamp,
-        [metric.name]: metric.value
-      })
-    }
-
-    return acc
-  }, [])
+  const formatMetric = (value: number, unit?: string) => {
+    if (unit === 'ms') return `${Math.round(value)}ms`
+    if (unit === '%') return `${Math.round(value)}%`
+    if (unit === 'MB') return `${value.toFixed(1)} MB`
+    return value.toString()
+  }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Performance Metrics</h2>
-        <div className="flex space-x-4">
-          <input
-            type="date"
-            value={dateRange.startDate.split('T')[0]}
-            onChange={(e) =>
-              setDateRange(prev => ({
-                ...prev,
-                startDate: new Date(e.target.value).toISOString()
-              }))
-            }
-            className="px-3 py-2 border rounded-lg"
-            aria-label="Start date"
-          />
-          <input
-            type="date"
-            value={dateRange.endDate.split('T')[0]}
-            onChange={(e) =>
-              setDateRange(prev => ({
-                ...prev,
-                endDate: new Date(e.target.value).toISOString()
-              }))
-            }
-            className="px-3 py-2 border rounded-lg"
-            aria-label="End date"
-          />
-        </div>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Performance Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {stats && Object.entries(stats).map(([metric, data]) => (
-          <div
-            key={metric}
-            className="bg-white rounded-lg shadow p-4"
-          >
-            <h3 className="text-lg font-semibold mb-2">{metric}</h3>
-            <dl className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <dt className="text-gray-500">Average</dt>
-                <dd className="font-medium">{data.average.toFixed(2)}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Total Samples</dt>
-                <dd className="font-medium">{data.total}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Good</dt>
-                <dd className="text-green-600 font-medium">
-                  {((data.good / data.total) * 100).toFixed(1)}%
-                </dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Needs Improvement</dt>
-                <dd className="text-yellow-600 font-medium">
-                  {((data.needsImprovement / data.total) * 100).toFixed(1)}%
-                </dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Poor</dt>
-                <dd className="text-red-600 font-medium">
-                  {((data.poor / data.total) * 100).toFixed(1)}%
-                </dd>
-              </div>
-            </dl>
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-medium mb-4">Web Vitals</h2>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">FCP</span>
+              <span className="font-medium">{formatMetric(metrics.webVitals.fcp, 'ms')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">LCP</span>
+              <span className="font-medium">{formatMetric(metrics.webVitals.lcp, 'ms')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">FID</span>
+              <span className="font-medium">{formatMetric(metrics.webVitals.fid, 'ms')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">CLS</span>
+              <span className="font-medium">{metrics.webVitals.cls.toFixed(3)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">TTFB</span>
+              <span className="font-medium">{formatMetric(metrics.webVitals.ttfb, 'ms')}</span>
+            </div>
           </div>
-        ))}
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-medium mb-4">Cache Performance</h2>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Hit Rate</span>
+              <span className="font-medium">{formatMetric(metrics.resourceMetrics.cacheHitRate, '%')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Cache Size</span>
+              <span className="font-medium">{formatMetric(metrics.resourceMetrics.cacheSize, 'MB')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Cached Resources</span>
+              <span className="font-medium">{metrics.resourceMetrics.cachedResources}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-medium mb-4">Resource Optimization</h2>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Images Optimized</span>
+              <span className="font-medium">{metrics.resourceMetrics.imagesOptimized}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Space Saved</span>
+              <span className="font-medium">{formatMetric(metrics.resourceMetrics.spaceSaved, 'MB')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Avg. Compression</span>
+              <span className="font-medium">{formatMetric(metrics.resourceMetrics.averageCompression, '%')}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-lg font-semibold mb-4">Metrics Over Time</h3>
-        <div className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="timestamp"
-                tickFormatter={formatDate}
-                angle={-45}
-                textAnchor="end"
-              />
-              <YAxis />
-              <Tooltip
-                labelFormatter={formatDate}
-                formatter={(value: number) => [value.toFixed(2)]}
-              />
-              <Legend />
-              {Object.entries(metricColors).map(([metric, color]) => (
-                <Line
-                  key={metric}
-                  type="monotone"
-                  dataKey={metric}
-                  stroke={color}
-                  dot={false}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <h2 className="text-lg font-medium mb-4">Real-Time Analytics</h2>
+        <RealTimeStats stats={metrics.realTimeStats} />
       </div>
     </div>
   )
-} 
+}
+
+export default PerformanceDashboard 

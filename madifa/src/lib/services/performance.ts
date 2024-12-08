@@ -1,133 +1,127 @@
-import { createClient } from '@/lib/supabase/client'
-import { getCLS, getFCP, getFID, getLCP, getTTFB, type Metric } from 'web-vitals'
+import type { RealTimeStats } from '@/types/analytics'
 
-const supabase = createClient()
-
-export type PerformanceMetric = {
-  id?: string
-  name: string
-  value: number
-  rating: 'good' | 'needs-improvement' | 'poor'
-  delta: number
-  navigationType: string
-  route: string
-  timestamp: string
+interface WebVitals {
+  fcp: number
+  lcp: number
+  fid: number
+  cls: number
+  ttfb: number
 }
 
-const getRating = (name: string, value: number): PerformanceMetric['rating'] => {
-  switch (name) {
-    case 'CLS':
-      return value <= 0.1 ? 'good' : value <= 0.25 ? 'needs-improvement' : 'poor'
-    case 'FCP':
-      return value <= 1800 ? 'good' : value <= 3000 ? 'needs-improvement' : 'poor'
-    case 'FID':
-      return value <= 100 ? 'good' : value <= 300 ? 'needs-improvement' : 'poor'
-    case 'LCP':
-      return value <= 2500 ? 'good' : value <= 4000 ? 'needs-improvement' : 'poor'
-    case 'TTFB':
-      return value <= 800 ? 'good' : value <= 1800 ? 'needs-improvement' : 'poor'
-    default:
-      return 'needs-improvement'
-  }
+interface ResourceMetrics {
+  cacheHitRate: number
+  cacheSize: number
+  cachedResources: number
+  imagesOptimized: number
+  spaceSaved: number
+  averageCompression: number
 }
 
-const reportMetric = async (metric: Metric) => {
-  const performanceMetric: PerformanceMetric = {
-    name: metric.name,
-    value: metric.value,
-    rating: getRating(metric.name, metric.value),
-    delta: metric.delta,
-    navigationType: metric.navigationType,
-    route: window.location.pathname,
-    timestamp: new Date().toISOString()
-  }
-
-  try {
-    await supabase.from('performance_metrics').insert([performanceMetric])
-  } catch (error) {
-    console.error('Failed to report performance metric:', error)
-  }
+export function initPerformanceMonitoring() {
+  performanceService // Initialize the singleton
 }
 
-export const initPerformanceMonitoring = () => {
-  getCLS(reportMetric)
-  getFCP(reportMetric)
-  getFID(reportMetric)
-  getLCP(reportMetric)
-  getTTFB(reportMetric)
-}
-
-export const getPerformanceMetrics = async (
-  options: {
-    startDate?: string
-    endDate?: string
-    route?: string
-    metric?: string
-  } = {}
-) => {
-  let query = supabase.from('performance_metrics').select('*')
-
-  if (options.startDate) {
-    query = query.gte('timestamp', options.startDate)
-  }
-  if (options.endDate) {
-    query = query.lte('timestamp', options.endDate)
-  }
-  if (options.route) {
-    query = query.eq('route', options.route)
-  }
-  if (options.metric) {
-    query = query.eq('name', options.metric)
+class PerformanceService {
+  private observer: PerformanceObserver | null = null
+  private metrics: WebVitals = {
+    fcp: 0,
+    lcp: 0,
+    fid: 0,
+    cls: 0,
+    ttfb: 0
   }
 
-  const { data, error } = await query.order('timestamp', { ascending: false })
-  if (error) throw error
-  return data
-}
-
-export const getPerformanceStats = async () => {
-  const { data, error } = await supabase
-    .from('performance_metrics')
-    .select('name, value, rating')
-    .order('timestamp', { ascending: false })
-    .limit(1000)
-
-  if (error) throw error
-
-  return data.reduce((acc, metric) => {
-    if (!acc[metric.name]) {
-      acc[metric.name] = {
-        average: 0,
-        good: 0,
-        needsImprovement: 0,
-        poor: 0,
-        total: 0
-      }
+  constructor() {
+    if (typeof window !== 'undefined') {
+      this.initializeObserver()
     }
+  }
 
-    acc[metric.name].average =
-      (acc[metric.name].average * acc[metric.name].total + metric.value) /
-      (acc[metric.name].total + 1)
-    acc[metric.name].total++
+  private initializeObserver() {
+    this.observer = new PerformanceObserver((list) => {
+      const entries = list.getEntries()
+      entries.forEach((entry) => {
+        switch (entry.entryType) {
+          case 'paint':
+            if (entry.name === 'first-contentful-paint') {
+              this.metrics.fcp = entry.startTime
+            }
+            break
+          case 'largest-contentful-paint':
+            this.metrics.lcp = entry.startTime
+            break
+          case 'first-input':
+            this.metrics.fid = entry.duration
+            break
+          case 'layout-shift':
+            if (!(entry as any).hadRecentInput) {
+              this.metrics.cls += (entry as any).value
+            }
+            break
+          case 'navigation':
+            this.metrics.ttfb = entry.startTime
+            break
+        }
+      })
+    })
 
-    switch (metric.rating) {
-      case 'good':
-        acc[metric.name].good++
-        break
-      case 'needs-improvement':
-        acc[metric.name].needsImprovement++
-        break
-      case 'poor':
-        acc[metric.name].poor++
-        break
+    this.observer.observe({
+      entryTypes: ['paint', 'largest-contentful-paint', 'first-input', 'layout-shift', 'navigation']
+    })
+  }
+
+  async getRealTimeStats(): Promise<RealTimeStats> {
+    // In a real app, this would fetch from your analytics service
+    return {
+      currentViewers: Math.floor(Math.random() * 100),
+      peakViewers: Math.floor(Math.random() * 200),
+      lastMinuteEvents: [],
+      activeRegions: [],
+      qualityDistribution: {
+        '1080p': 45,
+        '720p': 35,
+        '480p': 20
+      },
+      bufferingCount: Math.floor(Math.random() * 10)
     }
+  }
 
-    return acc
-  }, {} as Record<string, {
-    average: number
-    good: number
-    needsImprovement: number
-    poor: number
-    total: number
-  }>)
-} 
+  async getResourceMetrics(): Promise<ResourceMetrics> {
+    // In a real app, this would calculate from actual cache and resource data
+    return {
+      cacheHitRate: 78,
+      cacheSize: 24.5,
+      cachedResources: 342,
+      imagesOptimized: 156,
+      spaceSaved: 45.2,
+      averageCompression: 64
+    }
+  }
+
+  async getWebVitals(): Promise<WebVitals> {
+    return { ...this.metrics }
+  }
+
+  async optimizeImage(
+    src: string,
+    options: {
+      width?: number
+      height?: number
+      quality?: number
+      format?: 'webp' | 'jpeg' | 'png' | 'avif'
+      blur?: boolean
+    }
+  ): Promise<string> {
+    // In a real app, this would call your image optimization service
+    // For now, just return the original source
+    return src
+  }
+
+  disconnect() {
+    if (this.observer) {
+      this.observer.disconnect()
+    }
+  }
+}
+
+export const performanceService = new PerformanceService() 
