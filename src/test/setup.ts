@@ -7,11 +7,11 @@ import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 
 // Mock window.fetch
-const originalFetch = global.fetch
-global.fetch = vi.fn()
+const originalFetch = globalThis.fetch
+globalThis.fetch = vi.fn()
 
 // Mock matchMedia
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation(query => ({
     matches: false,
@@ -26,14 +26,14 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock ResizeObserver
-window.ResizeObserver = vi.fn().mockImplementation(() => ({
+globalThis.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }))
 
 // Mock IntersectionObserver
-window.IntersectionObserver = vi.fn().mockImplementation(() => ({
+globalThis.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   unobserve: vi.fn(),
   disconnect: vi.fn(),
@@ -43,5 +43,5 @@ window.IntersectionObserver = vi.fn().mockImplementation(() => ({
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
-  global.fetch = originalFetch
+  globalThis.fetch = originalFetch
 })

@@ -21,7 +21,7 @@ export interface AuthContextValue {
   isAuthenticated: boolean
   error: Error | null
   signIn: (email: string, password: string) => Promise<void>
-  signInWithProvider: (provider: 'google' | 'github') => Promise<void>
+  signInWithProvider: (provider: 'google') => Promise<void>
   signUp: (email: string, password: string, fullName: string) => Promise<void>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>

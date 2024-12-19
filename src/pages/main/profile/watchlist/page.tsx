@@ -5,6 +5,7 @@ import { getUserWatchlist } from '@/lib/services/user-interactions'
 import type { Content } from '@/lib/types/content'
 import ContentGrid from '@/components/ui/content-grid'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { logger } from '@/lib/logger'
 
 export default function WatchlistPage() {
   const { user } = useAuth()
@@ -29,10 +30,10 @@ export default function WatchlistPage() {
       }
     }
 
-    loadWatchlist()
+    void loadWatchlist()
   }, [user])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="min-h-screen bg-gray-900 py-12">
@@ -42,7 +43,7 @@ export default function WatchlistPage() {
         {error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : watchlist.length > 0 ? (
-          <ContentGrid content={watchlist} />
+          <ContentGrid items={watchlist} />
         ) : (
           <div className="py-12 text-center text-gray-400">
             Your watchlist is empty. Add content to watch later!

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
-import { useRouter } from 'react-router-dom'
+import { useRouter } from 'next/router'
 
 import { getUserRatings } from '@/lib/services/user-interactions'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { logger } from '@/lib/logger'
 
 interface RatedContent {
   content_id: string
@@ -36,10 +37,10 @@ export default function RatingsPage() {
       }
     }
 
-    loadRatings()
+    void loadRatings()
   }, [user])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="min-h-screen bg-gray-900 py-12">

@@ -76,7 +76,7 @@ export default function SubscriptionPage() {
     }
   }
 
-  if (authLoading) return <Loading />
+  if (authLoading) return <LoadingSpinner />
 
   return (
     <div className="min-h-screen bg-gray-900">

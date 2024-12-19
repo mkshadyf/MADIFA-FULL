@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
@@ -44,7 +44,7 @@ export default function BrowsePage () {
 
   const { content: filteredContent, loading: filterLoading } = useFilteredContent()
 
-  all' ? content : filteredContent
+  const displayContent = selectedCategory === 'all' ? content : filteredContent
 
   return (
     <div className="space-y-8">

@@ -3,15 +3,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useToast } from '@/hooks/useToast'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-
+ 
 export default function AuthCallback () {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { showToast } = useToast()
 
   useEffect(() => {
-    error')
-    error_description')
+    const error = searchParams.get('error')
+    const errorDescription = searchParams.get('error_description')
 
     if (error) {
       showToast(errorDescription || 'Authentication failed', 'error')
@@ -24,5 +24,5 @@ export default function AuthCallback () {
     navigate('/onboarding')
   }, [navigate, searchParams, showToast])
 
-  return <LoadingState text="Completing authentication..." />
+  return <LoadingSpinner text="Completing authentication..." />
 }

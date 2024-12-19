@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
+import { logger } from '@/lib/logger'
 
-import type { SubscriptionStatus, SubscriptionTier } from '@/types/subscription'
 import {
-  cancelSubscription,
-  reactivateSubscription,
+  subscriptionService,
 } from '@/lib/services/subscription'
 import { createClient } from '@/lib/supabase/client'
 import type { UserSubscription } from '@/lib/types/subscription'
@@ -35,14 +34,14 @@ export default function ManageSubscription() {
 
         setSubscription(data)
       } catch (error) {
-        console.error('Error fetching subscription:', error)
+        logger.error('Error fetching subscription:', error)
         setError('Failed to load subscription details')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchSubscription()
+    void fetchSubscription()
   }, [user])
 
   const handleCancelSubscription = async () => {
@@ -53,19 +52,19 @@ export default function ManageSubscription() {
     setMessage(null)
 
     try {
-      await cancelSubscription(subscription.id)
+      await subscriptionService.cancelSubscription(subscription.id)
       setSubscription(prev =>
         prev
           ? {
               ...prev,
-              status: 'inactive' as SubscriptionStatus,
+              status: 'inactive',
               cancel_at_period_end: true,
             }
           : null
       )
       setMessage('Subscription cancelled successfully')
     } catch (error) {
-      console.error('Error cancelling subscription:', error)
+      logger.error('Error cancelling subscription:', error)
       setError('Failed to cancel subscription')
     } finally {
       setActionLoading(false)
@@ -80,7 +79,7 @@ export default function ManageSubscription() {
     setMessage(null)
 
     try {
-      await reactivateSubscription(subscription.id)
+      await subscriptionService.reactivateSubscription(subscription.id)
       setSubscription(prev =>
         prev
           ? {
@@ -92,7 +91,7 @@ export default function ManageSubscription() {
       )
       setMessage('Subscription reactivated successfully')
     } catch (error) {
-      console.error('Error reactivating subscription:', error)
+        logger.error('Error reactivating subscription:', error)
       setError('Failed to reactivate subscription')
     } finally {
       setActionLoading(false)
@@ -123,7 +122,7 @@ export default function ManageSubscription() {
               <div className="grid grid-cols-2 gap-4 text-gray-300">
                 <div>
                   <p className="text-sm font-medium">Plan</p>
-                  <p className="text-lg">{subscription.tier as string}</p>
+                  <p className="text-lg">{subscription.tier.name}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Status</p>
@@ -156,6 +155,7 @@ export default function ManageSubscription() {
               {subscription.status === 'active' &&
               !subscription.cancel_at_period_end ? (
                 <button
+                  type="button"
                   onClick={handleCancelSubscription}
                   disabled={actionLoading}
                   className="w-full rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
@@ -165,6 +165,7 @@ export default function ManageSubscription() {
               ) : subscription.status === 'inactive' ||
                 subscription.cancel_at_period_end ? (
                 <button
+                  type="button"
                   onClick={handleReactivateSubscription}
                   disabled={actionLoading}
                   className="w-full rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"

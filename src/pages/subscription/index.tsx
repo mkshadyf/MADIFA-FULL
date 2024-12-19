@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { applovinService } from '@/lib/services/applovin'
 import { useAuth } from '@/hooks/useAuth'
+import { logger } from '@/lib/logger'
 
 const plans = [
   {
@@ -44,8 +45,8 @@ type PlanId = (typeof plans)[number]['id']
 
 export default function SubscriptionPage() {
   const navigate = useNavigate()
-  const { user, profile, updateProfile } = useAuth()
-  const [selectedPlan, setSelectedPlan] = React.useState<PlanId>(
+  const { profile, updateProfile } = useAuth()
+  const [selectedPlan] = React.useState<PlanId>(
     (profile?.subscription_tier as PlanId) || 'free'
   )
   const [loading, setLoading] = React.useState(false)

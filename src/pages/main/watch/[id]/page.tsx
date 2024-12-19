@@ -5,10 +5,11 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '@/providers/AuthProvider'
 
 import type { VimeoVideo } from '@/types/vimeo'
-import { getVideoDetails } from '@/lib/services/vimeo'
+import { vimeoService } from '@/lib/services/vimeo'
 import { getWatchHistory } from '@/lib/services/watch-history'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import VimeoPlayer from '@/components/ui/vimeo-player'
+import { logger } from '@/lib/logger'
 
 export default function WatchPage() {
   const { id } = useParams()
@@ -21,8 +22,8 @@ export default function WatchPage() {
     const loadVideo = async () => {
       try {
         // Get video details from Vimeo
-        const videoDetails = await getVideoDetails(id as string)
-        setVideo(videoDetails)
+        const videoDetails = await vimeoService.getVideoDetails(id as string) as VimeoVideo
+        setVideo(videoDetails as VimeoVideo)
 
         // Get watch progress if user is logged in
         if (user?.id) {
@@ -39,10 +40,10 @@ export default function WatchPage() {
       }
     }
 
-    loadVideo()
+    void loadVideo()
   }, [id, user?.id])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   if (!video) return <div>Video not found</div>
 

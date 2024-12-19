@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
-import { useRouter, useSearchParams } from 'react-router-dom'
+import { useRouter } from 'next/router'
 
 import { verifyPayment } from '@/lib/services/payment'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useSearchParams } from 'next/navigation'
+import { logger } from '@/lib/logger'
 
 export default function SubscriptionSuccess () {
   const [verifying, setVerifying] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const searchParams = useSearchParams()
+    const searchParams = useSearchParams()
   const { user } = useAuth()
-  session_id')
+  const sessionId = searchParams.get('session_id')
 
   useEffect(() => {
     const verify = async () => {
@@ -26,7 +28,7 @@ export default function SubscriptionSuccess () {
         if (result.success) {
           // Wait a moment to show success message
           setTimeout(() => {
-            router.push('/browse')
+           void router.push('/browse')
           }, 2000)
         } else {
           throw new Error('Payment verification failed')
@@ -39,11 +41,11 @@ export default function SubscriptionSuccess () {
       }
     }
 
-    verify()
+    void verify()
   }, [sessionId, user, router])
 
   if (verifying) {
-    return <Loading />
+    return <LoadingSpinner />
   }
 
   return (

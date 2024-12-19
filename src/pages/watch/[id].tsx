@@ -3,8 +3,8 @@ import { useRouter } from 'next/router'
 
 import { supabase } from '@/lib/supabase/client'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
-import ErrorBoundary from '@/components/common/ErrorBoundary'
-import AuthGuard from '@/components/guards/AuthGuard'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { AuthGuard } from '@/components/guards/AuthGuard'
 import { VideoPlayer } from '@/components/video/VideoPlayer'
 
 interface VideoData {
@@ -21,7 +21,7 @@ export default function WatchPage () {
   const [video, setVideo] = useState<VideoData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  (max-width: 768px)')
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -41,7 +41,7 @@ export default function WatchPage () {
       }
     }
 
-    fetchVideo()
+    void fetchVideo()
   }, [id])
 
   if (error) {
@@ -62,7 +62,8 @@ export default function WatchPage () {
   }
 
   return (
-    <AuthGuard>
+    <div>
+      <AuthGuard allowedRoles={['user', 'admin']} />
       <ErrorBoundary>
         <div className={`container mx-auto ${isMobile ? 'px-4' : 'px-8'}`}>
           {isLoading ? (
@@ -78,6 +79,6 @@ export default function WatchPage () {
           ) : null}
         </div>
       </ErrorBoundary>
-    </AuthGuard>
+    </div>
   )
 }

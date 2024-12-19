@@ -130,13 +130,13 @@ export interface Database {
       }
     }
     Views: {
-      [_ in never]: never
+      [key: string]: never
     }
     Functions: {
-      [_ in never]: never
+      [key: string]: never
     }
     Enums: {
-      [_ in never]: never
+      [key: string]: never
     }
   }
 }

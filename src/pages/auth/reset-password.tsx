@@ -1,17 +1,17 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { authService } from '@/lib/services/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
+import { logger } from '@/lib/logger'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const { showToast } = useToast()
+   const { showToast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

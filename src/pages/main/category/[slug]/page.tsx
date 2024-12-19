@@ -8,6 +8,7 @@ import type { Content } from '@/lib/supabase/types'
 import type { Category } from '@/lib/types/content'
 import CategoryNavigation from '@/components/ui/category-navigation'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { logger } from '@/lib/logger'
 
 interface CategoryPageProps {
   params: {
@@ -55,11 +56,11 @@ export default function CategoryPage({ params }: CategoryPageProps) {
       }
     }
 
-    fetchCategoryContent()
+    void fetchCategoryContent()
   }, [params.slug])
 
   if (loading) {
-    return <Loading />
+    return <LoadingSpinner />
   }
 
   if (error || !category) {

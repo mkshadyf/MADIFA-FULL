@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/AuthProvider'
 
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/lib/types/content'
+import { logger } from '@/lib/logger'
 
 export default function Favorites() {
   const { user } = useAuth()
@@ -11,7 +12,7 @@ export default function Favorites() {
   const supabase = createClient()
 
   useEffect(() => {
-    if (user) loadFavorites()
+    if (user) void loadFavorites()
   }, [user])
 
   const loadFavorites = async () => {
@@ -57,7 +58,7 @@ export default function Favorites() {
         })
 
         // Reload favorites to get the full content data
-        loadFavorites()
+        void loadFavorites()
       }
     } catch (error) {
       logger.error('Error toggling favorite:', error)

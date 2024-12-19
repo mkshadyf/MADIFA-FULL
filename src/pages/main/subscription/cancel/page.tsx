@@ -1,4 +1,4 @@
-import { useRouter } from 'react-router-dom'
+import { useRouter } from 'next/router'
 
 export default function SubscriptionCancel() {
   const router = useRouter()

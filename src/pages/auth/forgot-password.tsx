@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { authService } from '@/lib/services/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
+import { logger } from '@/lib/logger'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')

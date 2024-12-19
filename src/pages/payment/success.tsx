@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { useAuth } from '@/providers/AuthProvider'
 import { useNavigate } from 'react-router-dom'
 
 import { useToast } from '@/hooks/useToast'
@@ -11,7 +10,7 @@ export default function PaymentSuccess() {
   useEffect(() => {
     showToast('Payment successful! Your subscription is now active.', 'success')
     // Redirect to browse page after 3 seconds
-    const timer = setTimeout(() => {
+      const timer = setTimeout(() => {
       navigate('/browse')
     }, 3000)
 

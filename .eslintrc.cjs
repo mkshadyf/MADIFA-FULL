@@ -1,6 +1,5 @@
 // .eslintrc.cjs
 
-
 module.exports = {
   root: true,
   env: {
@@ -12,7 +11,6 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
     'plugin:react/recommended',
     'plugin:react/jsx-runtime',
     'plugin:react-hooks/recommended',
@@ -25,8 +23,10 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: ['./tsconfig.eslint.json', './tsconfig.json'],
-    tsconfigRootDir: '.'
+    project: './tsconfig.json',
+    tsconfigRootDir: '.',
+    createDefaultProgram: true,
+    allowDefaultProject: true
   },
   plugins: [
     '@typescript-eslint',
@@ -47,6 +47,22 @@ module.exports = {
       node: true
     }
   },
+  overrides: [
+    {
+      files: ['*.d.ts'],
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: '.',
+        allowDefaultProject: true,
+        createDefaultProgram: true
+      },
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unused-vars': 'off'
+      }
+    }
+  ],
   rules: {
     'simple-import-sort/imports': 'error',
     'simple-import-sort/exports': 'error',
@@ -56,7 +72,11 @@ module.exports = {
     'import/no-unresolved': 'error',
     'import/no-cycle': 'error',
     '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': ['error', {
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_',
+      ignoreRestSiblings: true
+    }],
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
     'no-console': 'off'

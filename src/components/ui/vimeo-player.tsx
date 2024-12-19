@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import Player from '@vimeo/player'
 
-import { getSubscriptionStatus } from '@/lib/services/subscription'
+import { subscriptionService } from '@/lib/services/subscription'
 import { updateWatchProgress } from '@/lib/services/watch-history'
 
 interface VimeoPlayerProps {
@@ -26,9 +26,17 @@ export default function VimeoPlayer ({
 
       // Check subscription if required
       if (requiresSubscription && user) {
-        const subscription = await getSubscriptionStatus(user.id)
+        const subscription = await subscriptionService.getCurrentSubscription(user.id)
         if (subscription?.status !== 'active') {
-          // Show subscription required message
+          playerRef.current.innerHTML = `
+            <div class="flex h-full w-full flex-col items-center justify-center bg-gray-900 p-4 text-center">
+              <h2 class="mb-4 text-2xl font-bold text-white">Premium Content</h2>
+              <p class="mb-6 text-gray-300">This content requires an active subscription.</p>
+              <a href="/subscription" class="rounded-md bg-indigo-600 px-6 py-2 text-white hover:bg-indigo-700">
+                Subscribe Now
+              </a>
+            </div>
+          `
           return
         }
       }
@@ -49,19 +57,19 @@ export default function VimeoPlayer ({
 
       // Set start time if provided
       if (startTime > 0) {
-        playerInstance.current.setCurrentTime(startTime)
+        await playerInstance.current?.setCurrentTime(startTime)
       }
 
       // Track progress for logged-in users
       if (user?.id) {
-         percent: number }) => {
-          updateWatchProgress(user.id, videoId, data.percent)
+        const handleTimeUpdate = (data: { seconds: number }) => {
+          void updateWatchProgress(user.id, videoId, data.seconds)
         }
-        playerInstance.current.on('timeupdate', handleTimeUpdate)
+        playerInstance.current?.on('timeupdate', handleTimeUpdate)
       }
     }
 
-    initPlayer()
+    void initPlayer()
 
     return () => {
       playerInstance.current?.destroy()

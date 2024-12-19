@@ -6,6 +6,7 @@ export type SubscriptionStatus =
   | 'past_due'
   | 'incomplete'
   | 'trialing'
+  | 'inactive'
 
 export type PaymentMethodType = 'card' | 'paypal' | 'bank_transfer'
 

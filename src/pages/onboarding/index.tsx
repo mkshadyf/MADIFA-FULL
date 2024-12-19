@@ -7,7 +7,7 @@ import StepIndicator from '@/components/onboarding/StepIndicator'
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState('welcome')
-
+ 
   return (
     <OnboardingLayout>
       <StepIndicator steps={steps} currentStep={currentStep} />

@@ -7,6 +7,7 @@ import { getCategoryContent } from '@/lib/services/categories'
 import type { Content } from '@/lib/supabase/types'
 import CategoryNavigation from '@/components/ui/category-navigation'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { logger } from '@/lib/logger'
 
 export default function CategoryPage(): JSX.Element {
   const [content, setContent] = useState<Content[]>([])
@@ -24,14 +25,14 @@ export default function CategoryPage(): JSX.Element {
         const data = await getCategoryContent(category)
         setContent(data)
       } catch (err) {
-        console.error('Error fetching category content:', err)
+        logger.error('Error fetching category content:', err)
         setError(err instanceof Error ? err.message : 'Failed to load content')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchContent()
+    void fetchContent()
   }, [category])
 
   if (loading) {
