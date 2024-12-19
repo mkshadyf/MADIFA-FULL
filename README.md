@@ -57,22 +57,26 @@ VITE_SENTRY_DSN=your_sentry_dsn
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/your-username/madifa.git
 cd madifa
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Start development server:
+
 ```bash
 npm run dev
 ```
 
 4. Build for production:
+
 ```bash
 npm run build
 ```
@@ -80,23 +84,25 @@ npm run build
 ## Testing
 
 - Run unit tests:
+
 ```bash
 npm test
 ```
 
 - Run E2E tests:
+
 ```bash
 npm run test:e2e
 ```
 
 - Run tests with UI:
+
 ```bash
 npm run test:ui
 ```
 
 ## Project Structure
 
-```
 madifa/
 ├── src/
 │   ├── components/     # Reusable UI components
@@ -109,21 +115,25 @@ madifa/
 ├── public/            # Static assets
 ├── e2e/              # End-to-end tests
 └── scripts/          # Build and utility scripts
+
 ```
 
 ## Core Components
 
 ### Authentication
+
 - `AuthProvider`: Manages user authentication state
 - `AuthGuard`: Protects routes based on user roles
 - `useAuth`: Hook for authentication operations
 
 ### Video Management
+
 - `BatchUploader`: Handles multiple video uploads
 - `ThumbnailManager`: Manages video thumbnails
 - `SecurityManager`: Controls video access settings
 
 ### Analytics
+
 - `RealTimeStats`: Shows live viewer statistics
 - `WorldMap`: Displays geographic distribution
 - `PerformanceDashboard`: Monitors application metrics
@@ -131,6 +141,7 @@ madifa/
 ## API Integration
 
 ### Vimeo Service
+
 ```typescript
 import { vimeoService } from '@/lib/services/vimeo'
 
@@ -149,6 +160,7 @@ await vimeoService.generateSignedUrl(videoId, {
 ```
 
 ### API Service
+
 ```typescript
 import { apiService } from '@/lib/services/api'
 
@@ -184,4 +196,4 @@ The application implements several security measures:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

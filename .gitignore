@@ -1,0 +1,106 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build output
+dist
+dist-ssr
+*.local
+build
+out
+.next
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Testing
+coverage
+.nyc_output
+playwright-report
+test-results
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Cache directories
+.cache
+.mf
+.rollup.cache
+tsconfig.tsbuildinfo
+.eslintcache
+.stylelintcache
+.npm
+.yarn
+
+# Platform specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific
+public/world-110m.json
+public/assets/generated/*
+stats.html
+.env.backup
+*.backup
+*.bak
+
+# PWA
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/sw.js.map
+**/public/workbox-*.js.map
+**/public/worker-*.js.map
+
+# Sentry
+.sentryclirc
+sentry.properties
+
+# Supabase
+**/supabase/.branches
+**/supabase/.temp
+.supabase
+
+# Vite
+.vite
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

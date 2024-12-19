@@ -1,0 +1,60 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo "${YELLOW}🚀 Running pre-push checks...${NC}"
+
+# Function to handle errors
+handle_error() {
+  echo "${RED}❌ $1 failed${NC}"
+  exit 1
+}
+
+# Run full validation
+echo "${YELLOW}🔍 Running full validation...${NC}"
+pnpm run validate || handle_error "Validation"
+
+# Run tests with coverage and enforce minimum coverage
+echo "${YELLOW}🧪 Running tests with coverage...${NC}"
+pnpm run test:coverage || handle_error "Test coverage"
+
+# Check minimum test coverage
+coverage_file="coverage/coverage-summary.json"
+if [ -f "$coverage_file" ]; then
+  lines_coverage=$(jq '.total.lines.pct' "$coverage_file")
+  if (( $(echo "$lines_coverage < 80" | bc -l) )); then
+    echo "${RED}❌ Test coverage ($lines_coverage%) is below minimum requirement (80%)${NC}"
+    exit 1
+  fi
+fi
+
+# Analyze bundle size
+echo "${YELLOW}📦 Analyzing bundle size...${NC}"
+pnpm run analyze || handle_error "Bundle analysis"
+
+# Check for outdated dependencies
+echo "${YELLOW}📚 Checking dependencies...${NC}"
+pnpm run check-deps || handle_error "Dependency check"
+
+# Run security audit
+echo "${YELLOW}🔒 Running security audit...${NC}"
+pnpm audit || handle_error "Security audit"
+
+# Run dependency cruiser to check for architectural violations
+echo "${YELLOW}🏗 Checking architecture...${NC}"
+pnpm dlx dependency-cruiser src || handle_error "Architecture check"
+
+# Check for memory leaks
+echo "${YELLOW}💾 Checking for memory leaks...${NC}"
+pnpm run analyze:memory || handle_error "Memory leak check"
+
+# Validate types
+echo "${YELLOW}📝 Validating types...${NC}"
+pnpm run typecheck || handle_error "Type validation"
+
+echo "${GREEN}✅ All pre-push checks passed!${NC}"
