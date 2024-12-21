@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-
+import { fetchMetrics } from '../manage/page'
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import type { Database } from '@/lib/database.types'
 import ContentCategories from '@/components/admin/content-categories'
 import ContentList from '@/components/admin/content-list'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 type Content = Database['public']['Tables']['content']['Row']
 
@@ -69,7 +69,7 @@ export default function ContentManagement() {
           popularContent: popularContent || [],
         })
       } catch (error) {
-        logger.error('Error fetching content metrics:', error)
+        console.error('Error fetching content metrics:', error)
       } finally {
         setLoading(false)
       }
@@ -78,7 +78,7 @@ export default function ContentManagement() {
     fetchMetrics()
   }, [])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">
@@ -93,6 +93,7 @@ export default function ContentManagement() {
             className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white"
           />
           <select
+            title="Select a category"
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
             className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white"
@@ -181,7 +182,10 @@ export default function ContentManagement() {
           content={metrics?.popularContent || []}
           onRefresh={() => {
             setLoading(true)
-            fetchMetrics()
+            void fetchMetrics().catch((error: any) => {
+              console.error('Error refreshing metrics:', error)
+              setLoading(false)
+            })
           }}
         />
       </div>

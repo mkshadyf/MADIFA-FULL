@@ -10,7 +10,7 @@ export function useVimeoPrivacy() {
       setUpdating(true)
       await updateVideoPrivacy(videoId, makePublic)
     } catch (error) {
-      logger.error('Error updating video privacy:', error)
+      console.error('Error updating video privacy:', error)
       throw error
     } finally {
       setUpdating(false)

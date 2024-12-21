@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { motion } from 'framer-motion'
@@ -7,6 +8,7 @@ import type { OnboardingState } from '@/lib/services/onboarding'
 import { subscriptionService } from '@/lib/services/subscription'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
+
 
 interface PaymentStepProps {
   onNext: (data: Partial<OnboardingState>) => Promise<void>
@@ -40,7 +42,7 @@ interface PaymentData {
   signature?: string
 }
 
-export default function PaymentStep ({ onNext, onBack, data }: PaymentStepProps) {
+export default function PaymentStep({ onNext, onBack, data }: PaymentStepProps) {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -70,7 +72,7 @@ export default function PaymentStep ({ onNext, onBack, data }: PaymentStepProps)
 
       setPlan(selectedPlan)
     } catch (error) {
-      logger.error('Error loading plan details:', error)
+      console.error('Error loading plan details:', error)
       showToast('Failed to load plan details', 'error')
     } finally {
       setIsLoading(false)
@@ -93,10 +95,7 @@ export default function PaymentStep ({ onNext, onBack, data }: PaymentStepProps)
     try {
       setIsProcessing(true)
 
-      '
-       ')
-      '
-       ') || ''
+      const [firstName, lastName] = (profile?.full_name || '').split(' ')
 
       const paymentData: PaymentData = {
         merchant_id: import.meta.env.VITE_PAYFAST_MERCHANT_ID,
@@ -104,8 +103,8 @@ export default function PaymentStep ({ onNext, onBack, data }: PaymentStepProps)
         return_url: import.meta.env.VITE_PAYFAST_RETURN_URL,
         cancel_url: import.meta.env.VITE_PAYFAST_CANCEL_URL,
         notify_url: import.meta.env.VITE_PAYFAST_NOTIFY_URL,
-        name_first: firstName,
-        name_last: lastName,
+        name_first: firstName || '',
+        name_last: lastName || '',
         email_address: user.email || '',
         m_payment_id: `${user.id}_${plan.id}_${Date.now()}`,
         amount: plan.price.toString(),
@@ -121,7 +120,7 @@ export default function PaymentStep ({ onNext, onBack, data }: PaymentStepProps)
       paymentData.signature = generatePaymentSignature(paymentData)
 
       // Create form and submit
-      form')
+      const form = document.createElement('form')
       form.method = 'POST'
       form.action =
         import.meta.env.VITE_PAYFAST_TEST_MODE === 'true'
@@ -129,7 +128,7 @@ export default function PaymentStep ({ onNext, onBack, data }: PaymentStepProps)
           : 'https://www.payfast.co.za/eng/process'
 
       Object.entries(paymentData).forEach(([key, value]) => {
-        input')
+        const input = document.createElement('input')
         input.type = 'hidden'
         input.name = key
         input.value = value
@@ -139,7 +138,7 @@ export default function PaymentStep ({ onNext, onBack, data }: PaymentStepProps)
       document.body.appendChild(form)
       form.submit()
     } catch (error) {
-      logger.error('Payment error:', error)
+      console.error('Payment error:', error)
       showToast('Payment processing failed', 'error')
       setIsProcessing(false)
     }

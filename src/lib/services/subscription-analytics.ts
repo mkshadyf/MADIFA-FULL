@@ -39,7 +39,7 @@ export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
 
     return metrics
   } catch (error) {
-    logger.error('Error fetching subscription metrics:', error)
+    console.error('Error fetching subscription metrics:', error)
     throw error
   }
 }

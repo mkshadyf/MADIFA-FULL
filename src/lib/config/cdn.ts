@@ -1,4 +1,4 @@
-import type { CDNConfig } from '@/lib/types/streaming'
+import type { CDNConfig } from '@/types/streaming'
 
 export const cdnConfig: CDNConfig = {
   provider: 'cloudflare',

@@ -1,5 +1,6 @@
+import React from "react"
 import { useAuth } from '@/providers/AuthProvider'
-import { usePathname, useRouter } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard' },
@@ -9,13 +10,13 @@ const navigation = [
 ]
 
 export default function AdminHeader() {
-  const router = useRouter()
-  const pathname = usePathname()
+  const navigate = useNavigate()
+  const pathname = useLocation().pathname
   const { signOut } = useAuth()
 
   const handleSignOut = async () => {
     await signOut()
-    router.push('/signin')
+    navigate('/signin')
   }
 
   return (
@@ -29,7 +30,7 @@ export default function AdminHeader() {
                 {navigation.map(item => (
                   <button
                     key={item.name}
-                    onClick={() => router.push(item.href)}
+                    onClick={() => navigate(item.href)}
                     className={`rounded-md px-3 py-2 text-sm font-medium ${
                       pathname === item.href
                         ? 'bg-gray-900 text-white'
@@ -44,7 +45,7 @@ export default function AdminHeader() {
           </div>
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => router.push('/browse')}
+              onClick={() => navigate('/browse')}
               className="text-sm text-gray-300 hover:text-white"
             >
               View Site

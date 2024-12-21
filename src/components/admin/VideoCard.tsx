@@ -1,16 +1,23 @@
 import React, { useState } from 'react'
 import { Dialog } from '@headlessui/react'
 
-import type { ContentSecurity, VimeoVideo } from '@/types/vimeo'
+import type { VimeoVideo } from '@/types/vimeo'
 import { Button } from '@/components/ui/button'
 
 import { VideoPlayer } from '../video/VideoPlayer'
 import { SecurityManager } from './SecurityManager'
 
+
 interface VideoCardProps {
   video: VimeoVideo
   onDelete: (videoId: string) => Promise<void>
-  onSecurityUpdate: (videoId: string, security: ContentSecurity['privacy']) => Promise<void>
+  onSecurityUpdate: (videoId: string, security: {
+    view: 'disable' | 'nobody' | 'unlisted' | 'anybody'
+    embed: 'private' | 'public' 
+    comments: 'nobody' | 'all'
+    download: boolean
+    add: boolean
+  }) => Promise<void>
   onThumbnailUpdate: (thumbnailUrl: string) => Promise<void>
 }
 
@@ -19,7 +26,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
   onDelete,
   onSecurityUpdate,
   onThumbnailUpdate,
-}) => {
+}): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false)
@@ -30,18 +37,24 @@ export const VideoCard: React.FC<VideoCardProps> = ({
       setIsDeleting(true)
       await onDelete(video.uri.split('/').pop()!)
     } catch (error) {
-      logger.error('Failed to delete video:', error)
+      console.error('Failed to delete video:', error)
     } finally {
       setIsDeleting(false)
     }
   }
 
-  privacy']) => {
+  const handleSecurityUpdate = async (security: {
+    view: 'disable' | 'nobody' | 'unlisted' | 'anybody'
+    embed: 'private' | 'public'
+    comments: 'nobody' | 'all' 
+    download: boolean
+    add: boolean
+  }) => {
     try {
       setIsUpdatingSecurity(true)
-      await onSecurityUpdate(video.uri.split('/').pop()!, privacy)
+      await onSecurityUpdate(video.uri.split('/').pop()!, security)
     } catch (error) {
-      logger.error('Failed to update security:', error)
+      console.error('Failed to update security:', error)
     } finally {
       setIsUpdatingSecurity(false)
     }
@@ -52,7 +65,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
       setIsUpdatingThumbnail(true)
       await onThumbnailUpdate(url)
     } catch (error) {
-      logger.error('Failed to update thumbnail:', error)
+      console.error('Failed to update thumbnail:', error)
     } finally {
       setIsUpdatingThumbnail(false)
     }
@@ -62,14 +75,14 @@ export const VideoCard: React.FC<VideoCardProps> = ({
     <div className="overflow-hidden rounded-lg bg-white shadow">
       <div className="aspect-video">
         <VideoPlayer
-          videoId={video.uri.split('/').pop()!}
-          options={{
-            responsive: true,
-            controls: true,
-            title: false,
-            byline: false,
-            portrait: false,
-          }}
+          url={video.uri || ''}
+          thumbnail={video.pictures?.base_link || ''}
+          title={video.name || ''}
+          controls={true}
+          autoplay={false}
+          loop={false}
+          muted={false}
+          quality="auto"
         />
       </div>
       <div className="p-4">
@@ -80,14 +93,14 @@ export const VideoCard: React.FC<VideoCardProps> = ({
             Manage Security
           </Button>
           <Button
-            onClick={() => handleThumbnailUpdate(video.pictures?.uri || '')}
+            onClick={() => handleThumbnailUpdate(video.pictures?.base_link || '')}
             variant="secondary"
             size="sm"
-            loading={isUpdatingThumbnail}
+            isLoading={isUpdatingThumbnail}
           >
             Update Thumbnail
           </Button>
-          <Button onClick={handleDelete} variant="danger" size="sm" loading={isDeleting}>
+          <Button onClick={handleDelete} variant="outline" size="sm" isLoading={isDeleting}>
             Delete
           </Button>
         </div>
@@ -101,7 +114,15 @@ export const VideoCard: React.FC<VideoCardProps> = ({
               <Dialog.Title className="text-lg font-medium">Security Settings</Dialog.Title>
               <SecurityManager
                 videoId={video.uri.split('/').pop()!}
-                currentSecurity={video.privacy}
+                currentSecurity={{
+                  view: video.privacy.view === 'password' ? 'nobody' : 
+                    video.privacy.view === 'anybody' ? 'anybody' :
+                    video.privacy.view === 'unlisted' ? 'unlisted' : 'disable',
+                  embed: video.privacy.embed === 'public' ? 'public' : 'private',
+                  comments: video.privacy.view === 'anybody' ? 'all' : 'nobody',
+                  download: Boolean(video.privacy.embed),
+                  add: Boolean(video.privacy) // to fix
+                }}
                 onUpdate={handleSecurityUpdate}
                 loading={isUpdatingSecurity}
               />

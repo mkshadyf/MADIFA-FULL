@@ -1,5 +1,5 @@
 import { paymentService } from '@/lib/services/payment'
-import type { PaymentNotification } from '@/lib/types/payment'
+import type { PaymentNotification } from '@/types/payment'
 
 export default async function handler(req: Request) {
   if (req.method !== 'POST') {
@@ -32,7 +32,7 @@ export default async function handler(req: Request) {
     await paymentService.handlePaymentNotification(paymentData)
     return new Response('OK', { status: 200 })
   } catch (error) {
-    logger.error('Payment notification error:', error)
+    console.error('Payment notification error:', error)
     return new Response('Internal server error', { status: 500 })
   }
 }

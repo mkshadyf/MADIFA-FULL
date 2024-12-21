@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
 import type { Content } from '@/types'
+import { useEffect, useRef } from 'react'
 
 import { downloadsManager } from '@/lib/services/downloads'
 import { createClient } from '@/lib/supabase/client'
@@ -54,11 +54,11 @@ export function useDownloadPersistence() {
               .update({ last_accessed: new Date().toISOString() })
               .eq('id', record.id)
           } catch (error) {
-            logger.error(`Failed to verify download ${record.id}:`, error)
+            console.error(`Failed to verify download ${record.id}:`, error)
           }
         }
       } catch (error) {
-        logger.error('Failed to load downloads:', error)
+        console.error('Failed to load downloads:', error)
         showToast('Failed to load downloads', 'error')
       }
     }
@@ -86,7 +86,7 @@ export function useDownloadPersistence() {
 
           if (error) throw error
         } catch (error) {
-          logger.error('Failed to save download:', error)
+          console.error('Failed to save download:', error)
           showToast('Failed to save download', 'error')
         }
       }, 1000)
@@ -102,7 +102,7 @@ export function useDownloadPersistence() {
 
         if (error) throw error
       } catch (error) {
-        logger.error('Failed to remove download record:', error)
+        console.error('Failed to remove download record:', error)
         showToast('Failed to remove download record', 'error')
       }
     }

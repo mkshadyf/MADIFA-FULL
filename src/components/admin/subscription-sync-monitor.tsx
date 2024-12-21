@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -16,7 +17,7 @@ export default function SubscriptionSyncMonitor() {
   const supabase = createClient()
 
   useEffect(() => {
-    loadStats()
+    void loadStats()
     const interval = setInterval(loadStats, 30000) // Refresh every 30s
     return () => clearInterval(interval)
   }, [])
@@ -56,7 +57,7 @@ export default function SubscriptionSyncMonitor() {
         averageProcessingTime: avgProcessingTime / 1000, // Convert to seconds
       })
     } catch (error) {
-      logger.error('Error loading sync stats:', error)
+      console.error('Error loading sync stats:', error)
     } finally {
       setLoading(false)
     }

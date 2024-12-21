@@ -11,7 +11,7 @@ class ContentSyncService {
   private syncInProgress = false
   private lastSyncTime: Date | null = null
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): ContentSyncService {
     if (!ContentSyncService.instance) {
@@ -27,7 +27,7 @@ class ContentSyncService {
 
     try {
       this.syncInProgress = true
-      logger.log('Starting content sync...')
+      console.log('Starting content sync...')
 
       // Get videos from Vimeo
       const videos = folderId
@@ -52,9 +52,9 @@ class ContentSyncService {
       // Update sync metadata
       await this.updateSyncMetadata()
 
-      logger.log(`Synced ${contentRecords.length} videos successfully`)
+      console.log(`Synced ${contentRecords.length} videos successfully`)
     } catch (error) {
-      logger.error('Content sync failed:', error)
+      console.error('Content sync failed:', error)
       throw error
     } finally {
       this.syncInProgress = false
@@ -151,10 +151,10 @@ class ContentSyncService {
           if (error) throw error
         }
 
-        logger.log(`Cleaned up ${orphanedIds.length} orphaned content items`)
+        console.log(`Cleaned up ${orphanedIds.length} orphaned content items`)
       }
     } catch (error) {
-      logger.error('Content cleanup failed:', error)
+      console.error('Content cleanup failed:', error)
       throw error
     }
   }

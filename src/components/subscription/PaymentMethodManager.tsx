@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -23,7 +24,7 @@ export default function PaymentMethodManager() {
       const methods = await subscriptionService.getPaymentMethods(user!.id)
       setPaymentMethods(methods)
     } catch (error) {
-      logger.error('Error loading payment methods:', error)
+      console.error('Error loading payment methods:', error)
       showToast('Failed to load payment methods', 'error')
     } finally {
       setIsLoading(false)
@@ -36,7 +37,7 @@ export default function PaymentMethodManager() {
       await loadPaymentMethods()
       showToast('Default payment method updated', 'success')
     } catch (error) {
-      logger.error('Error setting default payment method:', error)
+      console.error('Error setting default payment method:', error)
       showToast('Failed to update default payment method', 'error')
     }
   }
@@ -47,7 +48,7 @@ export default function PaymentMethodManager() {
       await loadPaymentMethods()
       showToast('Payment method removed', 'success')
     } catch (error) {
-      logger.error('Error deleting payment method:', error)
+      console.error('Error deleting payment method:', error)
       showToast(
         error instanceof Error &&
           error.message === 'Cannot delete default payment method'

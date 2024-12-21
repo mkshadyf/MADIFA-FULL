@@ -7,6 +7,7 @@ import { formatBytes } from '@/lib/utils/format'
 import { useToast } from '@/hooks/useToast'
 import { IconButton } from '@/components/ui/button'
 
+
 export default function DownloadsPage() {
   const [downloads, setDownloads] = useState<Content[]>([])
   const [storageInfo, setStorageInfo] = useState<{
@@ -30,7 +31,7 @@ export default function DownloadsPage() {
       setDownloads(downloadedContent)
       setStorageInfo(storage)
     } catch (error) {
-      logger.error('Failed to load downloads:', error)
+      console.error('Failed to load downloads:', error)
       showToast('Failed to load downloads', 'error')
     } finally {
       setIsLoading(false)
@@ -43,7 +44,7 @@ export default function DownloadsPage() {
       setDownloads(downloads.filter(d => d.id !== contentId))
       showToast('Download removed successfully', 'success')
     } catch (error) {
-      logger.error('Failed to remove download:', error)
+      console.error('Failed to remove download:', error)
       showToast('Failed to remove download', 'error')
     }
   }
@@ -56,7 +57,7 @@ export default function DownloadsPage() {
       setDownloads([])
       showToast('All downloads cleared successfully', 'success')
     } catch (error) {
-      logger.error('Failed to clear downloads:', error)
+      console.error('Failed to clear downloads:', error)
       showToast('Failed to clear downloads', 'error')
     }
   }
@@ -126,11 +127,12 @@ export default function DownloadsPage() {
                       {content.title}
                     </h3>
                     <p className="text-sm text-gray-400">
-                      {content.description.slice(0, 100)}
-                      {content.description.length > 100 ? '...' : ''}
+                      {content.description?.slice(0, 100)}
+                      {content.description?.length > 100 ? '...' : ''}
                     </p>
                   </div>
                   <IconButton
+                    label="Remove download"
                     icon="trash"
                     onClick={() => handleRemoveDownload(content.id)}
                     className="text-gray-400 hover:text-red-500"

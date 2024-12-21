@@ -1,13 +1,14 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
-import { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import {
   getUserFavorites,
   getUserRatings,
   getUserWatchlist,
 } from '@/lib/services/user-interactions'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 
 export default function UserInteractionsSummary() {
   const { user } = useAuth()
@@ -15,7 +16,7 @@ export default function UserInteractionsSummary() {
   const [watchlist, setWatchlist] = useState<Content[]>([])
   const [ratings, setRatings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
+   const navigate = useNavigate()
 
   useEffect(() => {
     const loadInteractions = async () => {
@@ -32,7 +33,7 @@ export default function UserInteractionsSummary() {
         setWatchlist(watchlistData)
         setRatings(ratingsData)
       } catch (error) {
-        logger.error('Error loading interactions:', error)
+        console.error('Error loading interactions:', error)
       } finally {
         setLoading(false)
       }
@@ -56,7 +57,7 @@ export default function UserInteractionsSummary() {
       {/* Favorites Summary */}
       <div
         className="cursor-pointer rounded-lg bg-gray-800 p-6 hover:bg-gray-700"
-        onClick={() => router.push('/profile/favorites')}
+        onClick={() => navigate('/profile/favorites')}
       >
         <h3 className="mb-2 text-xl font-semibold text-white">Favorites</h3>
         <p className="text-3xl font-bold text-indigo-500">{favorites.length}</p>
@@ -66,7 +67,7 @@ export default function UserInteractionsSummary() {
       {/* Watchlist Summary */}
       <div
         className="cursor-pointer rounded-lg bg-gray-800 p-6 hover:bg-gray-700"
-        onClick={() => router.push('/profile/watchlist')}
+        onClick={() => navigate('/profile/watchlist')}
       >
         <h3 className="mb-2 text-xl font-semibold text-white">Watchlist</h3>
         <p className="text-3xl font-bold text-indigo-500">{watchlist.length}</p>
@@ -76,7 +77,7 @@ export default function UserInteractionsSummary() {
       {/* Ratings Summary */}
       <div
         className="cursor-pointer rounded-lg bg-gray-800 p-6 hover:bg-gray-700"
-        onClick={() => router.push('/profile/ratings')}
+        onClick={() => navigate('/profile/ratings')}
       >
         <h3 className="mb-2 text-xl font-semibold text-white">Ratings</h3>
         <p className="text-3xl font-bold text-indigo-500">{ratings.length}</p>

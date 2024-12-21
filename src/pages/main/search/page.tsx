@@ -1,12 +1,13 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 import ContentCard from '@/components/ui/content-card'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import Navbar from '@/components/ui/navbar'
-import { logger } from '@/lib/logger'
+
 
 type Content = Database['public']['Tables']['content']['Row']
 
@@ -35,7 +36,7 @@ export default function SearchPage() {
         if (error) throw error
         setResults(data || [])
       } catch (error) {
-          logger.error('Error searching content:', error)
+          console.error('Error searching content:', error)
       } finally {
         setLoading(false)
       }

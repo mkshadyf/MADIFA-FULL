@@ -1,7 +1,8 @@
-import React from 'react'
-import {
+import React from "react"
+ import {
   CategoryScale,
   Chart as ChartJS,
+  ChartOptions,
   Legend,
   LinearScale,
   LineElement,
@@ -11,8 +12,7 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 
-import { formatBytes } from '@/lib/utils/format'
-import { useQueueAnalytics } from '@/hooks/useQueueAnalytics'
+ import { useQueueAnalytics } from '@/hooks/useQueueAnalytics'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
@@ -53,8 +53,8 @@ export default function QueueAnalyticsChart ({ className = '' }: QueueAnalyticsC
       tooltip: {
         callbacks: {
           label: (context: any) => {
-            '
             const value = context.parsed.y
+            const label = context.dataset.label
             return `${label}: ${(value * 100).toFixed(1)}%`
           },
         },
@@ -116,7 +116,7 @@ export default function QueueAnalyticsChart ({ className = '' }: QueueAnalyticsC
   return (
     <div className={className}>
       <div className="h-64">
-        <Line options={options} data={data} />
+        <Line data={data} options={options as ChartOptions<'line'>} />
       </div>
     </div>
   )

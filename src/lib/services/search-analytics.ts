@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client';
 
 interface SearchMetrics {
   totalSearches: number
@@ -25,8 +25,8 @@ export async function getSearchMetrics(
 
     const totalSearches = searches?.length || 0
     const averageResults =
-      searches?.reduce((acc, curr) => acc + curr.results_count, 0) /
-        totalSearches || 0
+      (searches?.reduce((acc, curr) => acc + curr.results_count, 0) || 0) /
+      totalSearches || 0
 
     // Get popular queries
     const { data: popularQueries } = await supabase.rpc('get_popular_queries', {
@@ -65,7 +65,7 @@ export async function getSearchMetrics(
       categoryDistribution: categoryDistribution || [],
     }
   } catch (error) {
-    logger.error('Error fetching search metrics:', error)
+    console.error('Error fetching search metrics:', error)
     throw error
   }
 }
@@ -84,7 +84,7 @@ export async function getSearchSuggestionMetrics() {
 
     return data
   } catch (error) {
-    logger.error('Error fetching suggestion metrics:', error)
+    console.error('Error fetching suggestion metrics:', error)
     throw error
   }
 }
@@ -104,6 +104,6 @@ export async function trackSearchSuggestion(
       created_at: new Date().toISOString(),
     })
   } catch (error) {
-    logger.error('Error tracking search suggestion:', error)
+    console.error('Error tracking search suggestion:', error)
   }
 }

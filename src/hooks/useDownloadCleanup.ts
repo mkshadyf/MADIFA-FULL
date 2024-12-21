@@ -32,7 +32,7 @@ export function useDownloadCleanup() {
           )
         }
       } catch (error) {
-        logger.error('Failed to get storage info:', error)
+        console.error('Failed to get storage info:', error)
       }
     }
 
@@ -58,7 +58,7 @@ export function useDownloadCleanup() {
       setStorageInfo(info)
       showToast('Cleanup completed successfully', 'success')
     } catch (error) {
-      logger.error('Failed to run cleanup:', error)
+      console.error('Failed to run cleanup:', error)
       showToast('Failed to run cleanup', 'error')
     } finally {
       setIsCleaning(false)

@@ -1,6 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 interface AuditEntry {
   id: string
@@ -25,7 +27,7 @@ export default function AuditLog() {
   const supabase = createClient()
 
   useEffect(() => {
-    fetchEntries()
+    void fetchEntries()
   }, [filter, page])
 
   const fetchEntries = async () => {
@@ -55,7 +57,7 @@ export default function AuditLog() {
       setEntries(prev => (page === 1 ? data : [...prev, ...data]))
       setHasMore(data.length === 20)
     } catch (error) {
-      logger.error('Error fetching audit log:', error)
+      console.error('Error fetching audit log:', error)
     } finally {
       setLoading(false)
     }
@@ -90,6 +92,7 @@ export default function AuditLog() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Audit Log</h2>
         <select
+          title="Filter"
           value={filter}
           onChange={e => {
             setFilter(e.target.value)

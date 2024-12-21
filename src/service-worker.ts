@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 import { clientsClaim } from 'workbox-core'
 import { ExpirationPlugin } from 'workbox-expiration'
@@ -9,8 +11,12 @@ import {
   StaleWhileRevalidate,
 } from 'workbox-strategies'
 
-/// <reference lib="webworker" />
-declare const self: ServiceWorkerGlobalScope
+declare const self: ServiceWorkerGlobalScope & {
+  __WB_MANIFEST: Array<{
+    revision: string | null
+    url: string
+  }>
+}
 
 // Claim control immediately
 clientsClaim()
@@ -24,7 +30,7 @@ self.addEventListener('install', () => {
 cleanupOutdatedCaches()
 
 // Precache all assets
-precacheAndRoute(self.__WB_MANIFEST || [])
+precacheAndRoute(self.__WB_MANIFEST)
 
 // Cache page navigations
 registerRoute(

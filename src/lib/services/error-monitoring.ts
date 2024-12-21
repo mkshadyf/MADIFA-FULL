@@ -1,4 +1,4 @@
-import { createErrorContext, handleError } from '@/utils/error-handler'
+import { createErrorContext, handleError } from '@/lib/utils/error-handler'
 
 export const errorMonitoring = {
   captureError(error: unknown, context: string): void {

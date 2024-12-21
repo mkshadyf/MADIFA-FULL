@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
-import { logger } from '@/lib/logger'
+
 
 import {
   subscriptionService,
 } from '@/lib/services/subscription'
 import { createClient } from '@/lib/supabase/client'
-import type { UserSubscription } from '@/lib/types/subscription'
+import type { UserSubscription } from '@/types/subscription'
 
 export default function ManageSubscription() {
   const { user } = useAuth()
@@ -34,7 +34,7 @@ export default function ManageSubscription() {
 
         setSubscription(data)
       } catch (error) {
-        logger.error('Error fetching subscription:', error)
+        console.error('Error fetching subscription:', error)
         setError('Failed to load subscription details')
       } finally {
         setLoading(false)
@@ -64,7 +64,7 @@ export default function ManageSubscription() {
       )
       setMessage('Subscription cancelled successfully')
     } catch (error) {
-      logger.error('Error cancelling subscription:', error)
+      console.error('Error cancelling subscription:', error)
       setError('Failed to cancel subscription')
     } finally {
       setActionLoading(false)
@@ -91,7 +91,7 @@ export default function ManageSubscription() {
       )
       setMessage('Subscription reactivated successfully')
     } catch (error) {
-        logger.error('Error reactivating subscription:', error)
+        console.error('Error reactivating subscription:', error)
       setError('Failed to reactivate subscription')
     } finally {
       setActionLoading(false)

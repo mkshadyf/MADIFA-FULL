@@ -58,7 +58,7 @@ export async function getAdsForContent(
     // Filter ads based on targeting
     return filterAdsByTargeting(ads, profile)
   } catch (error) {
-    logger.error('Error getting ads:', error)
+    console.error('Error getting ads:', error)
     return []
   }
 }
@@ -78,7 +78,7 @@ export async function trackAdImpression(
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    logger.error('Error tracking ad impression:', error)
+    console.error('Error tracking ad impression:', error)
   }
 }
 

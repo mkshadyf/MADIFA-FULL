@@ -1,9 +1,9 @@
+import React from "react"
 import { useEffect, useRef, useState } from 'react'
-import { useAuth } from '@/providers/AuthProvider'
-import { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { trackProgress } from '@/lib/services/content-delivery'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 
 interface VideoPlayerProps {
   content: Content
@@ -24,9 +24,8 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(1)
   const [showControls, setShowControls] = useState(true)
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>()
-  const { user } = useAuth()
-  const router = useRouter()
+  const controlsTimeoutRef = useRef<number>()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const video = videoRef.current
@@ -38,7 +37,7 @@ export default function VideoPlayer({
 
       // Track progress every 10 seconds
       if (Math.floor(video.currentTime) % 10 === 0) {
-        trackProgress(content.id, video.currentTime, video.duration)
+        void trackProgress(content.id, video.currentTime, video.duration)
       }
     }
 
@@ -67,10 +66,10 @@ export default function VideoPlayer({
     if (!video) return
 
     if (video.paused) {
-      video.play()
+      void video.play()
       setIsPlaying(true)
     } else {
-      video.pause()
+      void video.pause()
       setIsPlaying(false)
     }
   }
@@ -100,9 +99,9 @@ export default function VideoPlayer({
   const showControlsTemporarily = () => {
     setShowControls(true)
     if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current)
+      window.clearTimeout(controlsTimeoutRef.current)
     }
-    controlsTimeoutRef.current = setTimeout(() => {
+    controlsTimeoutRef.current = window.setTimeout(() => {
       if (isPlaying) {
         setShowControls(false)
       }
@@ -117,7 +116,7 @@ export default function VideoPlayer({
     >
       <video
         ref={videoRef}
-        src={content.video_url}
+        src={content.video_url ?? ''}
         className="aspect-video w-full bg-black"
         onClick={togglePlay}
       />
@@ -137,6 +136,7 @@ export default function VideoPlayer({
             value={currentTime}
             onChange={handleSeek}
             className="w-full"
+            title="Seek"
           />
 
           <div className="flex items-center justify-between">
@@ -145,6 +145,7 @@ export default function VideoPlayer({
               <button
                 onClick={togglePlay}
                 className="text-white hover:text-gray-300"
+                title="Play/Pause"
               >
                 {isPlaying ? (
                   <svg
@@ -180,6 +181,7 @@ export default function VideoPlayer({
                   <path d="M15.5 14.4c1.5-1.4 2.5-3.4 2.5-5.4 0-2-.9-4-2.5-5.4l-1.5 1.5c1.1 1.1 1.9 2.6 1.9 3.9s-.7 2.8-1.9 3.9l1.5 1.5zM12 16.5l-3.9-3.9H3v-3h5.1L12 5.7v10.8z" />
                 </svg>
                 <input
+                  title="Volume"
                   type="range"
                   min={0}
                   max={1}
@@ -193,7 +195,11 @@ export default function VideoPlayer({
 
             {/* Right Controls */}
             <div className="flex items-center space-x-4">
-              <button className="text-white hover:text-gray-300">
+              <button
+                title="Go back to home"
+                onClick={() => navigate('/')}
+                className="text-white hover:text-gray-300"
+              >
                 <svg
                   className="h-6 w-6"
                   fill="currentColor"

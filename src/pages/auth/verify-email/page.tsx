@@ -1,22 +1,22 @@
+import React from "react"
 import { useEffect, useState } from 'react'
-import Image, { useRouter, useSearchParams } from 'react-router-dom'
-import Link from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 
 import { createClient } from '@/lib/supabase/client'
 
-export default function VerifyEmailPage () {
+export default function VerifyEmailPage() {
   const [verifying, setVerifying] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const supabase = createClient()
 
   useEffect(() => {
     const verifyEmail = async () => {
       try {
         // Get token from URL
-        token')
-        type')
+        const token = searchParams.get('token')
+        const type = searchParams.get('type')
 
         if (!token || type !== 'email_verification') {
           throw new Error('Invalid verification link')
@@ -32,10 +32,10 @@ export default function VerifyEmailPage () {
 
         // Wait briefly before redirecting
         setTimeout(() => {
-          router.push('/browse')
+          navigate('/browse')
         }, 3000)
       } catch (err) {
-        logger.error('Verification error:', err)
+        console.error('Verification error:', err)
         setError(err instanceof Error ? err.message : 'Verification failed')
       } finally {
         setVerifying(false)
@@ -43,18 +43,16 @@ export default function VerifyEmailPage () {
     }
 
     verifyEmail()
-  }, [router, searchParams])
+  }, [navigate, searchParams])
 
   return (
     <div className="relative flex min-h-screen flex-col justify-center">
       {/* Dynamic Background with Overlay */}
       <div className="fixed inset-0 -z-10">
-        <Image
+        <img
           src="/images/auth-bg-5.jpg"
           alt="Background"
-          fill
-          className="object-cover"
-          priority
+          className="h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
       </div>
@@ -87,7 +85,7 @@ export default function VerifyEmailPage () {
                 </div>
                 <div className="text-red-500">{error}</div>
                 <Link
-                  href="/signin"
+                  to="/signin"
                   className="text-indigo-400 transition-colors hover:text-indigo-300"
                 >
                   Back to sign in

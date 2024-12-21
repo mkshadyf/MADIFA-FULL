@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { useNavigate } from 'react-router-dom'
@@ -5,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { onboardingService, OPTIONAL_STEPS } from '@/lib/services/onboarding'
 import type { OnboardingState } from '@/lib/services/onboarding'
 import { subscriptionService } from '@/lib/services/subscription'
-import type { SubscriptionTier } from '@/lib/types/subscription'
+import type { SubscriptionTier } from '@/types/subscription'
 import { useToast } from '@/hooks/useToast'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
@@ -16,6 +17,7 @@ import PaymentStep from './steps/PaymentStep'
 import PlanSelectionStep from './steps/PlanSelectionStep'
 import ProfileCompletionStep from './steps/ProfileCompletionStep'
 import WelcomeStep from './steps/WelcomeStep'
+
 
 const steps = [
   'welcome',
@@ -31,7 +33,7 @@ interface StepProps {
   data: Partial<OnboardingState>
 }
 
-export default function OnboardingFlow () {
+export default function OnboardingFlow() {
   const { user } = useAuth()
   const { showToast } = useToast()
   const [currentStep, setCurrentStep] = useState<OnboardingState['step']>('welcome')
@@ -54,14 +56,14 @@ export default function OnboardingFlow () {
         setOnboardingData(state)
       }
     } catch (error) {
-      logger.error('Error loading onboarding state:', error)
+      console.error('Error loading onboarding state:', error)
       showToast('Failed to load onboarding progress', 'error')
     } finally {
       setIsLoading(false)
     }
   }
 
-  step'], data: Partial<OnboardingState>) => {
+  const persistProgress = async (step: OnboardingState['step'], data: Partial<OnboardingState>) => {
     try {
       if (!user) return
       await onboardingService.updateOnboardingState(user.id, {
@@ -70,7 +72,7 @@ export default function OnboardingFlow () {
       })
       setOnboardingData(prev => ({ ...prev, ...data }))
     } catch (error) {
-      logger.error('Error saving progress:', error)
+      console.error('Error saving progress:', error)
       showToast('Failed to save progress', 'error')
     }
   }
@@ -102,7 +104,7 @@ export default function OnboardingFlow () {
       await persistProgress(nextStep, data)
       setCurrentStep(nextStep)
     } catch (error) {
-      logger.error('Error handling next step:', error)
+      console.error('Error handling next step:', error)
       showToast('Failed to proceed to next step', 'error')
     } finally {
       setIsLoading(false)
@@ -135,7 +137,7 @@ export default function OnboardingFlow () {
 
       showToast('Step skipped', 'success')
     } catch (error) {
-      logger.error('Error skipping step:', error)
+      console.error('Error skipping step:', error)
       showToast('Failed to skip step', 'error')
     } finally {
       setIsLoading(false)
@@ -155,7 +157,7 @@ export default function OnboardingFlow () {
         navigate('/browse')
       }
     } catch (error) {
-      logger.error('Error completing step:', error)
+      console.error('Error completing step:', error)
       showToast('Failed to complete step', 'error')
     } finally {
       setIsLoading(false)
@@ -163,7 +165,7 @@ export default function OnboardingFlow () {
   }
 
   if (isLoading) {
-    return <LoadingState />
+    return <LoadingSpinner />
   }
 
   return (
@@ -215,7 +217,7 @@ export default function OnboardingFlow () {
           currentStep={currentStep}
           onNext={handleStepCompletion}
           onBack={handleBack}
-          onSkip={OPTIONAL_STEPS.includes(currentStep) ? handleSkip : undefined}
+          onSkip={OPTIONAL_STEPS.includes(currentStep as any) ? handleSkip : undefined}
           isFirstStep={currentStep === 'welcome'}
           isLastStep={currentStep === 'profile-completion'}
           isLoading={isLoading}

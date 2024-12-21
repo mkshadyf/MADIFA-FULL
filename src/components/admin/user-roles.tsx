@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
+
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
@@ -13,7 +14,7 @@ interface RoleAssignment {
   assigned_at: string
 }
 
-export default function UserRoles () {
+export default function UserRoles() {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [roleAssignments, setRoleAssignments] = useState<Record<string, RoleAssignment>>({})
   const [loading, setLoading] = useState(true)
@@ -50,17 +51,17 @@ export default function UserRoles () {
         setUsers(userData || [])
         setRoleAssignments(roleMap || {})
       } catch (error) {
-        logger.error('Error fetching users and roles:', error)
+        console.error('Error fetching users and roles:', error)
         setError('Failed to load users and roles')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUsers()
+    void fetchUsers()
   }, [])
 
-  admin' | 'moderator' | 'user') => {
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'moderator' | 'user') => {
     setSaving(true)
     setError(null)
     setSuccess(null)
@@ -110,7 +111,7 @@ export default function UserRoles () {
 
       setSuccess('Role updated successfully')
     } catch (error) {
-      logger.error('Error updating role:', error)
+      console.error('Error updating role:', error)
       setError('Failed to update role')
     } finally {
       setSaving(false)
@@ -154,10 +155,11 @@ export default function UserRoles () {
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
                   <select
-                    value={roleAssignments[user.user_id]?.role || 'user'}
+                    title="Select role"
+                    value={roleAssignments[user.id]?.role || 'user'}
                     onChange={e =>
                       handleRoleChange(
-                        user.user_id,
+                        user.id,
                         e.target.value as 'admin' | 'moderator' | 'user'
                       )
                     }
@@ -170,8 +172,8 @@ export default function UserRoles () {
                   </select>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                  {roleAssignments[user.user_id]?.assigned_at
-                    ? new Date(roleAssignments[user.user_id].assigned_at).toLocaleString()
+                  {roleAssignments[user.id]?.assigned_at
+                    ? new Date(roleAssignments[user.id].assigned_at).toLocaleString()
                     : 'Never'}
                 </td>
               </tr>

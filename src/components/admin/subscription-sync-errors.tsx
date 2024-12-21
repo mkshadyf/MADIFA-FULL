@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -16,7 +17,7 @@ export default function SubscriptionSyncErrors() {
   const supabase = createClient()
 
   useEffect(() => {
-    loadErrors()
+    void loadErrors()
     const interval = setInterval(loadErrors, 30000) // Refresh every 30s
     return () => clearInterval(interval)
   }, [])
@@ -32,7 +33,7 @@ export default function SubscriptionSyncErrors() {
       if (error) throw error
       setErrors(data)
     } catch (error) {
-      logger.error('Error loading errors:', error)
+      console.error('Error loading errors:', error)
     } finally {
       setLoading(false)
     }

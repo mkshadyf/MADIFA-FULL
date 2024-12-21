@@ -1,7 +1,9 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 interface SearchStats {
   totalSearches: number
@@ -31,17 +33,16 @@ export default function SearchAnalytics() {
           .gte('created_at', startDate.toISOString())
 
         const totalSearches = totals?.length || 0
-        const averageResults =
-          totals?.reduce((acc, curr) => acc + curr.results_count, 0) /
-            totalSearches || 0
+        const averageResults = totals 
+          ? totals.reduce((acc, curr) => acc + curr.results_count, 0) / totalSearches 
+          : 0
 
         // Get popular queries
         const { data: popularQueries } = await supabase
           .from('search_analytics')
           .select('query, count(*)')
           .gte('created_at', startDate.toISOString())
-          .group('query')
-          .order('count', { ascending: false })
+           .order('count', { ascending: false })
           .limit(10)
 
         // Get searches by day
@@ -49,8 +50,7 @@ export default function SearchAnalytics() {
           .from('search_analytics')
           .select('created_at, count(*)')
           .gte('created_at', startDate.toISOString())
-          .group('created_at')
-          .order('created_at')
+           .order('created_at')
 
         // Get queries with no results
         const { data: noResultQueries } = await supabase
@@ -58,7 +58,7 @@ export default function SearchAnalytics() {
           .select('query, count(*)')
           .eq('results_count', 0)
           .gte('created_at', startDate.toISOString())
-          .group('query')
+          
           .order('count', { ascending: false })
           .limit(10)
 
@@ -67,22 +67,22 @@ export default function SearchAnalytics() {
           averageResults,
           popularQueries:
             popularQueries?.map(q => ({
-              query: q.query,
-              count: parseInt(q.count),
+              query: q[0], // Access first column (query)
+              count: parseInt(q[1]), // Access second column (count)
             })) || [],
           searchesByDay:
             searchesByDay?.map(d => ({
-              date: new Date(d.created_at).toLocaleDateString(),
-              count: parseInt(d.count),
+              date: new Date(d[0]).toLocaleDateString(), // Access first column (created_at)
+              count: parseInt(d[1]), // Access second column (count)
             })) || [],
           noResultQueries:
             noResultQueries?.map(q => ({
-              query: q.query,
-              count: parseInt(q.count),
+              query: q[0], // Access first column (query)
+              count: parseInt(q[1]), // Access second column (count) 
             })) || [],
         })
       } catch (error) {
-        logger.error('Error fetching search stats:', error)
+        console.error('Error fetching search stats:', error)
         setError(
           error instanceof Error
             ? error.message
@@ -93,7 +93,7 @@ export default function SearchAnalytics() {
       }
     }
 
-    fetchSearchStats()
+    void fetchSearchStats()
   }, [dateRange])
 
   if (loading) {

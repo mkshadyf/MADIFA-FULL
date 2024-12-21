@@ -1,8 +1,7 @@
-import React from 'react'
-import { useQuery } from '@tanstack/react-query'
+ import { useQuery } from '@tanstack/react-query'
 
-import { createClient } from '../../../lib/supabase/client'
-import type { Database } from '../../../lib/supabase/database.types'
+import { createClient } from '@/lib/supabase/client'
+import type { Database } from '@/lib/database.types'
 
 type AdminStats = Database['public']['Tables']['admin_stats']['Row']
 

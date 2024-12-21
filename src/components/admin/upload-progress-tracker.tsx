@@ -1,6 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 interface UploadStatus {
   id: string
@@ -28,13 +30,13 @@ export default function UploadProgressTracker () {
         if (error) throw error
         setUploads(data || [])
       } catch (error) {
-        logger.error('Error fetching uploads:', error)
+        console.error('Error fetching uploads:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUploads()
+    void fetchUploads()
 
     // Subscribe to upload status changes
     const channel = supabase
@@ -61,11 +63,11 @@ export default function UploadProgressTracker () {
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      void supabase.removeChannel(channel)
     }
   }, [])
 
-  status']) => {
+  const getStatusColor = (status: UploadStatus['status']) => {
     switch (status) {
       case 'uploading':
         return 'text-blue-400'

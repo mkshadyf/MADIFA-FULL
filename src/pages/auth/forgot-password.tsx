@@ -1,10 +1,11 @@
+import React from "react"
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { authService } from '@/lib/services/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
-import { logger } from '@/lib/logger'
+
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -22,7 +23,7 @@ export default function ForgotPassword() {
       setIsSubmitted(true)
       showToast('Password reset email sent', 'success')
     } catch (error) {
-      logger.error('Password reset error:', error)
+      console.error('Password reset error:', error)
       showToast('Failed to send reset email', 'error')
     } finally {
       setIsLoading(false)

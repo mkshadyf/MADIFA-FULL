@@ -1,44 +1,38 @@
 import React from 'react'
-import { createErrorContext, handleError } from '@/utils/error-handler'
+import { AppError, handleError } from '@/lib/utils/error-handler'
 
 interface Props {
   children: React.ReactNode
   fallback?: React.ReactNode
-  onError?: ((error: Error, errorInfo: React.ErrorInfo) => void) | undefined
+  onError?: (error: AppError, errorInfo: React.ErrorInfo) => void
 }
 
 interface State {
   hasError: boolean
-  error: Error | null
+  error: AppError | null
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
-  public override state: State = {
+  public state: State = {
     hasError: false,
     error: null,
   }
 
-  protected errorContext = createErrorContext(
-    'ErrorBoundary',
-    'componentDidCatch',
-    'handling component error'
-  )
-
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+  public static getDerivedStateFromError(error: unknown): State {
+    const appError = AppError.fromUnknown(error)
+    return { hasError: true, error: appError }
   }
 
-  public override componentDidCatch(
-    error: Error,
-    errorInfo: React.ErrorInfo
-  ): void {
-    handleError(error, this.errorContext)
+  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    const appError = AppError.fromUnknown(error)
+    handleError(appError, 'ErrorBoundary')
+    
     if (this.props.onError) {
-      this.props.onError(error, errorInfo)
+      this.props.onError(appError, errorInfo)
     }
   }
 
-  public override render(): React.ReactNode {
+  public render(): React.ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback
@@ -69,7 +63,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   fallback?: React.ReactNode,
-  onError?: ((error: Error, errorInfo: React.ErrorInfo) => void) | undefined
+  onError?: (error: AppError, errorInfo: React.ErrorInfo) => void
 ): React.ComponentType<P> {
   const WithErrorBoundaryComponent = function WithErrorBoundary(
     props: P

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { useRouter } from 'react-router-dom'
+ import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import { useActivityTracking } from '@/lib/hooks/useActivityTracking'
-import { useDebounce } from '@/lib/hooks/useDebounce'
+import { useActivityTracking } from '@/hooks/useActivityTracking'
+import { useDebounce } from '@/hooks/useDebounce'
 import { searchContent } from '@/lib/services/search'
 import type { Content } from '@/lib/supabase/types'
 
@@ -22,7 +22,7 @@ export default function SearchInterface() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const router = useRouter()
+   const navigate = useNavigate()
   const debouncedQuery = useDebounce(query, 300)
   const { trackSearch } = useActivityTracking()
 
@@ -38,14 +38,20 @@ export default function SearchInterface() {
 
       try {
         const searchResults = await searchContent(debouncedQuery, filters)
-        setResults(searchResults)
+        // Ensure content is not null before setting results
+        if (searchResults?.content) {
+          // Type assertion to handle the type mismatch between Content types
+          setResults(searchResults.content as Content[])
+        } else {
+          setResults([])
+        }
 
         // Track search activity
         if (debouncedQuery) {
           trackSearch(debouncedQuery)
         }
       } catch (error) {
-        logger.error('Search error:', error)
+        console.error('Search error:', error)
         setError(error instanceof Error ? error.message : 'Search failed')
       } finally {
         setLoading(false)
@@ -91,6 +97,7 @@ export default function SearchInterface() {
       <div className="flex flex-wrap gap-4">
         {/* Category Filter */}
         <select
+          title="Category"
           value={filters.category}
           onChange={e =>
             setFilters(prev => ({ ...prev, category: e.target.value }))
@@ -105,6 +112,7 @@ export default function SearchInterface() {
 
         {/* Year Filter */}
         <select
+          title="Year"
           value={filters.year}
           onChange={e =>
             setFilters(prev => ({ ...prev, year: parseInt(e.target.value) }))
@@ -124,6 +132,7 @@ export default function SearchInterface() {
 
         {/* Sort By */}
         <select
+          title="Sort By"
           value={filters.sortBy}
           onChange={e =>
             setFilters(prev => ({
@@ -148,7 +157,7 @@ export default function SearchInterface() {
           {results.map(content => (
             <div
               key={content.id}
-              onClick={() => router.push(`/watch/${content.id}`)}
+              onClick={() => navigate(`/watch/${content.id}`)}
               className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg bg-gray-800"
             >
               {content.thumbnail_url ? (

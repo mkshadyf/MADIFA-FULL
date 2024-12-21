@@ -1,10 +1,11 @@
+import React from "react"
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { authService } from '@/lib/services/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
-import { logger } from '@/lib/logger'
+
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -27,7 +28,7 @@ export default function ResetPassword() {
       showToast('Password updated successfully', 'success')
       navigate('/auth/signin')
     } catch (error) {
-      logger.error('Password reset error:', error)
+      console.error('Password reset error:', error)
       showToast('Failed to update password', 'error')
     } finally {
       setIsLoading(false)

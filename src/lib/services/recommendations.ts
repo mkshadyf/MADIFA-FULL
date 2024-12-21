@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 
 export async function getRecommendations(
   userId: string,
@@ -57,7 +57,7 @@ export async function getRecommendations(
 
     return recommendations || []
   } catch (error) {
-    logger.error('Error getting recommendations:', error)
+    console.error('Error getting recommendations:', error)
     throw error
   }
 }

@@ -1,5 +1,6 @@
+import React from "react"
 import { useState } from 'react'
-import Image, { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { createClient } from '@/lib/supabase/client'
 
@@ -8,7 +9,7 @@ export default function UpdatePasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+   const navigate = useNavigate()
   const supabase = createClient()
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -30,7 +31,7 @@ export default function UpdatePasswordPage() {
       if (error) throw error
 
       // Redirect to sign in with success message
-      router.push('/signin?message=Password updated successfully')
+      navigate('/signin?message=Password updated successfully')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update password')
     } finally {
@@ -42,11 +43,10 @@ export default function UpdatePasswordPage() {
     <div className="relative flex min-h-screen flex-col justify-center">
       {/* Dynamic Background with Overlay */}
       <div className="fixed inset-0 -z-10">
-        <Image
+        <img
           src="/images/auth-bg-4.jpg"
           alt="Background"
-          fill
-          className="object-cover"
+          className="h-full w-full object-cover"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />

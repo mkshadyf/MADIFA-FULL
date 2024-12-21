@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 
 export interface SearchFilters {
   genres?: string[]
@@ -112,7 +112,7 @@ export async function searchContent(
       facets,
     }
   } catch (error) {
-    logger.error('Search error:', error)
+    console.error('Search error:', error)
     throw error
   }
 }
@@ -151,6 +151,6 @@ async function trackSearchAnalytics(
       created_at: new Date().toISOString(),
     })
   } catch (error) {
-    logger.error('Error tracking search analytics:', error)
+    console.error('Error tracking search analytics:', error)
   }
 }

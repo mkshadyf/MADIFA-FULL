@@ -39,7 +39,7 @@ export default function Navbar() {
       await signOut()
       navigate('/auth/signin')
     } catch (error) {
-      logger.error('Error signing out:', error)
+      console.error('Error signing out:', error)
     }
   }
 

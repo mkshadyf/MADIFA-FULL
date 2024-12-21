@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
 import type { Content } from '@/types'
+import { useCallback, useEffect, useState } from 'react'
 
 import { downloadsManager } from '@/lib/services/downloads'
 
@@ -34,7 +34,7 @@ export function useDownloads() {
       setDownloads(downloadedContent)
       setStorageInfo(storage)
     } catch (error) {
-      logger.error('Failed to load downloads:', error)
+      console.error('Failed to load downloads:', error)
       showToast('Failed to load downloads', 'error')
     }
   }, [showToast])
@@ -82,7 +82,7 @@ export function useDownloads() {
 
         showToast('Download completed successfully', 'success')
       } catch (error) {
-        logger.error('Failed to download content:', error)
+        console.error('Failed to download content:', error)
         setDownloadProgress(prev => ({
           ...prev,
           [content.id]: {
@@ -104,7 +104,7 @@ export function useDownloads() {
         setDownloads(prev => prev.filter(d => d.id !== contentId))
         showToast('Download removed successfully', 'success')
       } catch (error) {
-        logger.error('Failed to remove download:', error)
+        console.error('Failed to remove download:', error)
         showToast('Failed to remove download', 'error')
       }
     },
@@ -117,7 +117,7 @@ export function useDownloads() {
       setDownloads([])
       showToast('All downloads cleared successfully', 'success')
     } catch (error) {
-      logger.error('Failed to clear downloads:', error)
+      console.error('Failed to clear downloads:', error)
       showToast('Failed to clear downloads', 'error')
     }
   }, [showToast])

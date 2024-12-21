@@ -1,8 +1,9 @@
+import React from "react"
 import type { ErrorInfo } from 'react'
 import React, { Component } from 'react'
 
 import { errorMonitoring } from '@/lib/services/error-monitoring'
-
+  
 interface Props {
   children: React.ReactNode
   userId?: string
@@ -37,9 +38,9 @@ export class AuthErrorBoundary extends Component<Props, State> {
   public componentDidUpdate(prevProps: Props) {
     if (this.props.userId !== prevProps.userId) {
       if (this.props.userId) {
-        errorMonitoring.setUser(this.props.userId, this.props.userEmail)
+        errorMonitoring.captureMessage(this.props.userId, this.props.userEmail)
       } else {
-        errorMonitoring.setUser(null)
+        errorMonitoring.captureMessage(null, null)
       }
     }
   }

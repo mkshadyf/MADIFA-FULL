@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 
-type Content = Database['public']['Tables']['content']['Row']
-
+ type Content = Database['public']['Tables']['content']['Row'] & {
+  category: string;
+  release_year: number;
+}
 interface ContentSearchProps {
   onSelect?: (content: Content) => void
 }
@@ -47,7 +49,7 @@ export default function ContentSearch({ onSelect }: ContentSearchProps) {
       if (error) throw error
       setResults(data || [])
     } catch (error) {
-      logger.error('Error searching content:', error)
+      console.error('Error searching content:', error)
     } finally {
       setLoading(false)
     }
@@ -66,6 +68,7 @@ export default function ContentSearch({ onSelect }: ContentSearchProps) {
           />
         </div>
         <select
+          title="Category"
           value={selectedCategory}
           onChange={e => setSelectedCategory(e.target.value)}
           className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white"
@@ -93,7 +96,7 @@ export default function ContentSearch({ onSelect }: ContentSearchProps) {
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
                     <img
-                      src={content.thumbnail_url}
+                      src={content.thumbnail_url || ''}
                       alt={content.title}
                       className="h-16 w-24 rounded object-cover"
                     />

@@ -2,7 +2,12 @@ import React from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { Navigate, useLocation } from 'react-router-dom'
 
-import type { Permission } from '@/types/auth'
+import type { UserProfile } from '@/types/auth'
+
+export interface Permission {
+  resource: string
+  action: 'read' | 'write' | 'delete' | 'manage'
+}
 
 interface PermissionGuardProps {
   children: React.ReactNode
@@ -15,7 +20,7 @@ export function PermissionGuard({
   requiredPermissions = [],
   requireAll = true,
 }: PermissionGuardProps) {
-  const { userProfile, isLoading } = useAuth()
+  const { user, isLoading } = useAuth()
   const location = useLocation()
 
   if (isLoading) {
@@ -26,12 +31,12 @@ export function PermissionGuard({
     )
   }
 
-  if (!userProfile) {
+  if (!user) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />
   }
 
   // Admin role bypasses permission checks
-  if (userProfile.role === 'admin') {
+  if (user.role === 'admin') {
     return <>{children}</>
   }
 
@@ -40,19 +45,19 @@ export function PermissionGuard({
     return <>{children}</>
   }
 
-  const userPermissions = userProfile.permissions || []
+  const userPermissions = user.user_metadata.permissions || []
 
   const hasPermission = requireAll
     ? requiredPermissions.every(required =>
         userPermissions.some(
-          userPerm =>
+          (userPerm: Permission) =>
             userPerm.resource === required.resource &&
             userPerm.action === required.action
         )
       )
     : requiredPermissions.some(required =>
         userPermissions.some(
-          userPerm =>
+          (userPerm: Permission) =>
             userPerm.resource === required.resource &&
             userPerm.action === required.action
         )

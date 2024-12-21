@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
 
 import type { VimeoVideo } from '@/types/vimeo'
-import { logger } from '@/lib/logger'
+
  
 interface Showcase {
   uri: string
@@ -59,7 +59,7 @@ export default function VimeoShowcaseManager() {
       })
       setShowcases((response as any).data)
     } catch (error) {
-      logger.error('Error loading showcases:', error)
+      console.error('Error loading showcases:', error)
     } finally {
       setLoading(false)
     }
@@ -91,7 +91,7 @@ export default function VimeoShowcaseManager() {
       })
       setVideos((response as any).data)
     } catch (error) {
-      logger.error('Error loading showcase videos:', error)
+      console.error('Error loading showcase videos:', error)
     } finally {
       setLoading(false)
     }
@@ -133,7 +133,7 @@ export default function VimeoShowcaseManager() {
             {videos.map(video => (
               <div key={video.uri} className="overflow-hidden rounded-lg bg-gray-800">
                 <img
-                  src={video.pictures.sizes[3].link}
+                  src={video.pictures?.sizes[3]?.link || ''}
                   alt={video.name}
                   className="aspect-video w-full object-cover"
                 />

@@ -1,7 +1,8 @@
+import React from "react"
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
-import type { Content } from '@/lib/supabase/database.types'
+import type { Content } from '@/lib/database.types'
 import { useContentAccess } from '@/hooks/useContentAccess'
 
 interface ContentGridProps {

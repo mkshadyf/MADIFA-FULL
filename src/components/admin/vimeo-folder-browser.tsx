@@ -1,5 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
+
+
 
 interface VimeoFolder {
   uri: string
@@ -60,7 +63,7 @@ export default function VimeoFolderBrowser({
 
       setFolders((response as any).data)
     } catch (error) {
-      logger.error('Error loading folders:', error)
+      console.error('Error loading folders:', error)
     } finally {
       setLoading(false)
     }

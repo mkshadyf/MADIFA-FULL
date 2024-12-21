@@ -1,66 +1,153 @@
-import type { User } from '@supabase/supabase-js'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
-import type { Database } from '@/lib/database.types'
+export type UserRole = 'admin' | 'user' | 'guest'
+export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | null
+export type VideoQuality = '480p' | '720p' | '1080p'
 
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type UserRole = Database['public']['Tables']['users']['Row']['role']
-export type SubscriptionStatus =
-  Database['public']['Tables']['subscriptions']['Row']['status']
-export type SubscriptionTier =
-  Database['public']['Tables']['subscriptions']['Row']['tier']
+export interface User extends SupabaseUser {
+  email_verified: boolean
+  sendEmailVerification: () => Promise<void>
+}
 
-export interface UserProfile extends Profile {
+export interface UserPreferences {
+  email_notifications: boolean
+  autoplay: boolean
+  default_quality: VideoQuality
+  subtitle_language?: string | null
+  audio_language?: string | null
+  content_restrictions?: {
+    max_rating?: string | null
+    restricted_categories?: string[] | null
+  } | null
+}
+
+export interface UserProfile {
+  id: string
+  user_id: string
+  full_name: string
+  display_name: string
   email: string
   role: UserRole
-}
-
-export interface AuthState {
-  user: User | null
-  profile: UserProfile | null
-  loading: boolean
-  error: Error | null
-}
-
-export interface AuthContextValue extends AuthState {
-  signIn: (provider: 'google' | 'github') => Promise<void>
-  signInWithPassword: (email: string, password: string) => Promise<void>
-  signOut: () => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
-  resetPassword: (email: string) => Promise<void>
-  updateProfile: (updates: Partial<UserProfile>) => Promise<void>
-}
-
-export interface OnboardingState {
-  step:
-    | 'welcome'
-    | 'plan-selection'
-    | 'payment'
-    | 'email-verification'
-    | 'profile-completion'
-  data: {
-    plan?: SubscriptionTier
-    paymentMethod?: string
-    profile?: Partial<UserProfile>
-  }
-}
-
-export interface AuthGuardProps {
-  children: React.ReactNode
-  requiredRole?: UserRole
-  requiredSubscription?: SubscriptionTier
-  fallback?: React.ReactNode
+  subscription_tier: string | null
+  subscription_status: SubscriptionStatus
+  avatar_url: string | null
+  pin_code: string | null
+  preferences: UserPreferences | null
+  created_at: string
+  updated_at: string
 }
 
 export function hasRequiredPermissions(
-  userProfile: UserProfile | null,
+  profile: UserProfile | null,
   requiredRole: UserRole
 ): boolean {
-  if (!userProfile) return false
+  if (!profile?.role) return false
 
   const roleHierarchy: Record<UserRole, number> = {
-    admin: 3,
+    admin: 2,
     user: 1,
+    guest: 0
   }
 
-  return roleHierarchy[userProfile.role] >= roleHierarchy[requiredRole]
+  const userRoleLevel = roleHierarchy[profile.role]
+  const requiredRoleLevel = roleHierarchy[requiredRole]
+
+  return userRoleLevel >= requiredRoleLevel
+}
+
+export interface SignInCredentials {
+  email: string
+  password: string
+}
+
+export interface SignUpCredentials extends SignInCredentials {
+  fullName: string
+}
+
+export interface User {
+  id: string
+  email: string
+  email_verified: boolean
+  full_name: string
+  role: 'user' | 'admin' | 'moderator'
+  subscription_status: 'active' | 'cancelled' | 'inactive'
+  subscription_tier: 'free' | 'premium' | 'premium_plus'
+  created_at: string
+  sendEmailVerification: () => Promise<void>
+}
+
+export interface Session {
+  id: string
+  user: User
+  created_at: string
+  expires_at: string
+  access_token: string
+  refresh_token: string
+}
+
+export interface AuthResponse {
+  user: User | null
+  session: Session | null
+  error: Error | null
+}
+
+export type Provider = 'google' | 'facebook' | 'twitter' | 'github' | 'email'
+
+export type Permission =
+  | 'content:read'
+  | 'content:write'
+  | 'content:delete'
+  | 'content:manage'
+  | 'users:read'
+  | 'users:write'
+  | 'users:delete'
+  | 'users:manage'
+  | 'settings:read'
+  | 'settings:write'
+  | 'settings:manage'
+  | 'analytics:read'
+  | 'analytics:write'
+  | 'analytics:manage'
+  | 'subscriptions:read'
+  | 'subscriptions:write'
+  | 'subscriptions:manage'
+  | 'downloads:read'
+  | 'downloads:write'
+  | 'downloads:manage'
+  | 'playlists:read'
+  | 'playlists:write'
+  | 'playlists:manage'
+  | 'comments:read'
+  | 'comments:write'
+  | 'comments:manage'
+  | 'ratings:read'
+  | 'ratings:write'
+  | 'ratings:manage'
+  | 'favorites:read'
+  | 'favorites:write'
+  | 'favorites:manage'
+  | 'history:read'
+  | 'history:write'
+  | 'history:manage'
+  | 'notifications:read'
+  | 'notifications:write'
+  | 'notifications:manage'
+  | 'admin:access'
+  | 'admin:manage'
+  | 'admin:full'
+
+export interface AuthContextValue {
+  user: User | null
+  session: Session | null
+  isLoading: boolean
+  error: Error | null
+  signIn: (credentials: SignInCredentials) => Promise<void>
+  signUp: (credentials: SignUpCredentials) => Promise<void>
+  signOut: () => Promise<void>
+  resetPassword: (email: string) => Promise<void>
+  updatePassword: (password: string) => Promise<void>
+  updateProfile: (data: Partial<User>) => Promise<void>
+  sendVerificationEmail: () => Promise<void>
+  refreshSession: () => Promise<void>
+  userProfile: User | null
 }

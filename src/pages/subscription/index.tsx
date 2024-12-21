@@ -1,15 +1,14 @@
 import React from 'react'
-import type { Profile } from '@/types'
+import type { UserProfile } from '@/types'
 import { useNavigate } from 'react-router-dom'
 
-import { applovinService } from '@/lib/services/applovin'
 import { useAuth } from '@/hooks/useAuth'
-import { logger } from '@/lib/logger'
+import { AppLovin } from '@/lib/services/applovin'
 
 const plans = [
   {
     id: 'free' as const,
-    name: 'Free',
+    name: 'Free', 
     price: 0,
     features: [
       'Limited content access',
@@ -23,7 +22,7 @@ const plans = [
     price: 9.99,
     features: [
       'Full content library',
-      'Ad-free viewing',
+      'Ad-free viewing', 
       'HD quality',
       'Download for offline',
     ],
@@ -55,10 +54,10 @@ export default function SubscriptionPage() {
     setLoading(true)
     try {
       if (planId === 'free') {
-        const watched = await applovinService.showRewardedAd()
-        if (!watched) {
-          throw new Error('Please watch the ad to continue with free plan')
-        }
+        const applovin = AppLovin.getInstance()
+        await applovin.initialize()
+        await applovin.loadRewardedAd()
+        await applovin.showRewardedAd()
       } else {
         // Handle payment for premium plans
         // Implement your payment logic here
@@ -68,11 +67,11 @@ export default function SubscriptionPage() {
       await updateProfile({
         subscription_tier: planId,
         subscription_status: 'active',
-      } as Partial<Profile>)
+      })
 
       navigate('/browse')
     } catch (error) {
-      logger.error('Subscription error:', error)
+      console.error('Subscription error:', error)
     } finally {
       setLoading(false)
     }

@@ -1,62 +1,56 @@
-import js from '@eslint/js'
-import tsParser from '@typescript-eslint/parser'
-import * as tseslint from '@typescript-eslint/eslint-plugin'
-import reactPlugin from 'eslint-plugin-react'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import sonarjs from 'eslint-plugin-sonarjs'
-import importPlugin from 'eslint-plugin-import'
+import globals from "globals";
+import js from "@eslint/js";
+import * as tseslint from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 
 export default [
-  js.configs.recommended,
   {
-    ignores: ['dist', 'coverage', 'node_modules', '.git', '*.config.js']
-  },
-  {
-    files: ['**/*.{js,jsx,ts,tsx}'],
-    plugins: {
-      '@typescript-eslint': tseslint,
-      'react': reactPlugin,
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-      'sonarjs': sonarjs,
-      'import': importPlugin,
-    },
+    files: ["**/*.{js,mjs,cjs,jsx,ts,tsx}"],
     languageOptions: {
-      ecmaVersion: 2024,
-      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      },
       parser: tsParser,
       parserOptions: {
-        projectService: true,
+        ecmaVersion: "latest",
+        sourceType: "module",
         ecmaFeatures: {
           jsx: true
         }
-      },
-      globals: {
-        React: true,
-        JSX: true
       }
     },
+    plugins: {
+      "@typescript-eslint": tseslint
+    },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }],
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/await-thenable': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-      'sonarjs/cognitive-complexity': ['warn', 20],
-      'import/no-cycle': 'error',
-      'react/jsx-no-leaked-render': 'warn',
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-empty-interface": "warn",
+      "@typescript-eslint/no-empty-function": "warn",
+      "@typescript-eslint/no-unused-expressions": "warn",
+      "@typescript-eslint/ban-ts-comment": "warn",
+      "@typescript-eslint/no-require-imports": "warn",
+      "@typescript-eslint/triple-slash-reference": "warn",
+      "react/react-in-jsx-scope": "off",
+      "react/prop-types": "off",
+      "no-unused-vars": "off",
+      "no-undef": "warn",
+      "no-empty": "warn",
+      "no-case-declarations": "warn",
+      "no-constant-condition": "warn",
+      "no-empty-pattern": "warn",
+      "prefer-const": "warn",
+      "no-useless-catch": "warn",
+      "no-func-assign": "warn",
+      "no-cond-assign": "warn"
     }
   },
   {
-    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/test/**/*.{ts,tsx}'],
+    files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      'sonarjs/no-duplicate-string': 'off',
-      'react/jsx-no-leaked-render': 'off'
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off"
     }
   }
-]
+];

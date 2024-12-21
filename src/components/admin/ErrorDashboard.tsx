@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+ import { useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -10,9 +10,47 @@ import {
   YAxis,
 } from 'recharts'
 
-import { getErrorReports, getErrorStats } from '@/lib/services/sentry'
-import type { ErrorReport } from '@/lib/services/sentry'
-import { useDataFetch } from '@/hooks/useDataFetch'
+ import { useDataFetch } from '@/hooks/useDataFetch'
+interface ErrorReport {
+  id: string
+  code: string
+  message: string
+  context?: Record<string, unknown>
+  timestamp: string
+  resolved: boolean
+}
+
+interface ErrorStats {
+  [key: string]: number
+}
+
+async function getErrorReports(dateRange: { startDate: string; endDate: string }): Promise<ErrorReport[]> {
+  try {
+    // Fetch error reports from your backend/database
+    const response = await fetch(`/api/error-reports?start=${dateRange.startDate}&end=${dateRange.endDate}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch error reports')
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching error reports:', error)
+    return []
+  }
+}
+
+async function getErrorStats(dateRange: { startDate: string; endDate: string }): Promise<ErrorStats> {
+  try {
+    // Fetch error statistics from your backend/database
+    const response = await fetch(`/api/error-stats?start=${dateRange.startDate}&end=${dateRange.endDate}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch error statistics')
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching error statistics:', error)
+    return {}
+  }
+}
 
 export function ErrorDashboard() {
   const [dateRange, setDateRange] = useState({
@@ -25,7 +63,7 @@ export function ErrorDashboard() {
     () => getErrorReports(dateRange)
   )
 
-  const { data: errorStats } = useDataFetch('error-stats', getErrorStats)
+  const { data: errorStats } = useDataFetch(['error-stats', dateRange], () => getErrorStats(dateRange))
 
   const chartData = errorStats
     ? Object.entries(errorStats).map(([type, count]) => ({
@@ -111,13 +149,13 @@ export function ErrorDashboard() {
                     {new Date(report.timestamp).toLocaleString()}
                   </td>
                   <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                    {report.errorType}
+                    {report.code}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {report.error}
+                    {report.message}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
-                    {report.url}
+                    {report.context ? JSON.stringify(report.context) : ''}
                   </td>
                 </tr>
               ))}

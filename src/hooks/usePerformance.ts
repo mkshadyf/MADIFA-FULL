@@ -12,7 +12,7 @@ export function usePerformance(componentName: string) {
       return () => {
         const unmountTime = performance.now()
         const duration = unmountTime - mountTime.current
-        logger.log(`${componentName} mounted for ${duration.toFixed(2)}ms`)
+        console.log(`${componentName} mounted for ${duration.toFixed(2)}ms`)
       }
     }
   }, [componentName])
@@ -20,7 +20,7 @@ export function usePerformance(componentName: string) {
   return {
     logRender: (action: string) => {
       if (env.NODE_ENV === 'development') {
-        logger.log(`${componentName} rendered due to ${action}`)
+        console.log(`${componentName} rendered due to ${action}`)
       }
     },
     measureOperation: async <T>(
@@ -31,9 +31,7 @@ export function usePerformance(componentName: string) {
         const start = performance.now()
         const result = await operation()
         const end = performance.now()
-        logger.log(
-          `${componentName}.${name} took ${(end - start).toFixed(2)}ms`
-        )
+        console.log(`${componentName}.${name} took ${(end - start).toFixed(2)}ms`)
         return result
       }
       return operation()

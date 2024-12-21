@@ -1,72 +1,73 @@
-import '@vimeo/player'
+export type VideoQuality = 'auto' | '4K' | '2K' | '1080p' | '720p' | '540p' | '360p'
 
-declare module '@vimeo/player' {
-  export interface VimeoPlayerOptions {
-    id: string | number
-    url?: string
-    width?: number | string
-    height?: number | string
-    autopause?: boolean
-    autoplay?: boolean
-    background?: boolean
-    byline?: boolean
-    color?: string
-    controls?: boolean
-    dnt?: boolean
-    keyboard?: boolean
-    loop?: boolean
-    muted?: boolean
-    pip?: boolean
-    playsinline?: boolean
-    portrait?: boolean
-    quality?: string
-    responsive?: boolean
-    speed?: boolean
-    title?: boolean
-    transparent?: boolean
+export interface VimeoVideo {
+  uri: string
+  name: string
+  description: string | null
+  duration: number
+  width?: number
+  height?: number
+  created_time: string
+  modified_time: string
+  pictures: {
+    active: boolean
+    type: string
+    base_link: string
+    sizes: Array<{
+      width: number
+      height: number
+      link: string
+      link_with_play_button?: string
+    }>
+    resource_key: string
+    default_picture: boolean
+  } | null
+  files?: Array<{
+    quality: string
+    type: string
+    width: number
+    height: number
+    link: string
+  }>
+  categories?: Array<{
+    name: string
+    subcategories: Array<{
+      name: string
+    }>
+  }>
+  tags?: Array<{
+    name: string
+  }>
+  metadata?: {
+    connections: {
+      likes: { total: number }
+    }
   }
-
-  export interface VimeoPlayer {
-    setVolume(volume: number): Promise<void>
-    setMuted(muted: boolean): Promise<void>
-    setPlaybackRate(rate: number): Promise<void>
-    setQuality(quality: string): Promise<void>
-    getCurrentTime(): Promise<number>
-    setCurrentTime(time: number): Promise<number>
-    getDuration(): Promise<number>
-    getPaused(): Promise<boolean>
-    play(): Promise<void>
-    pause(): Promise<void>
-    getMuted(): Promise<boolean>
-    getVolume(): Promise<number>
-    on(event: string, callback: (data: any) => void): void
-    off(event: string, callback: (data: any) => void): void
-    destroy(): Promise<void>
-    getQualities(): Promise<VideoQuality[]>
+  status: 'available' | 'uploading' | 'transcoding' | 'error'
+  privacy: {
+    view: 'anybody' | 'nobody' | 'password' | 'disable' | 'unlisted'
+    embed: 'public' | 'private'
+    download: boolean
+    add: boolean
+    comments: 'anybody' | 'nobody' | 'all'
   }
-
-  export default class Player implements VimeoPlayer {
-    constructor(element: HTMLElement | string, options: VimeoPlayerOptions)
-    setVolume(volume: number): Promise<void>
-    setMuted(muted: boolean): Promise<void>
-    setPlaybackRate(rate: number): Promise<void>
-    setQuality(quality: string): Promise<void>
-    getCurrentTime(): Promise<number>
-    setCurrentTime(time: number): Promise<number>
-    getDuration(): Promise<number>
-    getPaused(): Promise<boolean>
-    play(): Promise<void>
-    pause(): Promise<void>
-    getMuted(): Promise<boolean>
-    getVolume(): Promise<number>
-    on(event: string, callback: (data: any) => void): void
-    off(event: string, callback: (data: any) => void): void
-    destroy(): Promise<void>
-    getQualities(): Promise<VideoQuality[]>
+  stats: {
+    plays: number
+    finishes: number
+    likes: number
+    comments: number
+  }
+  transcode: {
+    status: 'complete' | 'in_progress' | 'error'
   }
 }
 
-export type { VimeoPlayer }
+export interface VimeoError {
+  name: string
+  message: string
+  developer_message?: string
+  error_code?: number
+}
 
 export interface VimeoFolder {
   uri: string
@@ -86,59 +87,17 @@ export interface VimeoFolder {
   }
 }
 
-export interface VimeoVideo {
-  uri: string
+export interface VimeoUploadOptions {
   name: string
-  description: string
-  duration: number
-  width: number
-  height: number
-  created_time: string
-  modified_time: string
-  pictures: {
-    base_link: string
-    sizes: Array<{
-      width: number
-      height: number
-      link: string
-    }>
+  description?: string
+  privacy?: {
+    view: 'anybody' | 'nobody' | 'password' | 'disable' | 'unlisted'
+    embed: 'public' | 'private'
+    download: boolean
+    add: boolean
+    comments: 'anybody' | 'nobody'
   }
-  files: Array<{
-    quality: string
-    type: string
-    width: number
-    height: number
-    link: string
-  }>
-  categories: Array<{
-    name: string
-    subcategories: Array<{
-      name: string
-    }>
-  }>
-  tags: Array<{
-    name: string
-  }>
-  metadata: {
-    connections: {
-      likes: { total: number }
-    }
-  }
-  status: string
-}
-
-export type VideoQuality =
-  | 'auto'
-  | '4K'
-  | '2K'
-  | '1080p'
-  | '720p'
-  | '540p'
-  | '360p'
-
-export interface VimeoError {
-  name: string
-  message: string
-  developer_message?: string
-  error_code?: number
+  folder_id?: string
+  upload_quota?: boolean
+  size?: number
 }

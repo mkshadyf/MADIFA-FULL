@@ -131,7 +131,7 @@ class DownloadQueueManager {
     ])
 
     if (error) {
-      logger.error('Failed to save queue state:', error)
+      console.error('Failed to save queue state:', error)
     }
   }
 
@@ -151,7 +151,7 @@ class DownloadQueueManager {
       .single()
 
     if (error) {
-      logger.error('Failed to load queue state:', error)
+      console.error('Failed to load queue state:', error)
       return
     }
 

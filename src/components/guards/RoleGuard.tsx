@@ -1,16 +1,11 @@
-import { useEffect } from 'react'
-import {
-  createErrorContext,
-  ErrorCodes,
-  handleError,
-  throwAppError,
-} from '@/utils/error-handler'
-import { useLocation, useNavigate } from 'react-router-dom'
+import React from "react"
+import { useAuth } from '@/hooks/useAuth';
+import { createErrorContext, ErrorCodes, handleError, throwAppError } from '@/lib/utils/error-handler';
+import { hasRequiredPermissions } from '@/types/auth';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import type { UserRole } from '@/types/auth'
-import { hasRequiredPermissions } from '@/types/auth'
-import { useAuth } from '@/hooks/useAuth'
-
 interface RoleGuardProps {
   children: React.ReactNode
   requiredRole: UserRole
@@ -24,7 +19,7 @@ export function RoleGuard({
 }: RoleGuardProps): JSX.Element | null {
   const navigate = useNavigate()
   const location = useLocation()
-  const { userProfile, isLoading } = useAuth()
+  const { profile, loading } = useAuth()
 
   useEffect(() => {
     const context = createErrorContext(
@@ -34,8 +29,8 @@ export function RoleGuard({
     )
 
     try {
-      if (!isLoading) {
-        if (!userProfile) {
+      if (!loading) {
+        if (!profile) {
           throwAppError(
             'User profile not found',
             ErrorCodes.AUTH.NOT_AUTHENTICATED,
@@ -43,7 +38,7 @@ export function RoleGuard({
           )
         }
 
-        if (!hasRequiredPermissions(userProfile, requiredRole)) {
+        if (!hasRequiredPermissions(profile, requiredRole)) {
           throwAppError(
             `Insufficient permissions: required role '${requiredRole}'`,
             ErrorCodes.AUTH.INSUFFICIENT_PERMISSIONS,
@@ -61,15 +56,15 @@ export function RoleGuard({
         replace: true,
       })
     }
-  }, [userProfile, requiredRole, fallbackPath, isLoading, navigate, location])
+  }, [profile, requiredRole, fallbackPath, loading, navigate, location])
 
   // Don't render anything while checking permissions
-  if (isLoading) {
+  if (loading) {
     return null
   }
 
   // Only render children if user has required permissions
-  if (hasRequiredPermissions(userProfile, requiredRole)) {
+  if (hasRequiredPermissions(profile, requiredRole)) {
     return <>{children}</>
   }
 

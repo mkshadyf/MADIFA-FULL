@@ -1,34 +1,35 @@
 import { Suspense, lazy } from 'react'
-import SignInPage from '@/pages/auth/signin/page'
-import SignUpPage from '@/pages/auth/signup/page'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/useAuth'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { MainLayout } from '@/components/layouts'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
-// Lazy loaded components with proper types
-const HomePage = lazy(async () => {
-  const module = await import('@/pages/home/index')
-  return { default: module.default }
-})
+// Auth pages (not lazy loaded for faster initial auth)
+import SignInPage from '@/pages/auth/signin/page'
+import SignUpPage from '@/pages/auth/signup/page'
 
-const ProfilePage = lazy(async () => {
-  const module = await import('@/pages/profile/index')
-  return { default: module.default }
-})
+// Lazy loaded pages
+const HomePage = lazy(() => import('@/pages/home/index'))
+const ProfilePage = lazy(() => import('@/pages/profile/index'))
+const AdminDashboard = lazy(() => import('@/pages/admin/dashboard/page'))
 
-const AdminDashboard = lazy(async () => {
-  const module = await import('@/pages/admin/dashboard/page')
-  return { default: module.default }
-})
+// Loading component with error boundary
+const PageLoader = ({ children }: { children: React.ReactNode }) => (
+  <ErrorBoundary>
+    <Suspense fallback={<LoadingSpinner size="lg" className="mx-auto mt-8" />}>
+      {children}
+    </Suspense>
+  </ErrorBoundary>
+)
 
 export function AppRoutes(): JSX.Element {
-  const { isLoading } = useAuth()
+  const { loading } = useAuth()
 
-  if (isLoading) {
-    return <LoadingSpinner size="lg" />
+  if (loading) {
+    return <LoadingSpinner size="lg" className="mx-auto mt-8" />
   }
 
   return (
@@ -43,17 +44,17 @@ export function AppRoutes(): JSX.Element {
           <Route
             path="/"
             element={
-              <Suspense fallback={<LoadingSpinner size="lg" />}>
+              <PageLoader>
                 <HomePage />
-              </Suspense>
+              </PageLoader>
             }
           />
           <Route
             path="/profile"
             element={
-              <Suspense fallback={<LoadingSpinner size="lg" />}>
+              <PageLoader>
                 <ProfilePage />
-              </Suspense>
+              </PageLoader>
             }
           />
         </Route>
@@ -63,16 +64,18 @@ export function AppRoutes(): JSX.Element {
           <Route
             path="/admin"
             element={
-              <Suspense fallback={<LoadingSpinner size="lg" />}>
+              <PageLoader>
                 <AdminDashboard />
-              </Suspense>
+              </PageLoader>
             }
           />
         </Route>
 
-        {/* Fallback route */}
+        {/* Catch-all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   )
 }
+
+export default AppRoutes

@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 
@@ -41,7 +42,7 @@ export default function PlanSelectionStep({
       const subscriptionPlans = await subscriptionService.getSubscriptionTiers()
       setPlans(subscriptionPlans)
     } catch (error) {
-      logger.error('Error loading plans:', error)
+      console.error('Error loading plans:', error)
       showToast('Failed to load subscription plans', 'error')
     } finally {
       setIsLoading(false)

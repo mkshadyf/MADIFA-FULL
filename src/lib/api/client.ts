@@ -27,7 +27,7 @@ class ApiClient {
       if (error) throw error
       return { data: data as T, error: null }
     } catch (error) {
-      logger.error(`API GET Error (${path}):`, error)
+      console.error(`API GET Error (${path}):`, error)
       return {
         data: null,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -45,7 +45,7 @@ class ApiClient {
       if (error) throw error
       return { data: responseData, error: null }
     } catch (error) {
-      logger.error(`API POST Error (${path}):`, error)
+      console.error(`API POST Error (${path}):`, error)
       return {
         data: null,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -68,7 +68,7 @@ class ApiClient {
       if (error) throw error
       return { data: responseData, error: null }
     } catch (error) {
-      logger.error(`API UPDATE Error (${path}):`, error)
+      console.error(`API UPDATE Error (${path}):`, error)
       return {
         data: null,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -83,7 +83,7 @@ class ApiClient {
       if (error) throw error
       return { data: null, error: null }
     } catch (error) {
-      logger.error(`API DELETE Error (${path}):`, error)
+      console.error(`API DELETE Error (${path}):`, error)
       return {
         data: null,
         error: error instanceof Error ? error.message : 'Unknown error',

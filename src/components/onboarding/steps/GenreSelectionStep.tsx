@@ -1,3 +1,4 @@
+import React from "react"
 interface GenreSelectionStepProps {
   selectedGenres: string[]
   onSelect: (genres: string[]) => void

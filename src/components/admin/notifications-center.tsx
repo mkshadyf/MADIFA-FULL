@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -32,7 +33,7 @@ export default function NotificationsCenter() {
         setNotifications(data || [])
         setUnreadCount(data?.filter(n => !n.read).length || 0)
       } catch (error) {
-        logger.error('Error fetching notifications:', error)
+        console.error('Error fetching notifications:', error)
       } finally {
         setLoading(false)
       }
@@ -76,7 +77,7 @@ export default function NotificationsCenter() {
       )
       setUnreadCount(count => count - 1)
     } catch (error) {
-      logger.error('Error marking notification as read:', error)
+      console.error('Error marking notification as read:', error)
     }
   }
 
@@ -92,7 +93,7 @@ export default function NotificationsCenter() {
       setNotifications(prev => prev.map(n => ({ ...n, read: true })))
       setUnreadCount(0)
     } catch (error) {
-      logger.error('Error marking all notifications as read:', error)
+      console.error('Error marking all notifications as read:', error)
     }
   }
 

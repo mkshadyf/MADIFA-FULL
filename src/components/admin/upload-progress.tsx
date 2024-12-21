@@ -1,3 +1,4 @@
+import React from "react"
 interface UploadProgressProps {
   progress: number
   status?: string

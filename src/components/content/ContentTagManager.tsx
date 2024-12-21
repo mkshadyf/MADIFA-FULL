@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
+import type { Content } from '@/types/content'
 import { useContent } from '@/hooks/useContent'
 
-import { IconButton } from '../ui/button'
-
+ 
 interface TagStats {
   count: number
   categories: Set<string>
@@ -19,7 +19,7 @@ export default function ContentTagManager({
   className = '',
   onTagSelect,
 }: ContentTagManagerProps) {
-  const { contents } = useContent()
+  const { data: contents } = useContent()
   const [tagStats, setTagStats] = useState<Record<string, TagStats>>({})
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [searchTerm, setSearchTerm] = useState('')
@@ -28,8 +28,8 @@ export default function ContentTagManager({
     if (!contents) return
 
     const stats: Record<string, TagStats> = {}
-    contents.forEach(content => {
-      content.tags?.forEach(tag => {
+    contents.forEach((content: Content) => {
+      content.tags?.forEach((tag: string) => {
         if (!stats[tag]) {
           stats[tag] = {
             count: 0,

@@ -1,8 +1,10 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
+import 'chart.js/auto' // This registers the controllers
+import { analyticsService } from '@/lib/services/analytics'
 
-import { getContentAnalytics } from '@/lib/services/analytics'
-import type { ContentPerformance } from '@/lib/services/analytics'
+import type { AnalyticsReport } from '@/types/analytics'
 
 interface ContentAnalyticsDashboardProps {
   contentId: string
@@ -12,17 +14,35 @@ export default function ContentAnalyticsDashboard({
   contentId,
 }: ContentAnalyticsDashboardProps) {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d')
-  const [analytics, setAnalytics] = useState<ContentPerformance | null>(null)
+  const [analytics, setAnalytics] = useState<AnalyticsReport | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const data = await getContentAnalytics(contentId, period)
+        const endDate = new Date()
+        const startDate = new Date()
+        
+        // Calculate start date based on period
+        switch(period) {
+          case '7d':
+            startDate.setDate(startDate.getDate() - 7)
+            break
+          case '30d':
+            startDate.setDate(startDate.getDate() - 30)
+            break
+          case '90d':
+            startDate.setDate(startDate.getDate() - 90)
+            break
+        }
+
+        const data = await analyticsService.generateReport(startDate, endDate, {
+          contentId
+        })
         setAnalytics(data)
       } catch (error) {
-        logger.error('Error fetching analytics:', error)
+        console.error('Error fetching analytics:', error)
         setError(
           error instanceof Error ? error.message : 'Failed to load analytics'
         )
@@ -31,7 +51,7 @@ export default function ContentAnalyticsDashboard({
       }
     }
 
-    fetchAnalytics()
+    void fetchAnalytics()
   }, [contentId, period])
 
   if (loading) {
@@ -78,23 +98,19 @@ export default function ContentAnalyticsDashboard({
         <div className="rounded-lg bg-gray-800 p-6">
           <h3 className="text-lg font-medium text-white">Total Views</h3>
           <p className="mt-2 text-3xl font-bold text-indigo-500">
-            {analytics.metrics.views.toLocaleString()}
+            {analytics.totalViews.toLocaleString()}
           </p>
         </div>
         <div className="rounded-lg bg-gray-800 p-6">
           <h3 className="text-lg font-medium text-white">Completion Rate</h3>
           <p className="mt-2 text-3xl font-bold text-indigo-500">
-            {(
-              (analytics.metrics.completions / analytics.metrics.views) *
-              100
-            ).toFixed(1)}
-            %
+            {(analytics.completionRate * 100).toFixed(1)}%
           </p>
         </div>
         <div className="rounded-lg bg-gray-800 p-6">
-          <h3 className="text-lg font-medium text-white">Engagement Rate</h3>
+          <h3 className="text-lg font-medium text-white">Average Watch Time</h3>
           <p className="mt-2 text-3xl font-bold text-indigo-500">
-            {(analytics.metrics.engagementRate * 100).toFixed(1)}%
+            {Math.round(analytics.averageWatchTime / 60)} min
           </p>
         </div>
       </div>
@@ -106,17 +122,23 @@ export default function ContentAnalyticsDashboard({
         </h3>
         <Line
           data={{
-            labels: analytics.trendData.map(d => d.date),
+            labels: analytics.events
+              .filter(e => e.event_type === 'play')
+              .map(e => new Date(e.timestamp).toLocaleDateString()),
             datasets: [
               {
                 label: 'Views',
-                data: analytics.trendData.map(d => d.views),
+                data: analytics.events
+                  .filter(e => e.event_type === 'play')
+                  .map(() => 1),
                 borderColor: 'rgb(99, 102, 241)',
                 tension: 0.1,
               },
               {
-                label: 'Engagement',
-                data: analytics.trendData.map(d => d.engagement),
+                label: 'Completions',
+                data: analytics.events
+                  .filter(e => e.event_type === 'complete')
+                  .map(() => 1),
                 borderColor: 'rgb(139, 92, 246)',
                 tension: 0.1,
               },
@@ -146,46 +168,28 @@ export default function ContentAnalyticsDashboard({
       <div className="grid grid-cols-3 gap-6">
         <div className="rounded-lg bg-gray-800 p-6">
           <h3 className="mb-4 text-lg font-medium text-white">
-            Age Distribution
+            Unique Viewers
           </h3>
-          <Doughnut
-            data={{
-              labels: Object.keys(analytics.demographics.ageGroups),
-              datasets: [
-                {
-                  data: Object.values(analytics.demographics.ageGroups),
-                  backgroundColor: [
-                    '#4F46E5',
-                    '#7C3AED',
-                    '#A78BFA',
-                    '#C4B5FD',
-                    '#DDD6FE',
-                  ],
-                },
-              ],
-            }}
-            options={{
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: { color: 'white' },
-                },
-              },
-            }}
-          />
+          <p className="mt-2 text-3xl font-bold text-indigo-500">
+            {analytics.uniqueViewers.toLocaleString()}
+          </p>
         </div>
 
         <div className="rounded-lg bg-gray-800 p-6">
           <h3 className="mb-4 text-lg font-medium text-white">
-            Regional Distribution
+            Event Distribution
           </h3>
           <Bar
             data={{
-              labels: Object.keys(analytics.demographics.regions),
+              labels: ['Play', 'Complete', 'Progress'],
               datasets: [
                 {
-                  label: 'Viewers',
-                  data: Object.values(analytics.demographics.regions),
+                  label: 'Events',
+                  data: [
+                    analytics.events.filter(e => e.event_type === 'play').length,
+                    analytics.events.filter(e => e.event_type === 'complete').length,
+                    analytics.events.filter(e => e.event_type === 'progress').length,
+                  ],
                   backgroundColor: '#4F46E5',
                 },
               ],
@@ -211,15 +215,15 @@ export default function ContentAnalyticsDashboard({
 
         <div className="rounded-lg bg-gray-800 p-6">
           <h3 className="mb-4 text-lg font-medium text-white">
-            Device Distribution
+            Watch Time Distribution
           </h3>
           <Doughnut
             data={{
-              labels: Object.keys(analytics.demographics.devices),
+              labels: ['0-25%', '25-50%', '50-75%', '75-100%'],
               datasets: [
                 {
-                  data: Object.values(analytics.demographics.devices),
-                  backgroundColor: ['#4F46E5', '#7C3AED', '#A78BFA'],
+                  data: [25, 25, 25, 25], // Replace with actual watch time distribution
+                  backgroundColor: ['#4F46E5', '#7C3AED', '#A78BFA', '#C4B5FD'],
                 },
               ],
             }}

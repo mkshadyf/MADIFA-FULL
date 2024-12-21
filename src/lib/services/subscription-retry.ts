@@ -47,7 +47,7 @@ export async function retryFailedSyncJobs() {
       })
     )
   } catch (error) {
-    logger.error('Error retrying sync jobs:', error)
+    console.error('Error retrying sync jobs:', error)
     throw error
   }
 }

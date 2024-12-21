@@ -33,7 +33,7 @@ export class AuthService {
         profile: null, // Profile will be fetched separately
       }
     } catch (error) {
-      logger.error('Provider sign in error:', error)
+      console.error('Provider sign in error:', error)
       throw error
     }
   }
@@ -55,7 +55,7 @@ export class AuthService {
         profile: null, // Profile will be fetched separately
       }
     } catch (error) {
-      logger.error('Email sign in error:', error)
+      console.error('Email sign in error:', error)
       throw error
     }
   }
@@ -84,7 +84,7 @@ export class AuthService {
         profile: null,
       }
     } catch (error) {
-      logger.error('Sign up error:', error)
+      console.error('Sign up error:', error)
       throw error
     }
   }
@@ -97,7 +97,7 @@ export class AuthService {
 
       if (error) throw error
     } catch (error) {
-      logger.error('Password reset error:', error)
+      console.error('Password reset error:', error)
       throw error
     }
   }
@@ -110,7 +110,7 @@ export class AuthService {
 
       if (error) throw error
     } catch (error) {
-      logger.error('Password update error:', error)
+      console.error('Password update error:', error)
       throw error
     }
   }
@@ -120,7 +120,7 @@ export class AuthService {
       const { error } = await this.supabase.auth.signOut()
       if (error) throw error
     } catch (error) {
-      logger.error('Sign out error:', error)
+      console.error('Sign out error:', error)
       throw error
     }
   }
@@ -151,7 +151,7 @@ export class AuthService {
         ipAddress: '', // Will be set by the server
       }
     } catch (error) {
-      logger.error('Get session error:', error)
+      console.error('Get session error:', error)
       throw error
     }
   }
@@ -182,7 +182,7 @@ export class AuthService {
         ipAddress: '', // Will be set by the server
       }
     } catch (error) {
-      logger.error('Refresh session error:', error)
+      console.error('Refresh session error:', error)
       throw error
     }
   }

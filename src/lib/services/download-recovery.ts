@@ -45,7 +45,7 @@ class DownloadRecoveryService {
             await downloadQueueManager.addToQueue(download.content_id)
           }
         } catch (error) {
-          logger.error(
+          console.error(
             `Failed to verify download ${download.content_id}:`,
             error
           )
@@ -57,7 +57,7 @@ class DownloadRecoveryService {
         await downloadQueueManager.restoreQueue(queueItems)
       }
     } catch (error) {
-      logger.error('Failed to recover downloads:', error)
+      console.error('Failed to recover downloads:', error)
       throw error
     }
   }
@@ -74,7 +74,7 @@ class DownloadRecoveryService {
         await downloadsManager.removeDownload(download.content_id)
       }
     } catch (error) {
-      logger.error('Failed to cleanup orphaned downloads:', error)
+      console.error('Failed to cleanup orphaned downloads:', error)
       throw error
     }
   }

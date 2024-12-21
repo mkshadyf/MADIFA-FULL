@@ -29,7 +29,7 @@ export function useDownloadQueueSync() {
         // Restore queue state
         await downloadQueueManager.restoreQueue(data)
       } catch (error) {
-        logger.error('Failed to load download queue:', error)
+        console.error('Failed to load download queue:', error)
         showToast('Failed to load download queue', 'error')
       }
     }
@@ -62,7 +62,7 @@ export function useDownloadQueueSync() {
             if (error) throw error
           }
         } catch (error) {
-          logger.error('Failed to sync download queue:', error)
+          console.error('Failed to sync download queue:', error)
           showToast('Failed to sync download queue', 'error')
         }
       }, 1000)

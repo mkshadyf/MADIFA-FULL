@@ -1,9 +1,10 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/types/content'
-import { logger } from '@/lib/logger'
+import type { Content } from '@/types/content'
+
 
 export default function Favorites() {
   const { user } = useAuth()
@@ -31,7 +32,7 @@ export default function Favorites() {
       if (error) throw error
       setFavorites(data.map(item => item.content))
     } catch (error) {
-      logger.error('Error loading favorites:', error)
+      console.error('Error loading favorites:', error)
     } finally {
       setLoading(false)
     }
@@ -61,7 +62,7 @@ export default function Favorites() {
         void loadFavorites()
       }
     } catch (error) {
-      logger.error('Error toggling favorite:', error)
+      console.error('Error toggling favorite:', error)
     }
   }
 

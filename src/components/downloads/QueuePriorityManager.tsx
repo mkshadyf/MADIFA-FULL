@@ -1,22 +1,29 @@
-import React, { useState } from 'react'
-
+import React from "react"
+import { useState } from 'react'
 import { formatBytes } from '@/lib/utils/format'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
 import { useQueuePriority } from '@/hooks/useQueuePriority'
+import { IconButton } from '../ui/button'
 
-import { IconButton } from '../ui/Button'
+import type { Content } from '@/types/content'
+
+interface QueueItem {
+  id: string
+  content: Content
+  calculatedPriority?: number
+}
 
 interface QueuePriorityManagerProps {
   className?: string
   onPriorityChange?: () => void
 }
 
-export default function QueuePriorityManager ({
+export default function QueuePriorityManager({
   className = '',
   onPriorityChange,
 }: QueuePriorityManagerProps) {
-  const { queueItems, reorderQueue } = useDownloadQueue()
-  const { calculatePriority } = useQueuePriority()
+  const { queueItems } = useDownloadQueue()
+  const { calculatePriority, optimizeQueue } = useQueuePriority()
   const [isProcessing, setIsProcessing] = useState(false)
   const [priorityMode, setPriorityMode] = useState<'size' | 'expiration' | 'popularity' | 'custom'>(
     'size'
@@ -34,30 +41,30 @@ export default function QueuePriorityManager ({
         }))
       )
 
-      let sortedItems = [...itemsWithPriority]
+      const sortedItems = [...itemsWithPriority]
       switch (priorityMode) {
         case 'size':
-          sortedItems.sort((a, b) => (a.content.size || 0) - (b.content.size || 0))
+          sortedItems.sort((a, b) => (a.content.fileSize || 0) - (b.content.fileSize || 0))
           break
         case 'expiration':
           sortedItems.sort((a, b) => {
-            ').getTime()
-            ').getTime()
+            const aExp = new Date(a.content.expiration_date || '').getTime()
+            const bExp = new Date(b.content.expiration_date || '').getTime()
             return aExp - bExp
           })
           break
         case 'popularity':
-          sortedItems.sort((a, b) => b.calculatedPriority - a.calculatedPriority)
+          sortedItems.sort((a, b) => (b.calculatedPriority || 0) - (a.calculatedPriority || 0))
           break
         case 'custom':
           // Keep current order but update priorities
           break
       }
 
-      await reorderQueue(sortedItems.map(item => item.id))
+      await optimizeQueue()
       onPriorityChange?.()
     } catch (error) {
-      logger.error('Failed to update priorities:', error)
+      console.error('Failed to update priorities:', error)
     } finally {
       setIsProcessing(false)
     }
@@ -73,6 +80,7 @@ export default function QueuePriorityManager ({
           disabled={isProcessing}
           className={`${isProcessing ? 'animate-spin' : ''}`}
           aria-label="Update priorities"
+          label="Update priorities"
         />
       </div>
 
@@ -82,7 +90,7 @@ export default function QueuePriorityManager ({
           <select
             aria-label="Priority Mode"
             value={priorityMode}
-            onChange={e => setPriorityMode(e.target.value as any)}
+            onChange={e => setPriorityMode(e.target.value as typeof priorityMode)}
             className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
           >
             <option value="size">By Size (Smallest First)</option>
@@ -96,7 +104,7 @@ export default function QueuePriorityManager ({
           <p>Total Items: {queueItems.length}</p>
           <p>
             Total Size:{' '}
-            {formatBytes(queueItems.reduce((total, item) => total + (item.content.size || 0), 0))}
+            {formatBytes(queueItems.reduce((total, item) => total + (item.content.fileSize || 0), 0))}
           </p>
         </div>
 
@@ -109,7 +117,7 @@ export default function QueuePriorityManager ({
                   <span className="text-gray-400">
                     {index + 1}. {item.content.title}
                   </span>
-                  <span className="text-gray-500">{formatBytes(item.content.size || 0)}</span>
+                  <span className="text-gray-500">{formatBytes(item.content.fileSize || 0)}</span>
                 </div>
               ))}
             </div>

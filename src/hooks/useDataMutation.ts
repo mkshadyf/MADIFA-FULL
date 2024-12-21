@@ -1,7 +1,7 @@
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { handleAPIError } from '@/lib/utils/api-error'
+import { handleError } from '@/lib/utils/error-handler'
 
 interface MutationContext {
   previousData?: unknown
@@ -31,7 +31,7 @@ export function useDataMutation<TData = unknown, TVariables = unknown>(
       try {
         return await mutationFn(variables)
       } catch (error) {
-        throw handleAPIError(error)
+        throw handleError(error)
       }
     },
     onMutate: async (variables): Promise<MutationContext> => {

@@ -1,74 +1,51 @@
 export interface AnalyticsEvent {
-  id?: string
-  user_id?: string
+  user_id: string
   video_id: string
   event_type:
-    | 'play'
-    | 'pause'
-    | 'seek'
-    | 'complete'
-    | 'quality_change'
-    | 'error'
-    | 'view'
-    | 'buffer_start'
-    | 'buffer_end'
-    | 'heartbeat'
-  timestamp: string
-  data?: Record<string, any>
+  | 'play'
+  | 'pause'
+  | 'seek'
+  | 'complete'
+  | 'quality_change'
+  | 'error'
+  | 'buffer'
+  | 'progress'
+  timestamp: number
+  data?: {
+    position?: number
+    quality?: string
+    duration?: number
+    message?: string
+    bufferDuration?: number
+    [key: string]: any
+  }
 }
 
 export interface ViewSession {
-  id?: string
-  user_id?: string
-  video_id: string
-  start_time: string
-  end_time?: string
-  duration?: number
+  id: string
+  user_id: string
+  content_id: string
+  started_at: string
+  ended_at?: string
   progress: number
-  completed: boolean
-  quality_changes: number
-  buffer_count: number
-  total_buffer_time: number
-  device_info?: {
-    userAgent: string
-    platform: string
-    browser: string
-    os: string
-  }
-  network_info?: {
-    effectiveType: string
-    downlink: number
-    rtt: number
-  }
-  location_info?: {
-    country: string
-    region: string
-    city: string
-    latitude?: number
-    longitude?: number
-  }
+  last_position: number
+  stats: ViewingStats
+  created_at: string
+  updated_at: string
 }
 
 export interface ViewingStats {
-  totalViews: number
-  uniqueViewers: number
-  averageViewDuration: number
-  completionRate: number
-  engagementScore: number
-  qualityDistribution: Record<string, number>
+  totalTime: number
+  pauseCount: number
+  seekCount: number
+  qualityChanges: number
   bufferingEvents: number
   averageBufferDuration: number
-  dropOffPoints: Array<{
-    time: number
-    percentage: number
-  }>
-  geographicDistribution: Array<{
-    country: string
-    region: string
-    city: string
-    views: number
-    uniqueViewers: number
-  }>
+  totalViews: number
+  uniqueViewers: number
+  averageWatchTime: number
+  completionRate: number
+  events: AnalyticsEvent[]
 }
 
 export interface RealTimeStats {
@@ -100,47 +77,10 @@ export interface AnalyticsFilter {
 
 export interface AnalyticsReport {
   totalViews: number
+  uniqueViewers: number
   averageWatchTime: number
-  engagementRate: number
-  totalInteractions: number
-  realTimeStats: {
-    currentViewers: number
-    peakViewers: number
-    qualityDistribution: Record<string, number>
-    bufferingCount: number
-    lastMinuteEvents: Array<{
-      id?: string
-      event_type: string
-      timestamp: string
-      data?: {
-        quality?: string
-        location_info?: {
-          country: string
-        }
-      }
-    }>
-  }
-  geoData: Array<{
-    id: string
-    value: number
-  }>
-  videoStats: Array<{
-    video_id: string
-    title: string
-    views: number
-    completions: number
-    averageEngagement: number
-    engagementRate: number
-    averageWatchTime: number
-    dropOffPoints: Array<{
-      time: number
-      percentage: number
-    }>
-  }>
-  retentionData: Array<{
-    time: number
-    percentage: number
-  }>
+  completionRate: number
+  events: AnalyticsEvent[]
 }
 
 export interface GeoData {

@@ -1,3 +1,4 @@
+import React from "react"
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -10,7 +11,7 @@ interface CheckoutProps {
   onError: (error: string) => void
 }
 
-export default function Checkout ({ planId, price, onSuccess, onError }: CheckoutProps) {
+export default function Checkout({ planId, price, onSuccess, onError }: CheckoutProps) {
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
   const supabase = createClient()
@@ -21,7 +22,7 @@ export default function Checkout ({ planId, price, onSuccess, onError }: Checkou
     setLoading(true)
     try {
       // Initialize PayFast payment
-      /api/create-payment', {
+      const response = await fetch('/api/create-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

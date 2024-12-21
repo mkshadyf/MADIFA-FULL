@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 
-type UserProfile = Database['public']['Tables']['user_profiles']['Row']
+
+type UserProfile = Database['public']['Tables']['users']['Row']
 
 interface ActivityMetrics {
   dailyActiveUsers: number
@@ -76,13 +77,12 @@ export default function UserActivityMetrics() {
           `
           )
           .gte('created_at', oneMonthAgo.toISOString())
-          .group('user_id')
           .order('count', { ascending: false })
           .limit(5)
 
         const topUsers =
           topUsersData?.map(data => ({
-            user: data.user_profiles as UserProfile,
+            user: data.user_profiles as unknown as UserProfile,
             activityCount: parseInt(data.count as unknown as string),
           })) || []
 
@@ -133,13 +133,13 @@ export default function UserActivityMetrics() {
           activityByDay: dayCounts,
         })
       } catch (error) {
-        logger.error('Error fetching activity metrics:', error)
+        console.error('Error fetching activity metrics:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchMetrics()
+    void fetchMetrics()
   }, [])
 
   if (loading) return <div>Loading metrics...</div>

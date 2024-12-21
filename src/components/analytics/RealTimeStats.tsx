@@ -1,5 +1,5 @@
-import React from 'react'
-
+import React from "react"
+ 
 import type { RealTimeStats as RealTimeStatsType } from '@/types/analytics'
 
 interface RealTimeStatsProps {
@@ -50,7 +50,7 @@ export function RealTimeStats({ stats }: RealTimeStatsProps) {
         <div className="space-y-2">
           {stats.lastMinuteEvents.map((event, index) => (
             <div
-              key={event.id || index}
+              key={event.video_id || index}
               className="flex items-center justify-between text-sm"
             >
               <div>

@@ -1,7 +1,9 @@
-import { type Content } from '@/lib/supabase/database.types'
+ import { type Database } from '@/lib/database.types'
 
 import DownloadProgress from '../downloads/DownloadProgress'
 import OfflineToggle from './OfflineToggle'
+
+type Content = Database['public']['Tables']['content']['Row']
 
 interface ContentViewProps {
   content: Content

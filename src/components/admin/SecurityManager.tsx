@@ -1,6 +1,14 @@
 import React, { useState } from 'react'
 
-import type { ContentSecurity } from '@/types/vimeo'
+interface ContentSecurity {
+  privacy: {
+    view: 'disable' | 'nobody' | 'unlisted' | 'anybody'
+    embed: 'private' | 'public'
+    comments: 'nobody' | 'all'
+    download: boolean
+    add: boolean
+  }
+}
 
 interface SecurityManagerProps {
   videoId: string
@@ -9,9 +17,8 @@ interface SecurityManagerProps {
   loading?: boolean
 }
 
-export function SecurityManager ({
-  videoId,
-  currentSecurity,
+export function SecurityManager({
+   currentSecurity,
   onUpdate,
   loading,
 }: SecurityManagerProps) {
@@ -25,10 +32,10 @@ export function SecurityManager ({
     }
   )
 
-  privacy']>(
+  const handleChange = <K extends keyof ContentSecurity['privacy']>(
     field: K,
     value: ContentSecurity['privacy'][K]
-  ) => {
+  ): void => {
     setSecurity(prev => ({ ...prev, [field]: value }))
   }
 

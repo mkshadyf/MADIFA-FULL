@@ -31,7 +31,7 @@ class DownloadCleanupService {
         await this.cleanupLowStorage(userId)
       }
     } catch (error) {
-      logger.error('Failed to cleanup downloads:', error)
+      console.error('Failed to cleanup downloads:', error)
       throw error
     }
   }
@@ -82,7 +82,7 @@ class DownloadCleanupService {
   async scheduleCleanup(userId: string): Promise<void> {
     setInterval(() => {
       this.cleanupDownloads(userId).catch(error => {
-        logger.error('Scheduled cleanup failed:', error)
+        console.error('Scheduled cleanup failed:', error)
       })
     }, this.CLEANUP_INTERVAL)
   }

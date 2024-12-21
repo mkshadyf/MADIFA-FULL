@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useRef } from 'react'
 
 import { AdsConfig } from '@/lib/config/ads'
@@ -13,8 +14,8 @@ export default function BannerAd() {
 
       window.applovin.createBanner({
         adUnitId: AdsConfig.adUnits.banner,
-        position: 'bottom',
-        container: bannerRef.current,
+        position: 'bottom', 
+        container: bannerRef.current || undefined,
       })
     }
 

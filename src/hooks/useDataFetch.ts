@@ -1,27 +1,35 @@
-import type { UseQueryOptions } from '@tanstack/react-query'
+import type { QueryKey, UseQueryOptions } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
 
-import { handleAPIError } from '@/lib/utils/api-error'
+import { handleError } from '@/lib/utils/error-handler'
 
 interface FetchOptions<TData>
   extends Omit<UseQueryOptions<TData, Error>, 'queryKey' | 'queryFn'> {
   onError?: (error: Error) => void
+  cacheTime?: number
+  staleTime?: number
 }
 
 export function useDataFetch<TData>(
-  key: string | readonly unknown[],
+  key: QueryKey,
   fetcher: () => Promise<TData>,
   options: FetchOptions<TData> = {}
 ) {
-  const queryKey = Array.isArray(key) ? key : [key]
+  const {
+    onError,
+    ...restOptions
+  } = options
 
   return useQuery<TData, Error>({
-    queryKey,
+    queryKey: key,
     queryFn: async () => {
       try {
         return await fetcher()
       } catch (error) {
-        throw handleAPIError(error)
+        console.error('Data fetch error:', error)
+        const apiError = handleError(error, 'data_fetch_error')
+        onError?.(apiError)
+        throw apiError
       }
     },
     retry: (failureCount, error) => {
@@ -36,7 +44,7 @@ export function useDataFetch<TData>(
       return failureCount < 3
     },
     refetchOnWindowFocus: false,
-    ...options,
+    ...restOptions,
   })
 }
 
@@ -60,4 +68,17 @@ export function createFetcher<T = any>(
 
     return response.json()
   }
+}
+
+// Helper function to create a cached query
+export function createCachedQuery<T>(
+  key: QueryKey,
+  queryFn: () => Promise<T>,
+  options?: FetchOptions<T>
+) {
+  return useDataFetch<T>(key, queryFn, {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 30 * 60 * 1000, // 30 minutes
+    ...options,
+  })
 }

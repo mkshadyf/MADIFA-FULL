@@ -1,6 +1,7 @@
+import React from "react"
 import { useEffect } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
-import { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import AdminHeader from './header'
 
@@ -10,13 +11,13 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user, profile, loading } = useAuth()
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!loading && (!user || profile?.role !== 'admin')) {
-      router.push('/signin')
+      navigate('/signin')
     }
-  }, [user, profile, loading, router])
+  }, [user, profile, loading, navigate])
 
   if (loading) {
     return <div>Loading...</div>

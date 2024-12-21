@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
-import type { VideoQuality } from '@/types/vimeo'
+import type { VideoQuality } from '@/types/video'
 import { formatDuration } from '@/lib/utils/format'
 import { IconButton } from '@/components/ui/button'
 import { Slider } from '@/components/ui/Slider'
@@ -92,6 +92,7 @@ export default function VideoControls({
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <IconButton
+              label={isPlaying ? 'Pause video' : 'Play video'}
               icon={isPlaying ? 'pause' : 'play'}
               onClick={onPlayPause}
               className="text-white hover:text-indigo-400"
@@ -105,12 +106,13 @@ export default function VideoControls({
 
           <div className="flex items-center space-x-4">
             <QualitySelector
-              currentQuality={currentQuality}
-              availableQualities={availableQualities}
+              currentQuality={currentQuality as VideoQuality}
+              availableQualities={availableQualities as VideoQuality[]}
               onChange={onQualityChange}
             />
 
             <IconButton
+              label={isPiPActive ? 'Exit picture in picture' : 'Enter picture in picture'}
               icon="pip"
               onClick={onPiP}
               className={`text-white hover:text-indigo-400 ${isPiPActive ? 'text-indigo-400' : ''}`}
@@ -123,6 +125,7 @@ export default function VideoControls({
             />
 
             <IconButton
+              label={isFullscreen ? 'Minimize' : 'Maximize'}
               icon={isFullscreen ? 'minimize' : 'maximize'}
               onClick={onFullscreen}
               className={`text-white hover:text-indigo-400 ${

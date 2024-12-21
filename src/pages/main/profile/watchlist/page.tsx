@@ -1,11 +1,12 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { getUserWatchlist } from '@/lib/services/user-interactions'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 import ContentGrid from '@/components/ui/content-grid'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { logger } from '@/lib/logger'
+
 
 export default function WatchlistPage() {
   const { user } = useAuth()
@@ -21,7 +22,7 @@ export default function WatchlistPage() {
         const data = await getUserWatchlist(user.id)
         setWatchlist(data)
       } catch (error) {
-        logger.error('Error loading watchlist:', error)
+        console.error('Error loading watchlist:', error)
         setError(
           error instanceof Error ? error.message : 'Failed to load watchlist'
         )

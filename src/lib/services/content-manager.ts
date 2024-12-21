@@ -1,10 +1,11 @@
-import type { Content, ContentMetadata, Playlist, Series } from '@/types'
-
+import { vimeoService } from '@/lib/services/vimeo'
 import { createClient } from '@/lib/supabase/client'
+import type { Content, ContentMetadata, Playlist } from '@/types'
 
 const supabase = createClient()
 
 interface ContentFilters {
+  id?: string
   category?: string
   tags?: string[]
   series?: string
@@ -33,38 +34,49 @@ class ContentManager {
   async getContent(
     filters?: ContentFilters,
     sort?: ContentSort
-  ): Promise<Content[]> {
-    let query = supabase.from('content').select('*')
+  ): Promise<Content | null> {
+    // Get videos from Vimeo
+    const videos = await vimeoService.getVideos({
+      query: filters?.category,
+      sort: sort?.field === 'title' ? 'name' : 'date',
+      direction: sort?.direction || 'desc'
+    })
 
-    // Apply filters
-    if (filters?.category) {
-      query = query.eq('category', filters.category)
-    }
-    if (filters?.tags?.length) {
-      query = query.contains('tags', filters.tags)
-    }
-    if (filters?.series) {
-      query = query.eq('series_id', filters.series)
-    }
-    if (filters?.releaseYear) {
-      query = query.eq('release_year', filters.releaseYear)
-    }
-    if (filters?.duration?.min) {
-      query = query.gte('duration', filters.duration.min)
-    }
-    if (filters?.duration?.max) {
-      query = query.lte('duration', filters.duration.max)
-    }
+    // Assuming we want the first video that matches the id
+    const video = videos.find(v => v.uri.split('/').pop() === filters?.id);
+    if (!video) return null; // Return null if no video found
 
-    // Apply sorting
-    if (sort) {
-      query = query.order(sort.field, { ascending: sort.direction === 'asc' })
-    }
+    // Map Vimeo response to our Content type
+    return {
+      id: video.uri.split('/').pop() || '',
+      title: video.name,
+      description: video.description,
+      thumbnail_url: video.pictures.base_link,
+      duration: video.duration,
+      category: filters?.category || '',
+      release_year: new Date(video.created_time).getFullYear(),
+      status: video.status,
+      created_at: video.created_time,
+      updated_at: video.modified_time
+    };
+  }
 
-    const { data, error } = await query
+  async deleteContent(contentId: string): Promise<void> {
+    // Delete video from Vimeo
+    await vimeoService.deleteVideo(contentId)
+  }
 
-    if (error) throw error
-    return data
+  async updateMetadata(
+    contentId: string,
+    metadata: Partial<ContentMetadata>
+  ): Promise<void> {
+    // Update video metadata on Vimeo
+    await vimeoService.updateVideo(contentId, {
+      name: metadata.title,
+      description: metadata.description,
+      privacy: { view: 'disable' }, // Adjust based on your needs
+      ...metadata
+    })
   }
 
   async createPlaylist(
@@ -72,21 +84,20 @@ class ContentManager {
     name: string,
     description?: string
   ): Promise<Playlist> {
-    const { data, error } = await supabase
-      .from('playlists')
-      .insert([
-        {
-          user_id: userId,
-          name,
-          description,
-          items: [],
-        },
-      ])
-      .select()
-      .single()
+    // Create a showcase on Vimeo
+    const showcase = await vimeoService.createShowcase({
+      name,
+      description,
+      privacy: { view: 'password' } // Adjust based on your needs
+    })
 
-    if (error) throw error
-    return data
+    return {
+      id: showcase.uri.split('/').pop() || '',
+      user_id: userId,
+      name: showcase.name,
+      description: showcase.description || '',
+      items: []
+    }
   }
 
   async addToPlaylist(
@@ -94,111 +105,30 @@ class ContentManager {
     contentId: string,
     position?: number
   ): Promise<void> {
-    const { data: playlist, error: fetchError } = await supabase
-      .from('playlists')
-      .select('items')
-      .eq('id', playlistId)
-      .single()
-
-    if (fetchError) throw fetchError
-
-    const items = [...playlist.items]
-    if (typeof position === 'number') {
-      items.splice(position, 0, contentId)
-    } else {
-      items.push(contentId)
-    }
-
-    const { error: updateError } = await supabase
-      .from('playlists')
-      .update({ items })
-      .eq('id', playlistId)
-
-    if (updateError) throw updateError
-  }
-
-  async createSeries(name: string, description?: string): Promise<Series> {
-    const { data, error } = await supabase
-      .from('series')
-      .insert([
-        {
-          name,
-          description,
-          episodes: [],
-        },
-      ])
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  }
-
-  async addToSeries(
-    seriesId: string,
-    contentId: string,
-    episodeNumber: number
-  ): Promise<void> {
-    const { error } = await supabase
-      .from('content')
-      .update({
-        series_id: seriesId,
-        episode_number: episodeNumber,
-      })
-      .eq('id', contentId)
-
-    if (error) throw error
-  }
-
-  async updateMetadata(
-    contentId: string,
-    metadata: Partial<ContentMetadata>
-  ): Promise<void> {
-    const { error } = await supabase.from('content_metadata').upsert([
-      {
-        content_id: contentId,
-        ...metadata,
-      },
-    ])
-
-    if (error) throw error
+    // Add video to Vimeo showcase
+    await vimeoService.addToShowcase(playlistId, contentId)
   }
 
   async getRecommendations(userId: string, limit = 10): Promise<Content[]> {
-    // Get user's viewing history and preferences
-    const { data: history } = await supabase
-      .from('view_sessions')
-      .select('content_id')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(20)
+    // Get recommended videos from Vimeo
+    const videos = await vimeoService.getVideos({
+      sort: 'plays',
+      direction: 'desc',
+      per_page: limit
+    })
 
-    if (!history?.length) {
-      // Return trending content if no history
-      return this.getTrendingContent(limit)
-    }
-
-    // Get similar content based on categories and tags
-    const watchedContentIds = history.map(h => h.content_id)
-    const { data: similarContent } = await supabase
-      .from('content')
-      .select('*')
-      .not('id', 'in', `(${watchedContentIds.join(',')})`)
-      .order('views', { ascending: false })
-      .limit(limit)
-
-    return similarContent || []
-  }
-
-  private async getTrendingContent(limit: number): Promise<Content[]> {
-    const { data, error } = await supabase
-      .from('content')
-      .select('*')
-      .order('views', { ascending: false })
-      .limit(limit)
-
-    if (error) throw error
-    return data
+    return videos.map(video => ({
+      id: video.uri.split('/').pop() || '',
+      title: video.name,
+      description: video.description,
+      thumbnail_url: video.pictures.base_link,
+      duration: video.duration,
+      category: '',
+      release_year: new Date(video.created_time).getFullYear(),
+      status: video.status,
+      created_at: video.created_time,
+      updated_at: video.modified_time
+    }))
   }
 }
 

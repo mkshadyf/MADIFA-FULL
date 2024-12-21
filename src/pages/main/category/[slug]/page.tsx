@@ -1,14 +1,14 @@
-'use client'
+ 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-
+ 
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/lib/supabase/types'
-import type { Category } from '@/lib/types/content'
+import type { Category } from '@/types/content'
 import CategoryNavigation from '@/components/ui/category-navigation'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { logger } from '@/lib/logger'
+import { useNavigate } from 'react-router-dom'
+
 
 interface CategoryPageProps {
   params: {
@@ -21,7 +21,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const [content, setContent] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+   const navigate = useNavigate()
   const supabase = createClient()
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
         if (contentError) throw contentError
         setContent(contentData || [])
       } catch (error) {
-        logger.error('Error fetching category content:', error)
+        console.error('Error fetching category content:', error)
         setError(
           error instanceof Error ? error.message : 'Failed to load content'
         )
@@ -89,7 +89,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
           {content.map(item => (
             <div
               key={item.id}
-              onClick={() => router.push(`/watch/${item.id}`)}
+              onClick={() => navigate(`/watch/${item.id}`)}
               className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg bg-gray-800"
             >
               {item.thumbnail_url ? (

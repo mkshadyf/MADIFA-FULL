@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -19,7 +20,7 @@ export default function SubscriptionSyncStatus() {
   const supabase = createClient()
 
   useEffect(() => {
-    loadJobs()
+    void loadJobs()
     const interval = setInterval(loadJobs, 30000) // Refresh every 30s
     return () => clearInterval(interval)
   }, [])
@@ -35,7 +36,7 @@ export default function SubscriptionSyncStatus() {
       if (error) throw error
       setJobs(data)
     } catch (error) {
-      logger.error('Error loading sync jobs:', error)
+      console.error('Error loading sync jobs:', error)
     } finally {
       setLoading(false)
     }

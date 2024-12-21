@@ -1,10 +1,11 @@
+import React from "react"
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { motion } from 'framer-motion'
 
 import type { OnboardingState } from '@/lib/services/onboarding'
-import type { UserProfile } from '@/lib/types/auth'
-import type { StreamingQuality } from '@/lib/types/onboarding'
+import type { UserProfile } from '@/types/auth'
+import type { StreamingQuality } from '@/types/onboarding'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 
@@ -91,7 +92,7 @@ export default function ProfileCompletionStep({
         },
       })
     } catch (error) {
-      logger.error('Error updating profile:', error)
+      console.error('Error updating profile:', error)
       showToast('Failed to update profile', 'error')
     } finally {
       setIsSubmitting(false)

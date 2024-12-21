@@ -1,10 +1,11 @@
+import React from "react"
 import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/lib/supabase/types'
 import { uploadContent } from '@/lib/utils/content-upload'
 
-export default function ContentUpload () {
+export default function ContentUpload() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
@@ -26,20 +27,17 @@ export default function ContentUpload () {
     setLoading(true)
     setError(null)
     setUploadProgress(0)
-
     try {
-      // Upload thumbnail
-      thumbnails', {
-        onProgress: progress => {
+      const thumbnailUrl = await uploadContent(thumbnailFile, {
+        onProgress: (progress: { loaded: number; total: number }) => {
           setUploadProgress((progress.loaded / progress.total) * 50)
-        },
+        }
       })
 
-      // Upload video
-      videos', {
-        onProgress: progress => {
+      const videoUrl = await uploadContent(videoFile, {
+        onProgress: (progress: { loaded: number; total: number }) => {
           setUploadProgress(50 + (progress.loaded / progress.total) * 50)
-        },
+        }
       })
 
       // Create content record
@@ -63,7 +61,7 @@ export default function ContentUpload () {
       setVideoFile(null)
       setUploadProgress(0)
     } catch (error) {
-      logger.error('Upload error:', error)
+      console.error('Upload error:', error)
       setError(error instanceof Error ? error.message : 'Upload failed')
     } finally {
       setLoading(false)
@@ -78,6 +76,7 @@ export default function ContentUpload () {
         <div>
           <label className="block text-sm font-medium text-gray-300">Title</label>
           <input
+            title="Title"
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
@@ -89,6 +88,7 @@ export default function ContentUpload () {
         <div>
           <label className="block text-sm font-medium text-gray-300">Description</label>
           <textarea
+            title="Description"
             value={description}
             onChange={e => setDescription(e.target.value)}
             required
@@ -101,6 +101,7 @@ export default function ContentUpload () {
           <div>
             <label className="block text-sm font-medium text-gray-300">Category</label>
             <select
+              title="Category"
               value={category}
               onChange={e => setCategory(e.target.value)}
               required
@@ -116,6 +117,7 @@ export default function ContentUpload () {
           <div>
             <label className="block text-sm font-medium text-gray-300">Release Year</label>
             <input
+              title="Release Year"
               type="number"
               value={releaseYear}
               onChange={e => setReleaseYear(parseInt(e.target.value))}
@@ -131,6 +133,7 @@ export default function ContentUpload () {
           <div>
             <label className="block text-sm font-medium text-gray-300">Thumbnail</label>
             <input
+              title="Thumbnail"
               type="file"
               accept="image/*"
               onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
@@ -142,6 +145,7 @@ export default function ContentUpload () {
           <div>
             <label className="block text-sm font-medium text-gray-300">Video</label>
             <input
+              title="Video"
               type="file"
               accept="video/*"
               onChange={e => setVideoFile(e.target.files?.[0] || null)}

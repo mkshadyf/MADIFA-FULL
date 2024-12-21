@@ -44,7 +44,7 @@ export function useContentSearch({
 
         setResults(data || [])
       } catch (error) {
-        logger.error('Search error:', error)
+        console.error('Search error:', error)
         setError(error instanceof Error ? error.message : 'Search failed')
       } finally {
         setLoading(false)

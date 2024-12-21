@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
 import { contentManager } from '@/lib/services/content-manager'
-import { useContent } from '@/hooks/useContent'
 import { useToast } from '@/hooks/useToast'
+import { Content } from '@/types/content'
+import { IconButton } from '../ui/button'
 
-import { IconButton } from '../ui/Button'
 
 interface ContentMetadataEditorProps {
   className?: string
@@ -38,19 +38,19 @@ export default function ContentMetadataEditor ({
         const content = await contentManager.getContent({ id: contentId })
         if (content) {
           setMetadata({
-            title: content.title,
-            description: content.description,
-            category: content.category,
+            title: content.title || '',
+            description: content.description || '',
+            category: content.category || '',
             tags: content.tags || [],
-            releaseYear: content.release_year,
+            releaseYear: content.release_year || new Date().getFullYear(),
             expirationDate: content.expiration_date || '',
-            availabilityWindow: content.availability_window || 0,
+            availabilityWindow: typeof content.availability_window === 'number' ? content.availability_window : 0,
             isPublic: content.is_public ?? true,
             customFields: content.custom_fields || {},
           })
         }
       } catch (error) {
-        logger.error('Failed to load content metadata:', error)
+        console.error('Failed to load content metadata:', error)
         showToast('Failed to load content metadata', 'error')
       }
     }
@@ -66,7 +66,7 @@ export default function ContentMetadataEditor ({
       onUpdate?.()
       setIsEditing(false)
     } catch (error) {
-      logger.error('Failed to update metadata:', error)
+      console.error('Failed to update metadata:', error)
       showToast('Failed to update metadata', 'error')
     } finally {
       setIsSaving(false)
@@ -84,13 +84,13 @@ export default function ContentMetadataEditor ({
   }
 
   const addCustomField = () => {
-    Enter field name:')
-    if (key) {
+    const key = window.prompt('Enter field name:')
+    if (key && key.trim()) {
       setMetadata(prev => ({
         ...prev,
         customFields: {
           ...prev.customFields,
-          [key]: '',
+          [key.trim()]: '',
         },
       }))
     }
@@ -102,6 +102,7 @@ export default function ContentMetadataEditor ({
         <h3 className="text-lg font-semibold text-white">Content Metadata</h3>
         {!isEditing ? (
           <IconButton
+            label="Edit Metadata"
             icon="edit"
             onClick={() => setIsEditing(true)}
             className="text-gray-400 hover:text-white"
@@ -110,6 +111,7 @@ export default function ContentMetadataEditor ({
         ) : (
           <div className="flex items-center space-x-2">
             <IconButton
+              label="Save Metadata"
               icon="save"
               onClick={handleSave}
               disabled={isSaving}
@@ -117,6 +119,7 @@ export default function ContentMetadataEditor ({
               aria-label="Save metadata"
             />
             <IconButton
+              label="Cancel Editing"
               icon="x"
               onClick={() => setIsEditing(false)}
               className="text-gray-400 hover:text-white"

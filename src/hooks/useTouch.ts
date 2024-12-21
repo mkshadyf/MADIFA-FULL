@@ -10,7 +10,13 @@ interface UseTouchOptions {
   swipeThreshold?: number
 }
 
-export function useTouch ({
+interface TouchPosition {
+  x: number
+  y: number
+  time: number
+}
+
+export function useTouch({
   onTap,
   onDoubleTap,
   onLongPress,
@@ -20,7 +26,7 @@ export function useTouch ({
   swipeThreshold = 50,
 }: UseTouchOptions) {
   const [isLongPressing, setIsLongPressing] = useState(false)
-   y: number; time: number } | null>(null)
+  const touchStart = useRef<TouchPosition | null>(null)
   const lastTap = useRef<number>(0)
   const longPressTimer = useRef<NodeJS.Timeout>()
 

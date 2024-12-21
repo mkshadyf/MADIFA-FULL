@@ -1,5 +1,5 @@
 import React from 'react'
-import { createErrorContext, handleError } from '@/utils/error-handler'
+import { createErrorContext, handleError } from '@/lib/utils/error-handler'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/useAuth'

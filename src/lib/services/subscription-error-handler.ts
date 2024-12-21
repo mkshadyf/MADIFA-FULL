@@ -57,7 +57,7 @@ export async function handleSyncError(
 
     return errorLog
   } catch (error) {
-    logger.error('Error handling sync error:', error)
+    console.error('Error handling sync error:', error)
     throw error
   }
 }

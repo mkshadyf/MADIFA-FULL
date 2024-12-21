@@ -1,5 +1,24 @@
+ 
 import type { JSX } from 'react'
-import { createErrorContext, handleError } from '@/utils/error-handler'
+import { handleError } from '@/lib/utils/error-handler'
+
+type ErrorContext = {
+  component: string
+  method: string
+  action: string
+}
+
+function createErrorContext(
+  component: string,
+  method: string, 
+  action: string
+): ErrorContext {
+  return {
+    component,
+    method,
+    action
+  }
+}
 
 import { socialAuth } from '@/lib/services/social-auth'
 import { cn } from '@/lib/utils'
@@ -75,7 +94,7 @@ export function SocialAuth({
       }
       onSuccess?.()
     } catch (error) {
-      handleError(error, context)
+      handleError(error, context.toString()) // Convert ErrorContext to string
       onError?.(
         error instanceof Error ? error : new Error('Authentication failed')
       )

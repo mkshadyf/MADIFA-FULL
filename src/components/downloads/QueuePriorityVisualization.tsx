@@ -3,20 +3,23 @@ import React from 'react'
 import { formatBytes } from '@/lib/utils/format'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
 import { useQueuePriority } from '@/hooks/useQueuePriority'
+import type { QueueItem } from '@/stores/queueStore'
 
 interface QueuePriorityVisualizationProps {
   className?: string
 }
 
-export default function QueuePriorityVisualization ({
+type PriorityLevel = 'high' | 'medium' | 'low'
+
+export default function QueuePriorityVisualization({
   className = '',
 }: QueuePriorityVisualizationProps) {
   const { queueItems } = useDownloadQueue()
   const { calculatePriority } = useQueuePriority()
   const [priorityGroups, setPriorityGroups] = React.useState<{
-    high: typeof queueItems
-    medium: typeof queueItems
-    low: typeof queueItems
+    high: QueueItem[]
+    medium: QueueItem[]
+    low: QueueItem[]
   }>({
     high: [],
     medium: [],
@@ -41,10 +44,10 @@ export default function QueuePriorityVisualization ({
       })
     }
 
-    groupItems()
+    void groupItems()
   }, [queueItems, calculatePriority])
 
-  high' | 'medium' | 'low') => {
+  const getPriorityColor = (priority: PriorityLevel): string => {
     switch (priority) {
       case 'high':
         return 'bg-green-500/10 border-green-500/20'
@@ -57,8 +60,8 @@ export default function QueuePriorityVisualization ({
     }
   }
 
-  const getTotalSize = (items: typeof queueItems) => {
-    return items.reduce((total, item) => total + (item.content.size || 0), 0)
+  const getTotalSize = (items: QueueItem[]): number => {
+    return items.reduce((total: number, item: QueueItem) => total + (item.content.size || 0), 0)
   }
 
   return (

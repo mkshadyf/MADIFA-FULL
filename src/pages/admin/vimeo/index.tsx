@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 
 import type { VimeoVideo } from '@/types/vimeo'
 import { vimeoService } from '@/lib/services/vimeo'
 import { toast } from '@/components/ui/toast'
 import { BatchUploader } from '@/components/admin/BatchUploader'
 import { VideoCard } from '@/components/admin/VideoCard'
-
+ 
 export default function VimeoManagement() {
   const [videos, setVideos] = useState<VimeoVideo[]>([])
   const [loading, setLoading] = useState(true)
@@ -16,7 +16,7 @@ export default function VimeoManagement() {
       const response = await vimeoService.getVideos()
       setVideos(Array.isArray(response) ? response : [])
     } catch (error) {
-      logger.error('Failed to fetch videos:', error)
+      console.error('Failed to fetch videos:', error)
       toast.error('Failed to fetch videos')
     } finally {
       setLoading(false)
@@ -33,7 +33,7 @@ export default function VimeoManagement() {
       toast.success('Video deleted successfully')
       fetchVideos()
     } catch (error) {
-      logger.error('Failed to delete video:', error)
+      console.error('Failed to delete video:', error)
       toast.error('Failed to delete video')
     }
   }
@@ -44,7 +44,7 @@ export default function VimeoManagement() {
       toast.success('Security settings updated')
       fetchVideos()
     } catch (error) {
-      logger.error('Failed to update security settings:', error)
+      console.error('Failed to update security settings:', error)
       toast.error('Failed to update security settings')
     }
   }
@@ -63,7 +63,7 @@ export default function VimeoManagement() {
       toast.success('Thumbnail updated successfully')
       fetchVideos()
     } catch (error) {
-      logger.error('Failed to update thumbnail:', error)
+      console.error('Failed to update thumbnail:', error)
       toast.error('Failed to update thumbnail')
     }
   }

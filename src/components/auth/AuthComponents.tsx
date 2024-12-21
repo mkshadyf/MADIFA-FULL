@@ -31,9 +31,7 @@ interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-export function AuthInput ({ label, error, ...props }: AuthInputProps) {
-  -')
-
+export function AuthInput ({ label, error, id, ...props }: AuthInputProps) {
   return (
     <div>
       <label htmlFor={id} className="sr-only">

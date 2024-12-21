@@ -5,7 +5,7 @@ import type {
   Subscription,
   SubscriptionStatus,
   SubscriptionTier,
-} from '@/lib/types/subscription'
+} from '@/types/subscription'
 
 export interface SubscriptionUsage {
   storage_used: number
@@ -29,6 +29,43 @@ export class SubscriptionService {
         500,
         'Failed to get subscription',
         'GET_SUBSCRIPTION_ERROR',
+        error
+      )
+    }
+  }
+  //getSubscriptionStatus - This function determines the current status of a user's subscription
+  async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required')
+      }
+
+      const subscription = await this.getCurrentSubscription(userId)
+
+      // Handle edge cases with more detailed status
+      if (!subscription) {
+        return 'inactive'
+      }
+
+      // Validate subscription dates
+      const now = new Date()
+      const periodEnd = new Date(subscription.current_period_end)
+
+      if (subscription.status === 'active' && periodEnd < now) {
+        return 'expired' as SubscriptionStatus
+      }
+
+      if (subscription.cancel_at_period_end && periodEnd > now) {
+        return 'canceling' as SubscriptionStatus
+      }
+
+      return subscription.status || 'inactive'
+
+    } catch (error) {
+      throw createAPIError(
+        500,
+        'Failed to get subscription status',
+        'GET_SUBSCRIPTION_STATUS_ERROR',
         error
       )
     }
@@ -122,12 +159,12 @@ export class SubscriptionService {
     try {
       const updates = cancelImmediately
         ? {
-            status: 'cancelled' as SubscriptionStatus,
-            cancelled_at: new Date().toISOString(),
-          }
+          status: 'cancelled' as SubscriptionStatus,
+          cancelled_at: new Date().toISOString(),
+        }
         : {
-            cancel_at_period_end: true,
-          }
+          cancel_at_period_end: true,
+        }
 
       const { error } = await supabase
         .from('subscriptions')
@@ -223,5 +260,5 @@ export class SubscriptionService {
     return endDate
   }
 }
-
 export const subscriptionService = new SubscriptionService()
+

@@ -48,6 +48,7 @@ export default function QueueRecommendations({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Queue Health</h3>
         <IconButton
+        label='Optimize'
           icon="optimize"
           onClick={handleOptimize}
           disabled={isOptimizing}

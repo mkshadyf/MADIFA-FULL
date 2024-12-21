@@ -1,7 +1,8 @@
-import { useRouter } from 'next/router'
+import React from "react"
+import { useNavigate } from 'react-router-dom'
 
 export default function SubscriptionCancel() {
-  const router = useRouter()
+  const navigate = useNavigate()
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-900">
@@ -15,13 +16,13 @@ export default function SubscriptionCancel() {
         </p>
         <div className="space-y-4">
           <button
-            onClick={() => router.push('/subscription')}
+            onClick={() => navigate('/subscription')}
             className="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
             Try Again
           </button>
           <button
-            onClick={() => router.push('/browse')}
+            onClick={() => navigate('/browse')}
             className="inline-flex w-full items-center justify-center rounded-md border border-gray-600 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700"
           >
             Continue with Free Plan

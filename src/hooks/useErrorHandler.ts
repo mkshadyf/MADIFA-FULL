@@ -1,5 +1,4 @@
-import { env } from '@/config/env'
-import { AppError } from '@/lib/utils/error'
+import { AppError } from '@/lib/utils/error-handler'
 
 import { useToast } from './useToast'
 
@@ -17,8 +16,8 @@ export function useErrorHandler() {
     const context = options.context ? `[${options.context}] ` : ''
 
     // Log error in development
-    if (env.NODE_ENV === 'development') {
-      logger.error(`${context}[${appError.code}]`, appError)
+    if (import.meta.env.VITE_NODE_ENV === 'development') {
+      console.error(`${context}[${appError.code}]`, appError)
     }
 
     // Show toast notification
@@ -27,7 +26,7 @@ export function useErrorHandler() {
     }
 
     // Log to server in production
-    if (env.NODE_ENV === 'production' && options.logToServer !== false) {
+    if (import.meta.env.VITE_NODE_ENV === 'production' && options.logToServer !== false) {
       try {
         await fetch('/api/log-error', {
           method: 'POST',
@@ -36,11 +35,11 @@ export function useErrorHandler() {
             code: appError.code,
             message: appError.message,
             stack: appError.stack,
-            meta: { ...appError.meta, context: options.context },
+            meta: { context: options.context }, // Removed spreading of non-existent meta property
           }),
         })
       } catch (err) {
-        logger.error('Failed to log error to server:', err)
+        console.error('Failed to log error to server:', err)
       }
     }
 

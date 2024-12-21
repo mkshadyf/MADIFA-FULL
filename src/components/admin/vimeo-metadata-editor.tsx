@@ -1,8 +1,8 @@
-import { useState } from 'react'
+ import { useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
 
 import type { VimeoVideo } from '@/types/vimeo'
-import { logger } from '@/lib/logger'
+
 
 interface MetadataEditorProps {
   video: VimeoVideo
@@ -41,7 +41,7 @@ export default function VimeoMetadataEditor({ video, onUpdate }: MetadataEditorP
       })
       onUpdate()
     } catch (error) {
-      logger.error('Error updating video metadata:', error)
+      console.error('Error updating video metadata:', error)
     } finally {
       setSaving(false)
     }
@@ -71,7 +71,7 @@ export default function VimeoMetadataEditor({ video, onUpdate }: MetadataEditorP
           </label>
           <textarea
             id="video-description"
-            value={description}
+            value={description || ''}
             onChange={e => setDescription(e.target.value)}
             rows={4}
             className="w-full rounded-lg bg-gray-700 px-3 py-2 focus:ring-2 focus:ring-indigo-500"

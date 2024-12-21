@@ -1,6 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 interface ContentStats {
   totalViews: number
@@ -64,7 +66,7 @@ export default function ContentStats({ contentId }: { contentId: string }) {
           category: content?.category || '',
         })
       } catch (error) {
-        logger.error('Error fetching content stats:', error)
+        console.error('Error fetching content stats:', error)
       } finally {
         setLoading(false)
       }

@@ -1,7 +1,7 @@
 import type { Content } from '@/types'
 
-import { downloadQueueManager } from '../services/download-queue'
-import { storageQuotaManager } from '../services/storage-quota'
+import { downloadQueueManager } from '@/lib/services/download-queue'
+import { storageQuotaManager } from '@/lib/services/storage-quota'
 
 export class QuotaEnforcementMiddleware {
   private static instance: QuotaEnforcementMiddleware
@@ -41,7 +41,7 @@ export class QuotaEnforcementMiddleware {
 
       return { canProceed: true }
     } catch (error) {
-      logger.error('Quota enforcement error:', error)
+      console.error('Quota enforcement error:', error)
       return {
         canProceed: false,
         message: 'Failed to check storage quota',

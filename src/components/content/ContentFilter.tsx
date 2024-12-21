@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Content } from '@/types'
 
 import { useContent } from '@/hooks/useContent'
@@ -12,11 +12,11 @@ export default function ContentFilter({
   className = '',
   onFilter,
 }: ContentFilterProps) {
-  const { contents } = useContent()
+  const { data: contents } = useContent()
   const [filters, setFilters] = useState({
     category: '',
     minDuration: '',
-    maxDuration: '',
+    maxDuration: '', 
     releaseYear: '',
     searchTerm: '',
   })
@@ -26,18 +26,34 @@ export default function ContentFilter({
   useEffect(() => {
     if (!contents) return
 
-    // Extract unique categories and years
-    const categories = new Set(contents.map(c => c.category))
-    const years = new Set(contents.map(c => c.release_year))
+    // Extract unique categories and years from valid content
+    const categories = new Set(
+      contents
+        .filter((c: Content) => c.category !== undefined)
+        .map((c: Content) => c.category)
+    )
+    const years = new Set(
+      contents
+        .filter((c: Content) => c.release_year !== undefined)
+        .map((c: Content) => c.release_year)
+    )
 
-    setAvailableCategories(Array.from(categories).sort())
-    setAvailableYears(Array.from(years).sort((a, b) => b - a))
+    setAvailableCategories(
+      Array.from(categories)
+        .filter((c): c is string => typeof c === 'string')
+        .sort()
+    )
+    setAvailableYears(
+      Array.from(years)
+        .filter((y): y is number => typeof y === 'number')
+        .sort((a, b) => b - a)
+    )
   }, [contents])
 
   useEffect(() => {
     if (!contents) return
 
-    const filteredContent = contents.filter(content => {
+    const filteredContent = contents.filter((content: Content) => {
       const matchesCategory =
         !filters.category || content.category === filters.category
       const matchesYear =
@@ -45,17 +61,15 @@ export default function ContentFilter({
         content.release_year === Number(filters.releaseYear)
       const matchesDuration =
         (!filters.minDuration ||
-          content.duration >= Number(filters.minDuration)) &&
+          (content.duration ?? 0) >= Number(filters.minDuration)) &&
         (!filters.maxDuration ||
-          content.duration <= Number(filters.maxDuration))
+          (content.duration ?? 0) <= Number(filters.maxDuration))
       const matchesSearch =
         !filters.searchTerm ||
         content.title
           .toLowerCase()
           .includes(filters.searchTerm.toLowerCase()) ||
-        content.description
-          .toLowerCase()
-          .includes(filters.searchTerm.toLowerCase())
+        content.description?.toLowerCase().includes(filters.searchTerm.toLowerCase())
 
       return matchesCategory && matchesYear && matchesDuration && matchesSearch
     })
@@ -104,6 +118,7 @@ export default function ContentFilter({
           <div>
             <label className="mb-1 block text-sm text-gray-400">Category</label>
             <select
+              title="Category"
               value={filters.category}
               onChange={e => handleFilterChange('category', e.target.value)}
               className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
@@ -122,6 +137,7 @@ export default function ContentFilter({
               Release Year
             </label>
             <select
+              title="Release Year"
               value={filters.releaseYear}
               onChange={e => handleFilterChange('releaseYear', e.target.value)}
               className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
@@ -143,6 +159,7 @@ export default function ContentFilter({
             </label>
             <input
               type="number"
+              title="Min Duration"
               value={filters.minDuration}
               onChange={e => handleFilterChange('minDuration', e.target.value)}
               className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
@@ -154,6 +171,7 @@ export default function ContentFilter({
             </label>
             <input
               type="number"
+              title="Max Duration"
               value={filters.maxDuration}
               onChange={e => handleFilterChange('maxDuration', e.target.value)}
               className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"

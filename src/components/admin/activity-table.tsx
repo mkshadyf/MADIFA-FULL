@@ -1,6 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 interface Activity {
   id: string
@@ -41,13 +43,13 @@ export default function ActivityTable() {
         if (error) throw error
         setActivities(data || [])
       } catch (error) {
-        logger.error('Error fetching activities:', error)
+        console.error('Error fetching activities:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchActivities()
+    void fetchActivities()
   }, [])
 
   const formatAction = (action: string) => {

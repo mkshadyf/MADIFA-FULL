@@ -1,10 +1,23 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import type { Permission, RolePermission, UserRole } from '@/types/auth'
 import { permissionService } from '@/lib/services/permissions'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+
+import type { UserProfile } from '@/types/auth'
+
+type UserRole = UserProfile['role']
+
+interface Permission {
+  id: string
+  name: string
+  description: string
+  scope: 'global' | 'user' | 'role'
+  actions: string[]
+  resource: string // Added missing resource field
+  action: string // Added missing action field
+}
 
 interface PermissionManagerProps {
   userId?: string // If provided, manage specific user permissions
@@ -22,7 +35,7 @@ export function PermissionManager({ userId, role }: PermissionManagerProps) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    loadPermissions()
+    void loadPermissions()
   }, [userId, role])
 
   const loadPermissions = async () => {
@@ -40,7 +53,7 @@ export function PermissionManager({ userId, role }: PermissionManagerProps) {
       setAvailablePermissions(available)
       setSelectedPermissions(current)
     } catch (error) {
-      logger.error('Failed to load permissions:', error)
+      console.error('Failed to load permissions:', error)
       toast.error('Failed to load permissions')
     } finally {
       setIsLoading(false)
@@ -73,7 +86,7 @@ export function PermissionManager({ userId, role }: PermissionManagerProps) {
       }
       toast.success('Permissions updated successfully')
     } catch (error) {
-      logger.error('Failed to update permissions:', error)
+      console.error('Failed to update permissions:', error)
       toast.error('Failed to update permissions')
     }
   }

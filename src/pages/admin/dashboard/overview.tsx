@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -55,7 +56,7 @@ export default function DashboardOverview() {
           totalViews24h: totalViews || 0,
         })
       } catch (error) {
-        logger.error('Error fetching quick stats:', error)
+        console.error('Error fetching quick stats:', error)
       } finally {
         setLoading(false)
       }
@@ -64,7 +65,7 @@ export default function DashboardOverview() {
     fetchQuickStats()
   }, [])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">

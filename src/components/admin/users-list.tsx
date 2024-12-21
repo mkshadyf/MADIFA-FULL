@@ -1,7 +1,7 @@
-import { useState } from 'react'
+ import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 
 import UserDetailsModal from './user-details-modal'
 
@@ -36,7 +36,7 @@ export default function UsersList({ users, onRefresh }: UsersListProps) {
       if (error) throw error
       onRefresh()
     } catch (error) {
-      logger.error('Error updating subscription:', error)
+      console.error('Error updating subscription:', error)
     } finally {
       setLoading(false)
     }
@@ -80,7 +80,7 @@ export default function UsersList({ users, onRefresh }: UsersListProps) {
                 <td className="whitespace-nowrap px-6 py-4">
                   <div className="flex items-center">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white">
-                      {user.full_name[0]}
+                      {user.full_name?.[0]}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-white">
@@ -92,10 +92,11 @@ export default function UsersList({ users, onRefresh }: UsersListProps) {
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
                   <select
+                    title="Subscription Tier"
                     value={user.subscription_tier}
                     onChange={e =>
                       handleUpdateSubscription(
-                        user.user_id,
+                        user.id,
                         e.target.value,
                         user.subscription_status
                       )

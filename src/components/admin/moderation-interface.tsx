@@ -1,8 +1,9 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
-import { getModerationLogs, moderateContent } from '@/lib/services/moderation'
-import type { ModerationAction } from '@/lib/services/moderation'
+import { moderationService } from '@/lib/services/moderation'
+import type { ModerationAction } from '@/types/moderation'
 
 export default function ModerationInterface() {
   const { user } = useAuth()
@@ -21,7 +22,7 @@ export default function ModerationInterface() {
 
   const loadModerationLogs = async () => {
     try {
-      const data = await getModerationLogs({ limit: 50 })
+      const data = await moderationService.getModerationRules()
       setLogs(data)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to load logs')
@@ -34,9 +35,11 @@ export default function ModerationInterface() {
     if (!user) return
 
     try {
-      await moderateContent({
+      await moderationService.takeModerationAction({
         ...selectedAction,
-        moderatorId: user.id,
+        moderator_id: user.id,
+        content_id: selectedAction.content_id,
+        created_at: new Date(),
       } as ModerationAction)
 
       // Refresh logs
@@ -62,6 +65,7 @@ export default function ModerationInterface() {
               Action Type
             </label>
             <select
+              title="Action Type"
               value={selectedAction.type}
               onChange={e =>
                 setSelectedAction(prev => ({
@@ -83,6 +87,7 @@ export default function ModerationInterface() {
               Reason
             </label>
             <textarea
+              title="Reason"
               value={selectedAction.reason || ''}
               onChange={e =>
                 setSelectedAction(prev => ({

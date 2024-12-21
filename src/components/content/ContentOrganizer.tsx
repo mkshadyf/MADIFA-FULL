@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { Content } from '@/types'
 
 import { useContent } from '@/hooks/useContent'
 import { useQueuePriority } from '@/hooks/useQueuePriority'
 
-import { IconButton } from '../ui/Button'
+import { IconButton } from '../ui/button'
 
 interface ContentOrganizerProps {
   className?: string
@@ -15,7 +15,7 @@ export default function ContentOrganizer({
   className = '',
   onOrganize,
 }: ContentOrganizerProps) {
-  const { contents, isLoading } = useContent()
+  const { data: contents, isLoading } = useContent()
   const { calculatePriority } = useQueuePriority()
   const [organizationMethod, setOrganizationMethod] = useState<
     'priority' | 'size' | 'date' | 'category'
@@ -32,7 +32,7 @@ export default function ContentOrganizer({
       switch (organizationMethod) {
         case 'priority':
           const contentWithPriorities = await Promise.all(
-            contents.map(async content => ({
+            contents.map(async (content: Content) => ({
               content,
               priority: await calculatePriority(content),
             }))
@@ -43,19 +43,21 @@ export default function ContentOrganizer({
           break
 
         case 'size':
-          organizedContent.sort((a, b) => (a.size || 0) - (b.size || 0))
+            organizedContent.sort((a, b) => (a.size || 0) - (b.size || 0))
           break
 
         case 'date':
           organizedContent.sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
+            (a, b) => {
+              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+              return dateB - dateA;
+            }
           )
           break
 
         case 'category':
-          organizedContent.sort((a, b) => a.category.localeCompare(b.category))
+          organizedContent.sort((a, b) => (a.category || '').localeCompare(b.category || ''))
           break
       }
 
@@ -78,6 +80,7 @@ export default function ContentOrganizer({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Organize Content</h3>
         <IconButton
+          label="Organize content"
           icon="organize"
           onClick={organizeContent}
           disabled={isOrganizing}
@@ -112,7 +115,7 @@ export default function ContentOrganizer({
           <div>
             <p className="text-gray-400">Categories</p>
             <p className="font-medium text-white">
-              {new Set(contents?.map(c => c.category)).size}
+              {new Set(contents?.map((c: Content) => c.category || '')).size}
             </p>
           </div>
         </div>
@@ -125,11 +128,11 @@ export default function ContentOrganizer({
             <div className="space-y-2">
               {Object.entries(
                 contents.reduce(
-                  (acc, content) => {
-                    acc[content.category] = (acc[content.category] || 0) + 1
+                  (acc: Record<string, number>, content: Content) => {
+                    acc[content.category || ''] = (acc[content.category || ''] || 0) + 1
                     return acc
                   },
-                  {} as Record<string, number>
+                  {}
                 )
               ).map(([category, count]) => (
                 <div

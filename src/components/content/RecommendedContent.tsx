@@ -1,3 +1,4 @@
+import React from "react"
 import { useRecommendations } from '@/hooks/useRecommendations'
 import ContentGrid from '@/components/ui/ContentGrid'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
@@ -11,7 +12,9 @@ export default function RecommendedContent({
   limit = 10,
   title = 'Recommended for You',
 }: RecommendedContentProps) {
-  const { data: recommendations, isLoading, error } = useRecommendations(limit)
+  const { data: recommendations, isLoading, error } = useRecommendations({
+    limit,
+  })
 
   if (isLoading) {
     return <LoadingSpinner />

@@ -13,22 +13,18 @@ export default function ErrorBoundaryProvider({ children }: Props) {
 
   useEffect(() => {
     // Initialize error monitoring
-    errorMonitoring.init(import.meta.env.VITE_SENTRY_DSN || '')
+    errorMonitoring.captureMessage(import.meta.env.VITE_SENTRY_DSN || '', 'init')
 
     // Set up global error handlers
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault()
-      errorMonitoring.captureError(event.reason, {
-        action: 'unhandledRejection',
-      })
+      errorMonitoring.captureMessage(event.reason, 'unhandledRejection')
       showToast('An unexpected error occurred', 'error')
     }
 
     const handleUnhandledError = (event: ErrorEvent) => {
       event.preventDefault()
-      errorMonitoring.captureError(event.error, {
-        action: 'unhandledError',
-      })
+      errorMonitoring.captureMessage(event.error, 'unhandledError')
       showToast('An unexpected error occurred', 'error')
     }
 
@@ -45,17 +41,37 @@ export default function ErrorBoundaryProvider({ children }: Props) {
     showToast('Attempting to recover from error...', 'info')
   }, [showToast])
 
-  return <ErrorBoundary onReset={handleReset}>{children}</ErrorBoundary>
+  return (
+    <ErrorBoundary
+      onError={(error) => {
+          errorMonitoring.captureMessage(error.message, 'error')
+        showToast('An error occurred', 'error')
+      }}
+      fallback={
+        <div className="flex min-h-[200px] flex-col items-center justify-center p-4 text-center">
+          <h2 className="mb-2 text-xl font-semibold">Something went wrong</h2>
+          <p className="mb-4 text-gray-600">An unexpected error occurred</p>
+          <button
+            className="rounded bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/90"
+            onClick={handleReset}
+          >
+            Try again
+          </button>
+        </div>
+      }
+    >
+      {children}
+    </ErrorBoundary>
+  )
 }
 
 // HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
   WrappedComponent: React.ComponentType<P>,
-  componentName?: string
 ) {
   return function WithErrorBoundaryWrapper(props: P) {
     return (
-      <ErrorBoundary component={componentName}>
+      <ErrorBoundary>
         <WrappedComponent {...props} />
       </ErrorBoundary>
     )

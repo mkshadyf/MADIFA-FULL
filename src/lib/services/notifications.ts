@@ -27,7 +27,7 @@ export async function sendNotification(notification: Notification) {
       await sendErrorEmail(notification)
     }
   } catch (error) {
-    logger.error('Error sending notification:', error)
+    console.error('Error sending notification:', error)
     throw error
   }
 }
@@ -35,5 +35,5 @@ export async function sendNotification(notification: Notification) {
 async function sendErrorEmail(notification: Notification) {
   // Implement email sending logic here
   // This could use SendGrid, AWS SES, etc.
-  logger.log('Sending error email:', notification)
+  console.log('Sending error email:', notification)
 }

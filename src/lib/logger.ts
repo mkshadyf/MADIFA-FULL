@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+ 
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 

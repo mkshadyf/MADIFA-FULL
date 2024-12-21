@@ -1,7 +1,7 @@
 import md5 from 'md5'
 
 import { createClient } from '@/lib/supabase/client'
-import type { BillingPeriod, SubscriptionTier } from '@/lib/types/subscription'
+import type { BillingPeriod, SubscriptionTier } from '@/types/subscription'
 
 import { subscriptionService } from './subscription'
 
@@ -59,7 +59,7 @@ export class PaymentService {
       // Log payment notification
       await this.logPaymentNotification(userId, data)
     } catch (error) {
-      logger.error('Error handling payment notification:', error)
+      console.error('Error handling payment notification:', error)
       throw error
     }
   }
@@ -136,7 +136,7 @@ export async function createPaymentSession({
     const { sessionId, url } = await response.json()
     return { sessionId, url }
   } catch (error) {
-    logger.error('Payment session creation error:', error)
+    console.error('Payment session creation error:', error)
     throw error
   }
 }
@@ -157,7 +157,7 @@ export async function verifyPayment(sessionId: string) {
 
     return response.json()
   } catch (error) {
-    logger.error('Payment verification error:', error)
+    console.error('Payment verification error:', error)
     throw error
   }
 }
@@ -187,7 +187,7 @@ export async function updateSubscriptionStatus(
 
     if (error) throw error
   } catch (error) {
-    logger.error('Subscription status update error:', error)
+    console.error('Subscription status update error:', error)
     throw error
   }
 }
@@ -230,7 +230,7 @@ export async function cancelSubscription(userId: string) {
 
     return true
   } catch (error) {
-    logger.error('Subscription cancellation error:', error)
+    console.error('Subscription cancellation error:', error)
     throw error
   }
 }

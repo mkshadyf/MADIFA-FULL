@@ -1,6 +1,20 @@
-import type { Permission, RolePermission, UserRole } from '@/types/auth'
 import { createAPIError } from '@/lib/error'
 import { supabase } from '@/lib/supabase/client'
+import type { UserRole } from '@/types/auth'
+
+export interface Permission {
+  id: string
+  name: string
+  description: string
+  resource: string
+  action: 'read' | 'write' | 'delete' | 'manage' | '*'
+  scope: 'global' | 'user' | 'role'
+}
+
+export interface RolePermission {
+  role: UserRole
+  permissions: Permission[]
+}
 
 export class PermissionService {
   async getRolePermissions(role: UserRole): Promise<Permission[]> {
@@ -73,7 +87,9 @@ export class PermissionService {
         ...(customPermissions?.permissions || []),
       ]
 
-      return Array.from(new Set(allPermissions))
+      return Array.from(
+        new Set(allPermissions.map(p => JSON.stringify(p)))
+      ).map(p => JSON.parse(p))
     } catch (error) {
       throw createAPIError(
         500,
@@ -153,6 +169,7 @@ export class PermissionService {
           description: permission.description,
           resource: permission.resource,
           action: permission.action,
+          scope: permission.scope,
         })
         .select()
         .single()

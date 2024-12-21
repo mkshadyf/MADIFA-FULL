@@ -38,7 +38,7 @@ class ErrorLogger {
 
     // In development, log to console
     if (process.env.NODE_ENV === 'development') {
-      logger.error('Error logged:', errorLog)
+      console.error('Error logged:', errorLog)
     }
 
     // In production, send to error tracking service
@@ -50,7 +50,7 @@ class ErrorLogger {
           body: JSON.stringify(errorLog),
         })
       } catch (e) {
-        logger.error('Failed to send error log:', e)
+        console.error('Failed to send error log:', e)
       }
     }
   }

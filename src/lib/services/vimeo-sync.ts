@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/client'
-
 import { getVideoDetails } from './vimeo'
 
 export async function syncVimeoContent(videoId: string) {
@@ -28,7 +27,7 @@ export async function syncVimeoContent(videoId: string) {
 
     return vimeoDetails
   } catch (error) {
-    logger.error('Error syncing Vimeo content:', error)
+    console.error('Error syncing Vimeo content:', error)
 
     // Update sync status as failed
     await supabase.from('vimeo_sync').upsert({

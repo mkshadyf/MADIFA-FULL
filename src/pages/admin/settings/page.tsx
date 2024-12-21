@@ -1,10 +1,11 @@
+import React from "react"
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { createClient } from '@/lib/supabase/client'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
-export default function AdminSettings () {
+export default function AdminSettings() {
   const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -17,8 +18,7 @@ export default function AdminSettings () {
     setError(null)
 
     try {
-      // Clear CDN cache
-      /api/admin/clear-cache', {
+      const response = await fetch('/api/admin/clear-cache', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,8 +41,7 @@ export default function AdminSettings () {
     setError(null)
 
     try {
-      // Revalidate content
-      /api/admin/revalidate', {
+      const response = await fetch('/api/admin/revalidate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +58,7 @@ export default function AdminSettings () {
     }
   }
 
-  if (authLoading) return <Loading />
+  if (authLoading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">

@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from 'react'
-
+import { useEffect, useState } from 'react'
 import { useContent } from '@/hooks/useContent'
-
-import { IconButton } from '../ui/button'
+import type { Content } from '@/types/content'
 
 interface CategoryStats {
   count: number
@@ -19,10 +17,8 @@ export default function ContentCategoryManager({
   className = '',
   onCategorySelect,
 }: ContentCategoryManagerProps) {
-  const { contents } = useContent()
-  const [categoryStats, setCategoryStats] = useState<
-    Record<string, CategoryStats>
-  >({})
+  const { data: contents } = useContent()
+  const [categoryStats, setCategoryStats] = useState<Record<string, CategoryStats>>({})
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [isExpanded, setIsExpanded] = useState<Record<string, boolean>>({})
 
@@ -30,8 +26,8 @@ export default function ContentCategoryManager({
     if (!contents) return
 
     const stats: Record<string, CategoryStats> = {}
-    contents.forEach(content => {
-      const category = content.category
+    contents.forEach((content: Content) => {
+      const category = content.category || 'Uncategorized'
       if (!stats[category]) {
         stats[category] = {
           count: 0,
@@ -41,15 +37,26 @@ export default function ContentCategoryManager({
       }
 
       stats[category].count++
-      stats[category].totalSize += content.size || 0
-      stats[category].averageDuration =
-        (stats[category].averageDuration * (stats[category].count - 1) +
-          (content.duration || 0)) /
-        stats[category].count
+      if (typeof content.size === 'number') {
+        stats[category].totalSize += content.size
+      }
+      
+      if (typeof content.duration === 'number') {
+        stats[category].averageDuration =
+          (stats[category].averageDuration * (stats[category].count - 1) +
+            content.duration) /
+          stats[category].count
+      }
     })
 
     setCategoryStats(stats)
   }, [contents])
+
+  const getTotalStorageUsage = (): number => {
+    if (!contents) return 0
+    return contents.reduce((total: number, content: Content) => 
+      total + (typeof content.size === 'number' ? content.size : 0), 0)
+  }
 
   const handleCategoryClick = (category: string) => {
     setSelectedCategory(category)
@@ -58,6 +65,24 @@ export default function ContentCategoryManager({
       ...prev,
       [category]: !prev[category],
     }))
+  }
+
+  const formatDuration = (seconds: number): string => {
+    if (!seconds || seconds <= 0) return '0 min'
+    const minutes = Math.round(seconds / 60)
+    return `${minutes} min`
+  }
+
+  const formatSize = (bytes: number): string => {
+    if (!bytes || bytes <= 0) return '0 MB'
+    const mb = bytes / (1024 * 1024)
+    return `${mb.toFixed(1)} MB`
+  }
+
+  const formatPercentage = (size: number): string => {
+    const totalSize = getTotalStorageUsage()
+    if (totalSize === 0 || !size || size <= 0) return '0%'
+    return `${((size / totalSize) * 100).toFixed(1)}%`
   }
 
   return (
@@ -88,36 +113,28 @@ export default function ContentCategoryManager({
                 </div>
               </button>
 
-              {isExpanded[category] ? (
+              {isExpanded[category] && (
                 <div className="mt-3 space-y-2 border-t border-gray-800 pt-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-400">Total Size</span>
                     <span className="text-gray-300">
-                      {(stats.totalSize / (1024 * 1024)).toFixed(1)} MB
+                      {formatSize(stats.totalSize)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Avg. Duration</span>
                     <span className="text-gray-300">
-                      {Math.round(stats.averageDuration / 60)} min
+                      {formatDuration(stats.averageDuration)}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Storage Usage</span>
                     <span className="text-gray-300">
-                      {(
-                        (stats.totalSize /
-                          (contents?.reduce(
-                            (total, content) => total + (content.size || 0),
-                            0
-                          ) || 1)) *
-                        100
-                      ).toFixed(1)}
-                      %
+                      {formatPercentage(stats.totalSize)}
                     </span>
                   </div>
                 </div>
-              ) : null}
+              )}
             </div>
           ))}
       </div>

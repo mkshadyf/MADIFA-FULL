@@ -7,5 +7,5 @@ interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
   // Implement email sending logic
-  logger.log('Sending email:', options)
+  console.log('Sending email:', options)
 }

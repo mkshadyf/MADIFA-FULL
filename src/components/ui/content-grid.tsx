@@ -1,9 +1,8 @@
-import { useState } from 'react'
+ import { useState } from 'react'
 import { motion } from 'framer-motion'
-import Image from 'react-router-dom'
-import useRouter from 'react-router-dom'
-
-import type { Content } from '@/lib/types/content'
+import { useNavigate } from 'react-router-dom'
+ 
+import type { Content } from '@/types/content'
 
 interface ContentGridProps {
   items: Content[]
@@ -23,7 +22,7 @@ export default function ContentGrid({
   isLoading = false,
 }: ContentGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-  const router = useRouter()
+   const navigate = useNavigate()
 
   const container = {
     hidden: { opacity: 0 },
@@ -64,10 +63,10 @@ export default function ContentGrid({
               className={`relative ${
                 aspectRatio === 'video' ? 'aspect-video' : 'aspect-[2/3]'
               } cursor-pointer overflow-hidden rounded-lg`}
-              onClick={() => router.push(`/watch/${content.id}`)}
+              onClick={() => navigate(`/watch/${content.id}`)}
             >
               <img
-                src={content.thumbnail_url}
+                src={content.thumbnail_url || ''}
                 alt={content.title}
                 className="object-cover transition-transform duration-300 group-hover:scale-110"
               />

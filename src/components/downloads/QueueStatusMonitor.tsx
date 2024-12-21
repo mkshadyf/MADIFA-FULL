@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { QueueItem } from '@/types/queue'
 import { formatBytes, formatDuration } from '@/lib/utils/format'
@@ -12,7 +12,7 @@ interface QueueStats {
   estimatedTimeRemaining: number
 }
 
-export default function QueueStatusMonitor () {
+export default function QueueStatusMonitor() {
   const { queueItems } = useDownloadQueue()
   const [stats, setStats] = useState<QueueStats>({
     activeDownloads: 0,
@@ -23,18 +23,17 @@ export default function QueueStatusMonitor () {
   })
 
   useEffect(() => {
-    // Calculate queue statistics
-    downloading')
-    paused')
-    error')
-
+    // Filter queue items by status
+    const activeDownloads = queueItems.filter(item => item.status === 'downloading')
+    const pausedDownloads = queueItems.filter(item => item.status === 'paused')
+    const failedDownloads = queueItems.filter(item => item.status === 'error')
     // Calculate average speed from active downloads
-    const totalSpeed = activeDownloads.reduce((sum, item) => sum + (item.speed || 0), 0)
+    const totalSpeed = activeDownloads.reduce<number>((sum, item) => sum + (item.content?.fileSize || 0), 0)
     const averageSpeed = activeDownloads.length ? totalSpeed / activeDownloads.length : 0
 
-    // Calculate estimated time remaining
-    const remainingBytes = queueItems.reduce((sum, item) => {
-      const remaining = (item.content.size || 0) * (1 - item.progress / 100)
+    // Calculate estimated time remaining 
+    const remainingBytes = queueItems.reduce<number>((sum, item) => {
+      const remaining = (item.content?.size || 0) * (1 - (item.progress || 0) / 100)
       return sum + remaining
     }, 0)
     const estimatedTimeRemaining = averageSpeed ? remainingBytes / averageSpeed : 0

@@ -1,5 +1,7 @@
+import React from "react"
 import { useRef, useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
+
 
 interface UploadProgress {
   loaded: number
@@ -15,9 +17,9 @@ export default function VimeoUpload() {
 
   const handleUpload = async (file: File) => {
     const vimeoClient = new Vimeo(
-      process.env.NEXT_PUBLIC_VIMEO_CLIENT_ID!,
-      process.env.NEXT_PUBLIC_VIMEO_CLIENT_SECRET!,
-      process.env.NEXT_PUBLIC_VIMEO_ACCESS_TOKEN!
+      import.meta.env.VITE_VIMEO_CLIENT_ID!,
+      import.meta.env.VITE_VIMEO_CLIENT_SECRET!,
+      import.meta.env.VITE_VIMEO_ACCESS_TOKEN!
     )
 
     setUploading(true)
@@ -33,11 +35,11 @@ export default function VimeoUpload() {
             privacy: { view: 'disable' }, // Private by default
           },
           uri => {
-            logger.log('Upload completed:', uri)
+            console.info('Upload completed:', uri)
             resolve(uri)
           },
           error => {
-            logger.error('Upload error:', error)
+            console.error('Upload error:', error)
             reject(error)
           },
           (bytes_uploaded, bytes_total) => {
@@ -66,12 +68,13 @@ export default function VimeoUpload() {
 
       <div className="space-y-4">
         <input
+          placeholder="Select a video to upload"
           ref={fileInputRef}
           type="file"
           accept="video/*"
           onChange={e => {
             const file = e.target.files?.[0]
-            if (file) handleUpload(file)
+            if (file) void handleUpload(file)
           }}
           disabled={uploading}
           className="block w-full text-sm text-gray-400

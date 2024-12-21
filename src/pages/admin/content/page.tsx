@@ -1,7 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 type Content = Database['public']['Tables']['content']['Row']
@@ -26,7 +27,7 @@ export default function AdminContent() {
       if (error) throw error
       setContent(data || [])
     } catch (error) {
-      logger.error('Error fetching content:', error)
+      console.error('Error fetching content:', error)
     } finally {
       setLoading(false)
     }
@@ -39,11 +40,11 @@ export default function AdminContent() {
       if (error) throw error
       fetchContent()
     } catch (error) {
-      logger.error('Error deleting content:', error)
+      console.error('Error deleting content:', error)
     }
   }
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">

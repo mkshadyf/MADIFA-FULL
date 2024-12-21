@@ -1,11 +1,13 @@
+import React from "react"
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
+import { useParams, useNavigate } from 'react-router-dom'
 
 import { supabase } from '@/lib/supabase/client'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { VideoPlayer } from '@/components/video/VideoPlayer'
+
 
 interface VideoData {
   id: string
@@ -15,9 +17,9 @@ interface VideoData {
   thumbnail: string
 }
 
-export default function WatchPage () {
-  const router = useRouter()
-  const { id } = router.query
+export default function WatchPage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
   const [video, setVideo] = useState<VideoData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -28,13 +30,18 @@ export default function WatchPage () {
       if (!id) return
 
       try {
-        const { data, error } = await supabase.from('videos').select('*').eq('id', id).single()
+        const { data, error } = await supabase
+          .from('videos')
+          .select('*')
+          .eq('id', id)
+          .single()
 
         if (error) throw error
         if (!data) throw new Error('Video not found')
 
         setVideo(data)
       } catch (err) {
+        console.error('Error loading video:', err)
         setError(err instanceof Error ? err.message : 'Failed to load video')
       } finally {
         setIsLoading(false)
@@ -51,7 +58,7 @@ export default function WatchPage () {
           <h1 className="text-2xl font-bold text-red-500">Error</h1>
           <p className="mt-2">{error}</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => navigate(-1)}
             className="mt-4 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
           >
             Go Back

@@ -1,8 +1,36 @@
 import { UAParser } from 'ua-parser-js'
 
-import type { AuthSettings, Session } from '@/types/auth'
 import { createAPIError } from '@/lib/error'
 import { supabase } from '@/lib/supabase/client'
+
+export interface Session {
+  id: string
+  user_id: string
+  device_info: {
+    userAgent: string
+    platform: string
+    browser: string
+    os: string
+  }
+  created_at: string
+  expires_at: string
+  last_accessed_at: string
+}
+
+export interface AuthSettings {
+  allowedDomains: string[]
+  passwordMinLength: number
+  passwordRequirements: {
+    uppercase: boolean
+    lowercase: boolean
+    numbers: boolean
+    symbols: boolean
+  }
+  maxLoginAttempts: number
+  lockoutDuration: number
+  sessionDuration: number
+  requireEmailVerification: boolean
+}
 
 const DEFAULT_SESSION_DURATION = 24 * 60 * 60 // 24 hours in seconds
 const MAX_SESSIONS_PER_USER = 5
@@ -101,7 +129,7 @@ export class SessionService {
 
       return true
     } catch (error) {
-      logger.error('Session validation error:', error)
+      console.error('Session validation error:', error)
       return false
     }
   }

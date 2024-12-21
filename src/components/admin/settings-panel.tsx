@@ -1,7 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+
 
 interface SystemSettings {
   maxUploadSize: number
@@ -59,14 +60,14 @@ export default function SettingsPanel() {
         setSystemSettings(systemData)
         setEmailSettings(emailData)
       } catch (error) {
-        logger.error('Error fetching settings:', error)
+        console.error('Error fetching settings:', error)
         setError('Failed to load settings')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchSettings()
+    void fetchSettings()
   }, [])
 
   const handleSystemSettingChange = (key: keyof SystemSettings, value: any) => {
@@ -101,7 +102,7 @@ export default function SettingsPanel() {
 
       setSuccess('Settings saved successfully')
     } catch (error) {
-      logger.error('Error saving settings:', error)
+      console.error('Error saving settings:', error)
       setError('Failed to save settings')
     } finally {
       setSaving(false)
@@ -120,6 +121,8 @@ export default function SettingsPanel() {
               Max Upload Size (MB)
             </label>
             <input
+              title="Max Upload Size (MB)"
+              placeholder="Max Upload Size (MB)"
               type="number"
               value={systemSettings?.maxUploadSize}
               onChange={e =>
@@ -137,6 +140,8 @@ export default function SettingsPanel() {
               Storage Quota (GB)
             </label>
             <input
+              title="Storage Quota (GB)"
+              placeholder="Storage Quota (GB)"
               type="number"
               value={systemSettings?.storageQuota}
               onChange={e =>
@@ -152,6 +157,8 @@ export default function SettingsPanel() {
           <div className="flex items-center space-x-4">
             <label className="flex items-center">
               <input
+                title="Maintenance Mode"
+                placeholder="Maintenance Mode"
                 type="checkbox"
                 checked={systemSettings?.maintenanceMode}
                 onChange={e =>
@@ -166,6 +173,8 @@ export default function SettingsPanel() {
 
             <label className="flex items-center">
               <input
+                title="System Notifications"
+                placeholder="System Notifications"
                 type="checkbox"
                 checked={systemSettings?.systemNotifications}
                 onChange={e =>
@@ -183,6 +192,8 @@ export default function SettingsPanel() {
 
             <label className="flex items-center">
               <input
+                title="Auto Backup"
+                placeholder="Auto Backup"
                 type="checkbox"
                 checked={systemSettings?.autoBackup}
                 onChange={e =>
@@ -205,6 +216,8 @@ export default function SettingsPanel() {
                 SMTP Host
               </label>
               <input
+                title="SMTP Host"
+                placeholder="SMTP Host"
                 type="text"
                 value={emailSettings?.smtpHost}
                 onChange={e =>
@@ -219,6 +232,8 @@ export default function SettingsPanel() {
                 SMTP Port
               </label>
               <input
+                title="SMTP Port"
+                placeholder="SMTP Port"
                 type="number"
                 value={emailSettings?.smtpPort}
                 onChange={e =>
@@ -235,6 +250,8 @@ export default function SettingsPanel() {
                 Sender Email
               </label>
               <input
+                title="Sender Email"
+                placeholder="Sender Email"
                 type="email"
                 value={emailSettings?.senderEmail}
                 onChange={e =>
@@ -249,6 +266,8 @@ export default function SettingsPanel() {
                 Sender Name
               </label>
               <input
+                title="Sender Name"
+                placeholder="Sender Name"
                 type="text"
                 value={emailSettings?.senderName}
                 onChange={e =>

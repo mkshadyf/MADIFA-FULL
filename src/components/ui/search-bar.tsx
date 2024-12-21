@@ -1,11 +1,12 @@
+import React from "react"
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { useDebounce } from '@/lib/hooks/useDebounce'
+import { useDebounce } from '@/hooks/useDebounce'
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 
 export function SearchBar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -13,7 +14,7 @@ export function SearchBar() {
   const [results, setResults] = useState<Content[]>([])
   const [loading, setLoading] = useState(false)
   const debouncedQuery = useDebounce(query, 300)
-  const router = useRouter()
+   const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
@@ -37,7 +38,7 @@ export function SearchBar() {
         if (error) throw error
         setResults(data || [])
       } catch (error) {
-        logger.error('Search error:', error)
+        console.error('Search error:', error)
       } finally {
         setLoading(false)
       }
@@ -49,7 +50,7 @@ export function SearchBar() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query)}`)
+      navigate(`/search?q=${encodeURIComponent(query)}`)
       setIsOpen(false)
       setQuery('')
     }
@@ -119,7 +120,7 @@ export function SearchBar() {
                     <button
                       key={item.id}
                       onClick={() => {
-                        router.push(`/watch/${item.id}`)
+                        navigate(`/watch/${item.id}`)
                         setIsOpen(false)
                         setQuery('')
                       }}

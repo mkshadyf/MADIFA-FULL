@@ -1,12 +1,13 @@
 import Stripe from 'stripe'
 
-import type { Subscription, SubscriptionPlan } from '@/types/subscription'
 import { createClient } from '@/lib/supabase/server'
+import type { Subscription, SubscriptionPlan } from '@/types/subscription'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2024-11-20.acacia',
 })
 
+// This function creates a new subscription for a user
 export async function createSubscription(
   userId: string,
   plan: SubscriptionPlan
@@ -42,7 +43,7 @@ export async function createSubscription(
     // Create subscription
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
-      items: [{ price: plan.stripePriceId }],
+      items: [{ price: plan.metadata?.stripePriceId as string }],
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
@@ -53,7 +54,7 @@ export async function createSubscription(
 
     return { clientSecret: paymentIntent.client_secret! }
   } catch (error) {
-    logger.error('Error creating subscription:', error)
+    console.error('Error creating subscription:', error)
     throw error
   }
 }
@@ -64,7 +65,7 @@ export async function cancelSubscription(
   try {
     await stripe.subscriptions.cancel(subscriptionId)
   } catch (error) {
-    logger.error('Error canceling subscription:', error)
+    console.error('Error canceling subscription:', error)
     throw error
   }
 }
@@ -84,7 +85,7 @@ export async function getSubscription(
     if (error) throw error
     return data
   } catch (error) {
-    logger.error('Error getting subscription:', error)
+    console.error('Error getting subscription:', error)
     throw error
   }
 }

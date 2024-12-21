@@ -1,232 +1,398 @@
-import { stripe } from '@/lib/services/stripe'
-import { supabase } from '@/lib/supabase/client'
-import {
-  type BillingHistory,
-  type Subscription,
-  type SubscriptionTierType,
-} from '@/lib/types/subscription'
+import { env } from '@/config/env'
+import { handleStripeError } from '@/lib/utils/error-handler'
+import type {
+  CustomerData,
+  InvoiceData,
+  PaymentMethodData,
+  SetupIntentData,
+  SubscriptionData,
+} from '@/types/stripe'
+import Stripe from 'stripe'
 
-// Helper functions
-async function notifyPaymentFailure(
-  userId: string,
-  failureCount: number
-): Promise<void> {
-  // Implementation for payment failure notification
-  console.log(`Payment failed for user ${userId}. Attempt ${failureCount}`)
+const stripe = new Stripe(env.VITE_STRIPE_SECRET_KEY, {
+  apiVersion: '2024-11-20.acacia' as Stripe.LatestApiVersion,
+})
+
+function mapCustomerToData(customer: Stripe.Customer): CustomerData {
+  return {
+    id: customer.id,
+    email: customer.email || null,
+    name: customer.name || null,
+    phone: customer.phone || null,
+    address: customer.address || null,
+    metadata: customer.metadata || {},
+    created: customer.created,
+    subscriptions: [],
+    default_payment_method: typeof customer.default_source === 'string' ? customer.default_source : null,
+    invoice_settings: {
+      default_payment_method: customer.invoice_settings?.default_payment_method || null,
+    },
+  }
 }
 
-function calculateProratedAmount(
-  currentTier: any,
-  newPlanId: string,
-  endDate: Date
-): number {
-  // Implementation for proration calculation
-  return 0 // Placeholder
+function mapSubscriptionToData(subscription: Stripe.Subscription): SubscriptionData {
+  return {
+    id: subscription.id,
+    customer: subscription.customer as string,
+    status: subscription.status,
+    current_period_start: subscription.current_period_start,
+    current_period_end: subscription.current_period_end,
+    created: subscription.created,
+    ended_at: subscription.ended_at,
+    cancel_at: subscription.cancel_at,
+    canceled_at: subscription.canceled_at,
+    trial_start: subscription.trial_start,
+    trial_end: subscription.trial_end,
+    prices: subscription.items.data.map(item => ({
+      id: item.price.id,
+      product: item.price.product as string,
+      active: item.price.active,
+      currency: item.price.currency,
+      type: item.price.type,
+      unit_amount: item.price.unit_amount,
+      recurring: item.price.recurring,
+      metadata: item.price.metadata || {},
+    })),
+    products: [],
+    metadata: subscription.metadata || {},
+  }
 }
 
-async function createProratedCharge(
-  userId: string,
-  amount: number
-): Promise<any> {
-  // Implementation for creating prorated charge
-  return null // Placeholder
+function mapInvoiceToData(invoice: Stripe.Invoice | Stripe.UpcomingInvoice): InvoiceData {
+  return {
+    id: 'id' in invoice ? invoice.id : 'upcoming',
+    customer: invoice.customer as string,
+    subscription: invoice.subscription as string | null,
+    status: invoice.status || 'draft',
+    currency: invoice.currency,
+    amount_due: invoice.amount_due,
+    amount_paid: invoice.amount_paid,
+    amount_remaining: invoice.amount_remaining,
+    created: invoice.created,
+    due_date: invoice.due_date,
+    lines: {
+      data: invoice.lines.data.map(line => ({
+        id: line.id,
+        amount: line.amount,
+        currency: line.currency,
+        description: line.description || '',
+        period: {
+          start: line.period.start,
+          end: line.period.end,
+        },
+        price: {
+          id: line.price?.id || '',
+          product: line.price?.product as string,
+          active: line.price?.active || false,
+          currency: line.price?.currency || '',
+          type: line.price?.type || 'one_time',
+          unit_amount: line.price?.unit_amount || null,
+          recurring: line.price?.recurring || null,
+          metadata: line.price?.metadata || {},
+        },
+        proration: line.proration,
+        quantity: line.quantity || 1,
+      })),
+    },
+    metadata: invoice.metadata || {},
+  }
 }
 
-export async function getCurrentSubscription(
-  userId: string
-): Promise<Subscription | null> {
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select('*, subscription_tier(*)')
-    .eq('user_id', userId)
-    .single()
+export async function createCustomer(
+  email: string,
+  name?: string
+): Promise<CustomerData> {
+  try {
+    const customer = await stripe.customers.create({
+      email,
+      name,
+    })
 
-  if (error) throw error
-  return data
+    return mapCustomerToData(customer)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function getCustomer(customerId: string): Promise<CustomerData> {
+  try {
+    const customer = await stripe.customers.retrieve(customerId, {
+      expand: ['subscriptions'],
+    })
+
+    if (customer.deleted) {
+      throw new Error('Customer not found')
+    }
+
+    return mapCustomerToData(customer as Stripe.Customer)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function updateCustomer(
+  customerId: string,
+  data: {
+    email?: string
+    name?: string
+    phone?: string
+    address?: {
+      line1?: string
+      line2?: string
+      city?: string
+      state?: string
+      postal_code?: string
+      country?: string
+    }
+    metadata?: Record<string, string>
+  }
+): Promise<CustomerData> {
+  try {
+    const customer = await stripe.customers.update(customerId, data)
+    return mapCustomerToData(customer)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function deleteCustomer(customerId: string): Promise<void> {
+  try {
+    await stripe.customers.del(customerId)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
 }
 
 export async function createSubscription(
-  userId: string,
-  planId: string,
-  paymentMethodId: string
-): Promise<Subscription> {
-  const customer = await stripe.customers.create({
-    payment_method: paymentMethodId,
-    email: userId, // Assuming userId is the email
-    invoice_settings: {
+  customerId: string,
+  priceId: string,
+  paymentMethodId?: string,
+  trialDays?: number
+): Promise<SubscriptionData> {
+  try {
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: {
+        payment_method_types: ['card'],
+        save_default_payment_method: 'on_subscription',
+      },
+      expand: ['latest_invoice.payment_intent'],
+      trial_period_days: trialDays,
       default_payment_method: paymentMethodId,
-    },
-  })
-
-  const subscription = await stripe.subscriptions.create({
-    customer: customer.id,
-    items: [{ price: planId }],
-    payment_settings: {
-      payment_method_types: ['card'],
-      save_default_payment_method: 'on_subscription',
-    },
-    expand: ['latest_invoice.payment_intent'],
-  })
-
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .insert({
-      user_id: userId,
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: customer.id,
-      status: subscription.status,
-      current_period_start: new Date(
-        subscription.current_period_start * 1000
-      ).toISOString(),
-      current_period_end: new Date(
-        subscription.current_period_end * 1000
-      ).toISOString(),
     })
-    .select()
-    .single()
 
-  if (error) throw error
-  return data
+    return mapSubscriptionToData(subscription)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function getSubscription(
+  subscriptionId: string
+): Promise<SubscriptionData> {
+  try {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+    return mapSubscriptionToData(subscription)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function updateSubscription(
+  subscriptionId: string,
+  data: {
+    cancel_at_period_end?: boolean
+    proration_behavior?: 'create_prorations' | 'none'
+    items?: Array<{
+      id?: string
+      price?: string
+      quantity?: number
+    }>
+    metadata?: Record<string, string>
+  }
+): Promise<SubscriptionData> {
+  try {
+    const subscription = await stripe.subscriptions.update(subscriptionId, data)
+    return mapSubscriptionToData(subscription)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
 }
 
 export async function cancelSubscription(
-  subscriptionId: string
-): Promise<void> {
-  const { data: subscription, error: fetchError } = await supabase
-    .from('subscriptions')
-    .select('stripe_subscription_id')
-    .eq('id', subscriptionId)
-    .single()
-
-  if (fetchError) throw fetchError
-
-  await stripe.subscriptions.cancel(subscription.stripe_subscription_id)
-
-  const { error: updateError } = await supabase
-    .from('subscriptions')
-    .update({
-      status: 'cancelled',
-      cancelled_at: new Date().toISOString(),
-    })
-    .eq('id', subscriptionId)
-
-  if (updateError) throw updateError
-}
-
-export async function reactivateSubscription(
-  subscriptionId: string
-): Promise<void> {
-  const { data: subscription, error: fetchError } = await supabase
-    .from('subscriptions')
-    .select('stripe_subscription_id')
-    .eq('id', subscriptionId)
-    .single()
-
-  if (fetchError) throw fetchError
-
-  await stripe.subscriptions.resume(subscription.stripe_subscription_id)
-
-  const { error: updateError } = await supabase
-    .from('subscriptions')
-    .update({
-      status: 'active',
-      cancelled_at: null,
-    })
-    .eq('id', subscriptionId)
-
-  if (updateError) throw updateError
-}
-
-export async function updateSubscriptionPlan(
   subscriptionId: string,
-  newPlanId: string
-): Promise<void> {
-  const { data: subscription, error: fetchError } = await supabase
-    .from('subscriptions')
-    .select('stripe_subscription_id')
-    .eq('id', subscriptionId)
-    .single()
-
-  if (fetchError) throw fetchError
-
-  await stripe.subscriptions.modify(subscription.stripe_subscription_id, {
-    items: [{ price: newPlanId }],
-    proration_behavior: 'always_invoice',
-  })
-}
-
-export async function getBillingHistory(
-  userId: string
-): Promise<BillingHistory[]> {
-  const { data, error } = await supabase
-    .from('billing_history')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-
-  if (error) throw error
-  return data
-}
-
-export function hasAccessToContent(
-  userTier: SubscriptionTierType,
-  contentTier: SubscriptionTierType
-): boolean {
-  const tierLevels: Record<SubscriptionTierType, number> = {
-    free: 0,
-    basic: 1,
-    premium: 2,
-    premium_plus: 3,
-  }
-
-  return tierLevels[userTier] >= tierLevels[contentTier]
-}
-
-export async function handleFailedPayment(userId: string): Promise<void> {
-  const { data: subscription, error: fetchError } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('user_id', userId)
-    .single()
-
-  if (fetchError) throw fetchError
-
-  const failureCount = subscription.payment_failure_count || 0
-
-  const { error: updateError } = await supabase
-    .from('subscriptions')
-    .update({
-      status: failureCount >= 3 ? 'cancelled' : 'past_due',
-      payment_failure_count: failureCount + 1,
+  cancelImmediately = false
+): Promise<SubscriptionData> {
+  try {
+    const subscription = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: !cancelImmediately,
     })
-    .eq('user_id', userId)
 
-  if (updateError) throw updateError
+    if (cancelImmediately) {
+      await stripe.subscriptions.cancel(subscriptionId)
+    }
 
-  // Send notification to user
-  await notifyPaymentFailure(userId, failureCount + 1)
+    return mapSubscriptionToData(subscription)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
 }
 
-export async function changePlan(
-  userId: string,
-  newPlanId: string,
-  currentSub: Subscription | null
-): Promise<void> {
-  if (currentSub) {
-    // Calculate prorated amount
-    const proratedAmount = calculateProratedAmount(
-      currentSub.tier,
-      newPlanId,
-      new Date(currentSub.current_period_end)
-    )
+export async function resumeSubscription(
+  subscriptionId: string
+): Promise<SubscriptionData> {
+  try {
+    const subscription = await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: false,
+    })
+    return mapSubscriptionToData(subscription)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
 
-    // Create prorated charge
-    const charge = await createProratedCharge(userId, proratedAmount)
+export async function createSetupIntent(
+  customerId: string
+): Promise<SetupIntentData> {
+  try {
+    const setupIntent = await stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+    })
+    return setupIntent as SetupIntentData
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
 
-    // Update subscription
-    await updateSubscriptionPlan(currentSub.id, newPlanId)
-  } else {
-    // Create new subscription
-    await createSubscription(userId, newPlanId, '')
+export async function listPaymentMethods(
+  customerId: string
+): Promise<PaymentMethodData[]> {
+  try {
+    const paymentMethods = await stripe.customers.listPaymentMethods(customerId, {
+      type: 'card',
+    })
+    return paymentMethods.data as PaymentMethodData[]
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function attachPaymentMethod(
+  customerId: string,
+  paymentMethodId: string
+): Promise<PaymentMethodData> {
+  try {
+    const paymentMethod = await stripe.paymentMethods.attach(paymentMethodId, {
+      customer: customerId,
+    })
+    return paymentMethod as PaymentMethodData
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function detachPaymentMethod(
+  paymentMethodId: string
+): Promise<PaymentMethodData> {
+  try {
+    const paymentMethod = await stripe.paymentMethods.detach(paymentMethodId)
+    return paymentMethod as PaymentMethodData
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function updateDefaultPaymentMethod(
+  customerId: string,
+  paymentMethodId: string
+): Promise<CustomerData> {
+  try {
+    const customer = await stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
+    })
+    return mapCustomerToData(customer)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function listInvoices(customerId: string): Promise<InvoiceData[]> {
+  try {
+    const invoices = await stripe.invoices.list({
+      customer: customerId,
+    })
+    return invoices.data.map(mapInvoiceToData)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function getInvoice(invoiceId: string): Promise<InvoiceData> {
+  try {
+    const invoice = await stripe.invoices.retrieve(invoiceId)
+    return mapInvoiceToData(invoice)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function getUpcomingInvoice(
+  customerId: string,
+  subscriptionId?: string
+): Promise<InvoiceData> {
+  try {
+    const invoice = await stripe.invoices.retrieveUpcoming({
+      customer: customerId,
+      subscription: subscriptionId,
+    })
+    return mapInvoiceToData(invoice)
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function createPortalSession(
+  customerId: string,
+  returnUrl: string
+): Promise<{ url: string }> {
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    })
+    return { url: session.url }
+  } catch (error) {
+    throw handleStripeError(error as any)
+  }
+}
+
+export async function createCheckoutSession(
+  customerId: string,
+  priceId: string,
+  successUrl: string,
+  cancelUrl: string
+): Promise<{ url: string | null }> {
+  try {
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    })
+    return { url: session.url }
+  } catch (error) {
+    throw handleStripeError(error as any)
   }
 }

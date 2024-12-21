@@ -1,142 +1,190 @@
+export interface Content {
+  id: string
+  title: string
+  description: string
+  thumbnail_url: string
+  video_url: string
+  duration: number
+  category: string
+  release_year: number
+  tags: string[]
+  is_public: boolean
+  status: 'draft' | 'published' | 'archived'
+  created_at: string
+  updated_at: string
+  creator_id: string
+  views: number
+  rating: number
+  featured: boolean
+}
+
+export interface User {
+  id: string
+  email: string
+  email_verified: boolean
+  full_name: string
+  role: 'user' | 'admin' | 'moderator'
+  subscription_status: 'active' | 'cancelled' | 'inactive'
+  subscription_tier: 'free' | 'premium' | 'premium_plus'
+  created_at: string
+  sendEmailVerification: () => Promise<void>
+}
+
+export interface Playlist {
+  id: string
+  title: string
+  description: string
+  content_ids: string[]
+  created_at: string
+  updated_at: string
+  creator_id: string
+}
+
+export interface Permission {
+  id: string
+  name: string
+  roles: ('user' | 'admin' | 'moderator')[]
+}
+
 export interface Database {
   public: {
     Tables: {
-      videos: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          thumbnail_url: string | null
-          duration: number
-          created_at: string
-          updated_at: string
-          status: 'processing' | 'ready' | 'error'
-          error?: string
-        }
-        Insert: Omit<
-          Database['public']['Tables']['videos']['Row'],
-          'id' | 'created_at' | 'updated_at'
-        >
-        Update: Partial<Database['public']['Tables']['videos']['Row']>
-      }
       users: {
-        Row: {
-          id: string
-          email: string
-          full_name: string | null
-          avatar_url: string | null
-          created_at: string
-          updated_at: string
-          role: 'user' | 'admin'
-          subscription_status: 'active' | 'inactive' | 'cancelled'
-          subscription_tier: 'free' | 'basic' | 'premium'
-        }
-        Insert: Omit<
-          Database['public']['Tables']['users']['Row'],
-          'id' | 'created_at' | 'updated_at'
-        >
-        Update: Partial<Database['public']['Tables']['users']['Row']>
+        Row: User
+        Insert: Omit<User, 'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'>
+        Update: Partial<Omit<User, 'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'>>
       }
-      profiles: {
+      content: {
+        Row: Content
+        Insert: Omit<Content, 'id' | 'created_at' | 'updated_at' | 'views' | 'rating'>
+        Update: Partial<Omit<Content, 'id' | 'created_at' | 'updated_at'>>
+      }
+      content_metadata: {
         Row: {
           id: string
-          user_id: string
-          full_name: string | null
-          avatar_url: string | null
-          preferences: {
-            theme: 'light' | 'dark'
-            notifications: boolean
-          }
-          subscription_status: 'active' | 'inactive' | 'cancelled'
-          subscription_tier: 'free' | 'basic' | 'premium'
+          content_id: string
+          language: string
+          quality: string
           created_at: string
           updated_at: string
         }
-        Insert: Omit<
-          Database['public']['Tables']['profiles']['Row'],
-          'id' | 'created_at' | 'updated_at'
-        >
-        Update: Partial<Database['public']['Tables']['profiles']['Row']>
+        Insert: Omit<Database['public']['Tables']['content_metadata']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['content_metadata']['Row'], 'id' | 'created_at' | 'updated_at'>>
       }
-      categories: {
-        Row: {
-          id: string
-          name: string
-          slug: string
-          description: string | null
-          thumbnail_url: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: Omit<
-          Database['public']['Tables']['categories']['Row'],
-          'id' | 'created_at' | 'updated_at'
-        >
-        Update: Partial<Database['public']['Tables']['categories']['Row']>
+      playlists: {
+        Row: Playlist
+        Insert: Omit<Playlist, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Playlist, 'id' | 'created_at' | 'updated_at'>>
       }
-      video_categories: {
-        Row: {
-          video_id: string
-          category_id: string
-          created_at: string
-        }
-        Insert: Omit<
-          Database['public']['Tables']['video_categories']['Row'],
-          'created_at'
-        >
-        Update: Partial<Database['public']['Tables']['video_categories']['Row']>
-      }
-      favorites: {
-        Row: {
-          id: string
-          user_id: string
-          video_id: string
-          created_at: string
-        }
-        Insert: Omit<
-          Database['public']['Tables']['favorites']['Row'],
-          'id' | 'created_at'
-        >
-        Update: Partial<Database['public']['Tables']['favorites']['Row']>
-      }
-      watch_history: {
-        Row: {
-          id: string
-          user_id: string
-          video_id: string
-          watched_at: string
-          progress: number
-        }
-        Insert: Omit<Database['public']['Tables']['watch_history']['Row'], 'id'>
-        Update: Partial<Database['public']['Tables']['watch_history']['Row']>
+      permissions: {
+        Row: Permission
+        Insert: Omit<Permission, 'id'>
+        Update: Partial<Omit<Permission, 'id'>>
       }
       subscriptions: {
         Row: {
           id: string
           user_id: string
-          status: 'active' | 'inactive' | 'cancelled'
-          tier: 'free' | 'basic' | 'premium'
-          current_period_start: string
+          plan_id: string
+          status: 'active' | 'cancelled' | 'inactive'
+          stripe_customer_id: string
+          stripe_subscription_id: string
           current_period_end: string
           cancel_at_period_end: boolean
+          payment_method_id: string
           created_at: string
           updated_at: string
         }
-        Insert: Omit<
-          Database['public']['Tables']['subscriptions']['Row'],
-          'id' | 'created_at' | 'updated_at'
-        >
-        Update: Partial<Database['public']['Tables']['subscriptions']['Row']>
+        Insert: Omit<Database['public']['Tables']['subscriptions']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['subscriptions']['Row'], 'id' | 'created_at' | 'updated_at'>>
       }
-    }
-    Views: {
-      [key: string]: never
-    }
-    Functions: {
-      [key: string]: never
-    }
-    Enums: {
-      [key: string]: never
+      downloads: {
+        Row: {
+          id: string
+          user_id: string
+          content_id: string
+          status: 'pending' | 'downloading' | 'completed' | 'failed'
+          progress: number
+          error?: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['downloads']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['downloads']['Row'], 'id' | 'created_at' | 'updated_at'>>
+      }
+      favorites: {
+        Row: {
+          id: string
+          user_id: string
+          content_id: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['favorites']['Row'], 'id' | 'created_at'>
+        Update: Partial<Omit<Database['public']['Tables']['favorites']['Row'], 'id' | 'created_at'>>
+      }
+      ratings: {
+        Row: {
+          id: string
+          user_id: string
+          content_id: string
+          rating: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['ratings']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['ratings']['Row'], 'id' | 'created_at' | 'updated_at'>>
+      }
+      comments: {
+        Row: {
+          id: string
+          user_id: string
+          content_id: string
+          text: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['comments']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['comments']['Row'], 'id' | 'created_at' | 'updated_at'>>
+      }
+      history: {
+        Row: {
+          id: string
+          user_id: string
+          content_id: string
+          progress: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['history']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['history']['Row'], 'id' | 'created_at' | 'updated_at'>>
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          message: string
+          read: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>
+        Update: Partial<Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>>
+      }
+      admin_stats: {
+        Row: {
+          id: string
+          total_users: number
+          total_content: number
+          total_views: number
+          total_downloads: number
+          total_revenue: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['admin_stats']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Database['public']['Tables']['admin_stats']['Row'], 'id' | 'created_at' | 'updated_at'>>
+      }
     }
   }
 }

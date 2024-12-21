@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useRef } from 'react'
 import Chart from 'chart.js/auto'
 
@@ -23,7 +24,7 @@ export default function AnalyticsCharts ({
 
   useEffect(() => {
     if (viewingChartRef.current) {
-      2d')
+      const ctx = viewingChartRef.current.getContext('2d')
       if (ctx) {
         new Chart(ctx, {
           type: 'line',
@@ -61,7 +62,7 @@ export default function AnalyticsCharts ({
     }
 
     if (categoryChartRef.current) {
-      2d')
+      const ctx = categoryChartRef.current.getContext('2d')
       if (ctx) {
         new Chart(ctx, {
           type: 'doughnut',
@@ -94,7 +95,7 @@ export default function AnalyticsCharts ({
     }
 
     if (subscriptionChartRef.current) {
-      2d')
+      const ctx = subscriptionChartRef.current.getContext('2d')
       if (ctx) {
         new Chart(ctx, {
           type: 'bar',

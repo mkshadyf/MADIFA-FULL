@@ -19,7 +19,7 @@ export async function getCategories() {
 
     return data || []
   } catch (error) {
-    logger.error('Error fetching categories:', error)
+    console.error('Error fetching categories:', error)
     throw error
   }
 }
@@ -55,7 +55,7 @@ export async function getCategoryContent(slug: string, limit = 20) {
 
     return content || []
   } catch (error) {
-    logger.error('Error fetching category content:', error)
+    console.error('Error fetching category content:', error)
     throw error
   }
 }
@@ -81,7 +81,7 @@ export async function getFeaturedCategories(limit = 5) {
 
     return data || []
   } catch (error) {
-    logger.error('Error fetching featured categories:', error)
+    console.error('Error fetching featured categories:', error)
     throw error
   }
 }

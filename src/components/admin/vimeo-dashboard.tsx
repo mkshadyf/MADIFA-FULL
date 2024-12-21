@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
 
@@ -66,7 +67,7 @@ export default function VimeoDashboard() {
 
       setStats(stats)
     } catch (error) {
-      logger.error('Error loading stats:', error)
+      console.error('Error loading stats:', error)
     } finally {
       setLoading(false)
     }
@@ -110,7 +111,7 @@ export default function VimeoDashboard() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div>
           <h2 className="mb-4 text-xl font-bold">Upload New Content</h2>
-          <VimeoUpload onSuccess={loadStats} />
+          <VimeoUpload />
         </div>
         <div>
           <h2 className="mb-4 text-xl font-bold">Showcases</h2>

@@ -1,14 +1,15 @@
+import React from "react"
 import { useState } from 'react'
-import { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 export default function SearchBar() {
   const [query, setQuery] = useState('')
-  const router = useRouter()
+   const navigate = useNavigate()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query)}`)
+      navigate(`/search?q=${encodeURIComponent(query)}`)
     }
   }
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { AuthProvider } from '@/providers/AuthProvider'
+import { AuthProvider } from '../providers/AuthProvider'
 import type {
   AuthError,
   AuthResponse,
@@ -179,7 +179,7 @@ describe('Authentication Flow', () => {
 
     it('should handle successful sign in', async () => {
       const mockUser = createMockUser()
-      const mockSession = createMockSession(mockUser)
+      const mockSession = createMockSession()
       const mockProfile = createMockUserProfile()
 
       mockSignInWithPassword.mockImplementationOnce(
@@ -349,7 +349,7 @@ describe('Authentication Flow', () => {
   describe('Session Management', () => {
     it('should handle session refresh', async () => {
       const mockUser = createMockUser()
-      const mockSession = createMockSession(mockUser)
+      const mockSession = createMockSession()
       const mockProfile = createMockUserProfile({ user_id: mockUser.id })
 
       mockGetSession.mockImplementationOnce(async () => {

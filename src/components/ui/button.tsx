@@ -1,5 +1,5 @@
-import { type ButtonHTMLAttributes, type FC, type ReactNode } from 'react'
-import { cn } from '@/utils/cn'
+ import { type ButtonHTMLAttributes, type FC, type ReactNode } from 'react'
+import { cn } from '@/lib/utils/cn'
 
 import { LoadingSpinner } from './LoadingSpinner'
 

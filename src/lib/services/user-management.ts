@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { UserActivity, UserProfile, UserSettings } from '@/lib/types/user'
+import type { UserActivity, UserProfile, UserSettings } from '@/types/user'
 
 export async function getUserProfile(
   userId: string
@@ -16,7 +16,7 @@ export async function getUserProfile(
     if (error) throw error
     return data
   } catch (error) {
-    logger.error('Error fetching user profile:', error)
+    console.error('Error fetching user profile:', error)
     throw error
   }
 }
@@ -38,7 +38,7 @@ export async function updateUserProfile(
     if (error) throw error
     return data
   } catch (error) {
-    logger.error('Error updating user profile:', error)
+    console.error('Error updating user profile:', error)
     throw error
   }
 }
@@ -56,7 +56,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
     if (error) throw error
     return data
   } catch (error) {
-    logger.error('Error fetching user settings:', error)
+    console.error('Error fetching user settings:', error)
     throw error
   }
 }
@@ -78,7 +78,7 @@ export async function updateUserSettings(
     if (error) throw error
     return data
   } catch (error) {
-    logger.error('Error updating user settings:', error)
+    console.error('Error updating user settings:', error)
     throw error
   }
 }
@@ -98,7 +98,7 @@ export async function trackUserActivity(
 
     if (error) throw error
   } catch (error) {
-    logger.error('Error tracking user activity:', error)
+    console.error('Error tracking user activity:', error)
     throw error
   }
 }
@@ -120,7 +120,7 @@ export async function getUserActivities(
     if (error) throw error
     return data
   } catch (error) {
-    logger.error('Error fetching user activities:', error)
+    console.error('Error fetching user activities:', error)
     throw error
   }
 }

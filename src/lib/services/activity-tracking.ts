@@ -39,7 +39,7 @@ export async function trackActivity(
 
     if (error) throw error
   } catch (error) {
-    logger.error('Activity tracking error:', error)
+    console.error('Activity tracking error:', error)
     throw error
   }
 }
@@ -67,7 +67,7 @@ export async function getUserActivity(userId: string, limit = 20) {
 
     return data
   } catch (error) {
-    logger.error('Error fetching user activity:', error)
+    console.error('Error fetching user activity:', error)
     throw error
   }
 }

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
-import { type UserProfile } from '@/lib/types/profile'
+import { type UserProfile } from '@/types'
 
 export interface ProfileForm {
   full_name: string

@@ -45,7 +45,7 @@ export async function generateLicense(
       },
     }
   } catch (error) {
-    logger.error('DRM license error:', error)
+    console.error('DRM license error:', error)
     throw error
   }
 }

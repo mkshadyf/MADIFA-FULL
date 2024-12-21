@@ -15,7 +15,7 @@ interface QueueStats {
   estimatedCompletion: number
 }
 
-export default function QueueStatusTracker () {
+export default function QueueStatusTracker() {
   const { queueItems } = useDownloadQueue()
   const [stats, setStats] = useState<QueueStats>({
     totalItems: 0,
@@ -30,14 +30,19 @@ export default function QueueStatusTracker () {
 
   useEffect(() => {
     const calculateStats = () => {
-      const totalSize = queueItems.reduce((sum, item) => sum + item.content.size, 0)
+      const totalSize = queueItems.reduce((sum: number, item: QueueItemWithStats) => 
+        sum + (item.content?.size || 0), 0)
+      
       const downloadedSize = queueItems.reduce(
-        (sum, item) => sum + (item.content.size * item.progress) / 100,
+        (sum: number, item: QueueItemWithStats) => 
+          sum + ((item.content?.size || 0) * (item.progress || 0)) / 100,
         0
       )
-      downloading')
+
+      const activeItems = queueItems.filter(item => item.status === 'downloading')
       const averageSpeed =
-        activeItems.reduce((sum, item) => sum + (item.speed || 0), 0) /
+        activeItems.reduce((sum: number, item: QueueItemWithStats) => 
+          sum + (item.speed || 0), 0) /
         Math.max(activeItems.length, 1)
 
       setStats({
@@ -45,6 +50,7 @@ export default function QueueStatusTracker () {
         activeItems: activeItems.length,
         completedItems: queueItems.filter(item => item.status === 'completed').length,
         failedItems: queueItems.filter(item => item.status === 'error').length,
+        
         totalSize,
         downloadedSize,
         averageSpeed,

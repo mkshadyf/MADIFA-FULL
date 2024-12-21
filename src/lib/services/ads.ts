@@ -38,7 +38,7 @@ class AdService {
       })
       this.isInitialized = true
     } catch (error) {
-      logger.error('Failed to initialize ad SDK:', error)
+      console.error('Failed to initialize ad SDK:', error)
     }
   }
 

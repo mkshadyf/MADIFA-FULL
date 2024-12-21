@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 
-import type { VideoQuality } from '@/types/vimeo'
 import { formatDuration } from '@/lib/utils/format'
 import { useDoubleTap } from '@/hooks/useDoubleTap'
 import { useSwipe } from '@/hooks/useSwipe'
 
+export type VideoQuality = 'auto' | '4k' | '2k' | '1080p' | '720p' | '540p' | '360p'
+
 import { IconButton } from '../ui/button'
-import { Slider } from '../ui/slider'
+import { Slider } from '../ui/Slider'
 
 interface MobileVideoControlsProps {
   onPlayPause: () => void
@@ -47,8 +48,10 @@ export default function MobileVideoControls({
     visible: false,
   })
 
-  const { bind: doubleTapBind } = useDoubleTap(() => {
-    onPlayPause()
+  const { bind: doubleTapBind } = useDoubleTap({
+      onDoubleTap: () => {
+        onPlayPause()
+    },
   })
 
   const { bind: swipeBind } = useSwipe({
@@ -107,6 +110,7 @@ export default function MobileVideoControls({
               {formatDuration(currentTime)} / {formatDuration(duration)}
             </div>
             <IconButton
+              label={isFullscreen ? 'Minimize' : 'Maximize'}
               icon={isFullscreen ? 'minimize' : 'maximize'}
               onClick={onFullscreen}
               className="text-white"
@@ -116,6 +120,7 @@ export default function MobileVideoControls({
           {/* Center play/pause */}
           <div className="absolute inset-0 flex items-center justify-center">
             <IconButton
+              label={isPlaying ? 'Pause' : 'Play'}
               icon={isPlaying ? 'pause' : 'play'}
               onClick={onPlayPause}
               className="text-6xl text-white"
@@ -125,12 +130,12 @@ export default function MobileVideoControls({
           {/* Bottom bar */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <Slider
-              value={currentTime}
+              value={[currentTime]}
               max={duration}
-              onChange={onSeek}
-              onPreview={time => setSeekPreview({ time, visible: true })}
-              onPreviewEnd={() => setSeekPreview({ time: 0, visible: false })}
+              onValueChange={([time]) => onSeek(time)}
               className="mb-4"
+              label="Video progress"
+              ariaLabel="Video progress slider"
             />
 
             {/* Quality selector */}

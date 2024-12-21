@@ -1,3 +1,4 @@
+import React from "react"
 interface LanguageSelectionStepProps {
   selectedLanguages: string[]
   onSelect: (languages: string[]) => void

@@ -1,6 +1,7 @@
+import React from "react"
 import { useEffect, useRef, useState } from 'react'
 
-import { useDebounce } from '@/lib/hooks/useDebounce'
+import { useDebounce } from '@/hooks/useDebounce'
 import { getSearchSuggestions } from '@/lib/services/search'
 
 interface SearchSuggestionsProps {
@@ -31,7 +32,7 @@ export default function SearchSuggestions({
         const results = await getSearchSuggestions(debouncedQuery)
         setSuggestions(results)
       } catch (error) {
-        logger.error('Error fetching suggestions:', error)
+        console.error('Error fetching suggestions:', error)
       } finally {
         setLoading(false)
       }

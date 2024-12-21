@@ -16,6 +16,14 @@ export interface Content {
   }
   is_public: boolean
   custom_fields?: Record<string, any>
+  size?: number
+  fileSize?: number
+  duration?: number // Added duration field
+  thumbnail_url?: string | null // Added thumbnail_url field
+  status?: 'ready' | 'processing' // Added status field
+  created_at?: string // Added created_at field
+  updated_at?: string // Added updated_at field
+  error?: string // Added error field
 }
 
 export interface ContentMetadata {
@@ -39,4 +47,15 @@ export interface Series {
   description?: string
   episodes: Content[]
   season_number?: number
+}
+
+export interface UserProfile {
+  id: string
+  user_id: string
+  email: string
+  full_name: string
+  role: string
+  subscription_status: 'active' | 'inactive' | 'cancelled'
+  subscription_tier: 'free' | 'premium' | 'premium_plus'
+  created_at: string
 }

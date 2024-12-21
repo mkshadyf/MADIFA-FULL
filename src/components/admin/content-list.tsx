@@ -1,11 +1,14 @@
 import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 
 import ContentFormModal from './content-form-modal'
 
-type Content = Database['public']['Tables']['content']['Row']
+type Content = Database['public']['Tables']['content']['Row'] & {
+  category: string
+  release_year: number
+}
 
 interface ContentListProps {
   content: Content[]
@@ -28,7 +31,7 @@ export default function ContentList({ content, onRefresh }: ContentListProps) {
       if (error) throw error
       onRefresh()
     } catch (error) {
-      logger.error('Error deleting content:', error)
+      console.error('Error deleting content:', error)
     } finally {
       setLoading(false)
     }
@@ -82,7 +85,7 @@ export default function ContentList({ content, onRefresh }: ContentListProps) {
                 <td className="whitespace-nowrap px-6 py-4">
                   <div className="flex items-center">
                     <img
-                      src={item.thumbnail_url}
+                      src={item.thumbnail_url || ''}
                       alt={item.title}
                       className="h-10 w-16 rounded object-cover"
                     />
@@ -126,7 +129,7 @@ export default function ContentList({ content, onRefresh }: ContentListProps) {
 
       {showForm ? (
         <ContentFormModal
-          content={selectedContent}
+          content={selectedContent as unknown as import('@/types/content').Content | undefined}
           onClose={() => {
             setShowForm(false)
             setSelectedContent(null)

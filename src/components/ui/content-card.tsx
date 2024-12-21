@@ -1,7 +1,8 @@
+import React from "react"
 import { useState } from 'react'
-import { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 
 import VideoDetailsModal from './video-details-modal'
 
@@ -19,10 +20,10 @@ export default function ContentCard({
   priority = false,
 }: ContentCardProps) {
   const [showDetails, setShowDetails] = useState(false)
-  const router = useRouter()
+   const navigate = useNavigate()
 
   const handlePlay = () => {
-    router.push(`/watch/${content.id}`)
+    navigate(`/watch/${content.id}`)
   }
 
   return (

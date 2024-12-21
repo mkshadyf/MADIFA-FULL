@@ -1,6 +1,7 @@
-import { useRouter } from 'react-router-dom'
+ import { useNavigate } from 'react-router-dom'
 
-import { useRecommendations } from '@/lib/hooks/useRecommendations'
+import { useRecommendations } from '@/hooks/useRecommendations'
+import { Content } from "@/types/content"
 
 interface RecommendationsGridProps {
   contentId?: string
@@ -15,14 +16,14 @@ export default function RecommendationsGrid({
   limit = 10,
   excludeIds = [],
 }: RecommendationsGridProps) {
-  const { recommendations, loading, error } = useRecommendations({
+  const { data: recommendations, isLoading, error } = useRecommendations({
     contentId,
     limit,
     excludeIds,
   })
-  const router = useRouter()
+  const navigate = useNavigate()
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="animate-pulse">
         <div className="mb-4 h-6 w-48 rounded bg-gray-800"></div>
@@ -36,10 +37,10 @@ export default function RecommendationsGrid({
   }
 
   if (error) {
-    return <div className="py-4 text-center text-red-500">{error}</div>
+    return <div className="py-4 text-center text-red-500">{error.message}</div>
   }
 
-  if (recommendations.length === 0) {
+  if (!recommendations) {
     return null
   }
 
@@ -47,10 +48,10 @@ export default function RecommendationsGrid({
     <div className="space-y-4">
       <h2 className="text-xl font-bold text-white">{title}</h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {recommendations.map(content => (
+        {Array.isArray(recommendations) && recommendations.map((content: Content) => (
           <div
             key={content.id}
-            onClick={() => router.push(`/watch/${content.id}`)}
+            onClick={() => navigate(`/watch/${content.id}`)}
             className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg bg-gray-800"
           >
             {content.thumbnail_url ? (

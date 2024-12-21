@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import type { Tables } from '@/types/supabase'
@@ -5,7 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import ContentGrid from '@/components/ui/content-grid'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
-type Category = Tables<'categories'>
+
+type Category = Tables['categories']['Row']
 
 export default function CategoryBrowser() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -23,7 +25,7 @@ export default function CategoryBrowser() {
 
         setCategories(data || [])
       } catch (error) {
-        logger.error('Error loading categories:', error)
+        console.error('Error loading categories:', error)
       } finally {
         setLoading(false)
       }
@@ -32,7 +34,7 @@ export default function CategoryBrowser() {
     loadCategories()
   }, [])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="space-y-12">

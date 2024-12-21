@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import type { Content } from '@/types'
+import { useEffect, useState } from 'react'
 
 import { queuePriorityManager } from '@/lib/services/queue-priority'
 
@@ -43,7 +43,7 @@ export function useQueuePriority() {
         user.id
       )
     } catch (error) {
-      logger.error('Failed to calculate priority:', error)
+      console.error('Failed to calculate priority:', error)
       return 0.5 // Default medium priority
     }
   }
@@ -57,7 +57,7 @@ export function useQueuePriority() {
       setLastOptimization(new Date())
       showToast('Queue priorities optimized', 'success')
     } catch (error) {
-      logger.error('Failed to optimize queue priorities:', error)
+      console.error('Failed to optimize queue priorities:', error)
       showToast('Failed to optimize queue priorities', 'error')
     } finally {
       setIsOptimizing(false)

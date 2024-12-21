@@ -1,6 +1,8 @@
+import React from "react"
 import { useEffect, useRef } from 'react'
 import {
   CategoryScale,
+  Chart,
   Chart as ChartJS,
   Legend,
   LinearScale,
@@ -12,7 +14,8 @@ import {
 import { Line } from 'react-chartjs-2'
 
 import { createClient } from '@/lib/supabase/client'
-import type { ActivityData } from '@/lib/types/activity'
+import type { ActivityData } from '@/types/activity'
+
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
@@ -65,7 +68,7 @@ export default function UserActivityChart () {
         )
 
         if (chartRef.current) {
-          2d')
+          const ctx = chartRef.current.getContext('2d')
           if (ctx) {
             new Chart(ctx, {
               type: 'line',
@@ -77,51 +80,49 @@ export default function UserActivityChart () {
                     data: sortedData.map(d => d.views),
                     borderColor: 'rgb(99, 102, 241)',
                     fill: false,
-                    lineTension: 0.1,
+                    tension: 0.1,
                   },
                   {
                     label: 'Searches',
                     data: sortedData.map(d => d.searches),
                     borderColor: 'rgb(139, 92, 246)',
                     fill: false,
-                    lineTension: 0.1,
+                    tension: 0.1,
                   },
                   {
                     label: 'Other Interactions',
                     data: sortedData.map(d => d.interactions),
                     borderColor: 'rgb(167, 139, 250)',
                     fill: false,
-                    lineTension: 0.1,
+                    tension: 0.1,
                   },
                 ],
               },
               options: {
                 responsive: true,
                 scales: {
-                  xAxes: [
-                    {
-                      ticks: { fontColor: 'white' },
-                    },
-                  ],
-                  yAxes: [
-                    {
-                      ticks: { fontColor: 'white', beginAtZero: true },
-                    },
-                  ],
+                  x: {
+                    ticks: { color: 'white' },
+                  },
+                  y: {
+                    ticks: { color: 'white' },
+                  },
                 },
-                legend: {
-                  labels: { fontColor: 'white' },
+                plugins: {
+                  legend: {
+                    labels: { color: 'white' },
+                  },
                 },
               },
             })
           }
         }
       } catch (error) {
-        logger.error('Error fetching activity data:', error)
+        console.error('Error fetching activity data:', error)
       }
     }
 
-    fetchData()
+    void fetchData()
   }, [])
 
   return (

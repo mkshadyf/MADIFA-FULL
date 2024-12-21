@@ -1,4 +1,4 @@
-import { Suspense, useEffect, type FC } from 'react'
+ import { Suspense, useEffect, type FC } from 'react'
 import { AuthProvider } from '@/providers/AuthProvider'
 import { AppRoutes } from '@/routes'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -13,7 +13,7 @@ import { AuthErrorBoundary } from '@/components/providers/AuthErrorBoundary'
 import ErrorBoundaryProvider from '@/components/providers/ErrorBoundaryProvider'
 
 const AuthenticatedContent: FC = () => {
-  const { user, isLoading } = useAuth()
+  const { user, loading: isLoading } = useAuth()
 
   if (isLoading) {
     return (

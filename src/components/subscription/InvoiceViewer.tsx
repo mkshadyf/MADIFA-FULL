@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -5,15 +6,23 @@ import { subscriptionService } from '@/lib/services/subscription'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 
-export default function InvoiceViewer () {
-  const [invoices, setInvoices] = useState<any[]>([])
+
+interface Invoice {
+  id: string
+  invoice_number: string
+  issued_date: string
+  amount: number
+}
+
+export default function InvoiceViewer() {
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { user } = useAuth()
   const { showToast } = useToast()
 
   useEffect(() => {
     if (user) {
-      loadInvoices()
+      void loadInvoices()
     }
   }, [user])
 
@@ -23,7 +32,7 @@ export default function InvoiceViewer () {
       const data = await subscriptionService.getInvoices(user!.id)
       setInvoices(data)
     } catch (error) {
-      logger.error('Error loading invoices:', error)
+      console.error('Error loading invoices:', error)
       showToast('Failed to load invoices', 'error')
     } finally {
       setIsLoading(false)
@@ -34,7 +43,7 @@ export default function InvoiceViewer () {
     try {
       const blob = await subscriptionService.downloadInvoice(invoiceId)
       const url = window.URL.createObjectURL(blob)
-      a')
+      const a = document.createElement('a')
       a.href = url
       a.download = `invoice-${invoiceId}.pdf`
       document.body.appendChild(a)
@@ -42,7 +51,7 @@ export default function InvoiceViewer () {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (error) {
-      logger.error('Error downloading invoice:', error)
+      console.error('Error downloading invoice:', error)
       showToast('Failed to download invoice', 'error')
     }
   }

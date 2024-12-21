@@ -1,3 +1,6 @@
+ 
+declare const window: Window & typeof globalThis
+
 import { useCallback, useEffect, useState, type FC } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { toast } from 'react-hot-toast'
@@ -5,7 +8,7 @@ import { toast } from 'react-hot-toast'
 import { vimeoService } from '@/lib/services/vimeo'
 import { cn } from '@/lib/utils'
 import { Progress } from '@/components/ui/progress'
-import { logger } from '@/lib/logger'
+
 
 type VideoStatus = 'uploading' | 'transcoding' | 'available' | 'error'
 
@@ -34,36 +37,34 @@ export const BatchUploader: FC<BatchUploaderProps> = ({
     Record<string, UploadStatus>
   >({})
   const [isUploading, setIsUploading] = useState(false)
-
-  const vimeoService =
-    uploadService || new VimeoService(process.env.VITE_VIMEO_ACCESS_TOKEN!)
+  const vimeoService = uploadService || undefined
 
   useEffect(() => {
     const transcodingFiles = Object.entries(uploadStatuses).filter(
-      ([_, status]) => status.status === 'transcoding' && status.videoId
+      ([, status]) => status.status === 'transcoding' && status.videoId
     )
 
     if (transcodingFiles.length > 0) {
-      const interval = setInterval(async () => {
+      const interval = window.setInterval(async () => {
         for (const [fileName, status] of transcodingFiles) {
           try {
-            const videoStatus = await vimeoService.getVideoStatus(
+            const videoDetails = await vimeoService?.getVideoDetails(
               status.videoId!
             )
             setUploadStatuses(prev => ({
               ...prev,
               [fileName]: {
                 ...prev[fileName],
-                status: videoStatus.status as VideoStatus,
-                transcodingProgress: videoStatus.progress,
+                status: videoDetails?.status as VideoStatus,
+                transcodingProgress: videoDetails?.status === 'available' ? 100 : videoDetails?.status === 'transcoding' ? 0 : undefined,
               },
             }))
 
-            if (videoStatus.status === 'available') {
+            if (videoDetails?.status === 'available') {
               toast.success(`${fileName} is ready to view`)
             }
           } catch (error) {
-            logger.error('Failed to get video status:', error)
+            console.error('Failed to get video status:', error)
             setUploadStatuses(prev => ({
               ...prev,
               [fileName]: {
@@ -79,7 +80,7 @@ export const BatchUploader: FC<BatchUploaderProps> = ({
         }
       }, 5000)
 
-      return () => clearInterval(interval)
+      return () => window.clearInterval(interval)
     }
   }, [uploadStatuses, vimeoService])
 
@@ -103,21 +104,13 @@ export const BatchUploader: FC<BatchUploaderProps> = ({
             },
           }))
 
-          const uri = await vimeoService.uploadVideo(file, {
-            name: file.name,
-            description: `Uploaded via batch uploader`,
-            onProgress: (progress: { percent: number }) => {
-              setUploadStatuses(prev => ({
-                ...prev,
-                [file.name]: {
-                  ...prev[file.name],
-                  uploadProgress: progress.percent,
-                },
-              }))
-            },
-          })
+          const uri = await vimeoService?.uploadVideo(
+            file,
+            file.name,
+            `Uploaded via batch uploader`
+          )
 
-          const videoId = uri.split('/').pop()
+          const videoId = uri?.uri.split('/').pop()
           if (!videoId) throw new Error('Failed to get video ID')
 
           setUploadStatuses(prev => ({

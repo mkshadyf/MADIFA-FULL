@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { WatchHistoryItem } from '@/lib/types/watch-history'
-
+import type { WatchHistoryItem } from '@/types/watch-history'
 import { getVideoDetails } from './vimeo'
 
 export async function updateWatchProgress(
@@ -11,16 +10,39 @@ export async function updateWatchProgress(
   const supabase = createClient()
 
   try {
-    const { error } = await supabase.from('watch_history').upsert({
-      user_id: userId,
-      vimeo_id: vimeoId,
-      progress,
-      last_watched: new Date().toISOString(),
-    })
+    const { error } = await supabase
+      .from('watch_history')
+      .upsert({
+        user_id: userId,
+        vimeo_id: vimeoId,
+        progress,
+        last_watched: new Date().toISOString(),
+        completed: progress >= 0.95,
+      })
 
     if (error) throw error
   } catch (error) {
-    logger.error('Error updating watch progress:', error)
+    console.error('Error updating watch progress:', error)
+    throw error
+  }
+}
+
+export async function removeFromHistory(
+  userId: string,
+  vimeoId: string
+): Promise<void> {
+  const supabase = createClient()
+
+  try {
+    const { error } = await supabase
+      .from('watch_history')
+      .delete()
+      .eq('user_id', userId)
+      .eq('vimeo_id', vimeoId)
+
+    if (error) throw error
+  } catch (error) {
+    console.error('Error removing from watch history:', error)
     throw error
   }
 }
@@ -40,21 +62,33 @@ export async function getWatchHistory(
       .limit(limit)
 
     if (error) throw error
+    if (!history) return []
 
-    // Fetch video details from Vimeo
+    // Fetch video details from Vimeo in parallel
     const watchHistory = await Promise.all(
-      history.map(async (item: WatchHistoryItem) => {
-        const videoDetails = await getVideoDetails(item.vimeo_id)
-        return {
-          ...item,
-          video: videoDetails,
+      history.map(async (item) => {
+        try {
+          const videoDetails = await getVideoDetails(item.vimeo_id)
+          return {
+            ...item,
+            video: videoDetails,
+          }
+        } catch (error) {
+          console.error(`Error fetching video details for ${item.vimeo_id}:`, error)
+          return item
         }
       })
     )
 
     return watchHistory
   } catch (error) {
-    logger.error('Error fetching watch history:', error)
+    console.error('Error fetching watch history:', error)
     throw error
   }
+}
+
+export const watchHistoryService = {
+  updateWatchProgress,
+  removeFromHistory,
+  getWatchHistory,
 }

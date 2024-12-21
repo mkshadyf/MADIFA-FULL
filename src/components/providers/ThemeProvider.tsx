@@ -1,3 +1,4 @@
+import React from "react"
 import { createContext, useContext, useEffect, useState } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
@@ -12,17 +13,17 @@ const ThemeContext = createContext<ThemeContextType>({
   setTheme: () => null,
 })
 
-export function ThemeProvider ({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('system')
 
   useEffect(() => {
     const root = window.document.documentElement
-    theme') as Theme | null
+    const savedTheme = localStorage.getItem('theme') as Theme | null
 
     if (savedTheme) {
       setTheme(savedTheme)
       if (savedTheme === 'system') {
-        (prefers-color-scheme: dark)').matches
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
           ? 'dark'
           : 'light'
         root.setAttribute('data-theme', systemTheme)
@@ -40,7 +41,7 @@ export function ThemeProvider ({ children }: { children: React.ReactNode }) {
       setTheme(newTheme)
 
       if (newTheme === 'system') {
-        (prefers-color-scheme: dark)').matches
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
           ? 'dark'
           : 'light'
         root.setAttribute('data-theme', systemTheme)

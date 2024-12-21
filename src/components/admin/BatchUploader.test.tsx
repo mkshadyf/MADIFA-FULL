@@ -1,22 +1,25 @@
+import React from "react"
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { vi } from 'vitest'
+import { vi, describe, it, beforeEach, expect } from 'vitest'
 import { BatchUploader } from './BatchUploader'
-import { VimeoService } from '@/lib/services/vimeo'
+import type { vimeoService } from '@/lib/services/vimeo'
 
 // Mock VimeoService
 class MockUploadService {
   async uploadVideo(
-    file: File,
+    _file: File,
     options: { onProgress: (progress: { percent: number }) => void }
   ) {
     // Simulate upload progress
     options.onProgress({ percent: 50 })
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => {
+      global.setTimeout(resolve, 100)
+    })
     options.onProgress({ percent: 100 })
     return 'https://vimeo.com/123456'
   }
 
-  async getVideoStatus(videoId: string) {
+  async getVideoStatus(_videoId: string) {
     return {
       status: 'available',
       progress: 100,
@@ -36,7 +39,7 @@ describe('BatchUploader', () => {
     render(
       <BatchUploader
         onComplete={mockOnComplete}
-        uploadService={mockUploadService as unknown as VimeoService}
+        uploadService={mockUploadService as unknown as typeof vimeoService}
       />
     )
 
@@ -53,7 +56,7 @@ describe('BatchUploader', () => {
       <BatchUploader
         onComplete={mockOnComplete}
         acceptedFileTypes={acceptedTypes}
-        uploadService={mockUploadService as unknown as VimeoService}
+        uploadService={mockUploadService as unknown as typeof vimeoService}
       />
     )
 
@@ -68,7 +71,7 @@ describe('BatchUploader', () => {
       <BatchUploader
         onComplete={mockOnComplete}
         maxFileSize={maxSize}
-        uploadService={mockUploadService as unknown as VimeoService}
+        uploadService={mockUploadService as unknown as typeof vimeoService}
       />
     )
 
@@ -79,7 +82,7 @@ describe('BatchUploader', () => {
     render(
       <BatchUploader
         onComplete={mockOnComplete}
-        uploadService={mockUploadService as unknown as VimeoService}
+        uploadService={mockUploadService as unknown as typeof vimeoService}
       />
     )
 
@@ -108,7 +111,7 @@ describe('BatchUploader', () => {
       <BatchUploader
         onComplete={mockOnComplete}
         maxFileSize={maxSize}
-        uploadService={mockUploadService as unknown as VimeoService}
+        uploadService={mockUploadService as unknown as typeof vimeoService}
       />
     )
 
@@ -138,7 +141,7 @@ describe('BatchUploader', () => {
     render(
       <BatchUploader
         onComplete={mockOnComplete}
-        uploadService={mockUploadService as unknown as VimeoService}
+        uploadService={mockUploadService as unknown as typeof vimeoService}
       />
     )
 
@@ -170,7 +173,7 @@ describe('BatchUploader', () => {
     render(
       <BatchUploader
         onComplete={mockOnComplete}
-        uploadService={mockUploadService as unknown as VimeoService}
+        uploadService={mockUploadService as unknown as typeof vimeoService}
       />
     )
 

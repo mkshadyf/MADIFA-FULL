@@ -86,7 +86,7 @@ export function usePWA() {
         setUpdateAvailable(true)
       },
       onOfflineReady() {
-        logger.log('App is ready for offline use')
+        console.log('App is ready for offline use')
       },
     })
 

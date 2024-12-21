@@ -1,33 +1,73 @@
-import { env } from '@/lib/config/env'
-import { logger } from '@/lib/logger'
+import type { NextFunction, Request, Response } from 'express'
+import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
+import hpp from 'hpp'
+import xss from 'xss-clean'
 
-const ALLOWED_ORIGINS = [
-  env.VITE_APP_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
-].filter(Boolean)
 
-export async function securityMiddleware(request: Request): Promise<Response> {
-  try {
-    const origin = request.headers.get('origin')
-    const response = new Response(null, {
-      status: 200,
-      headers: new Headers({
-        'Access-Control-Allow-Origin':
-          origin && ALLOWED_ORIGINS.includes(origin)
-            ? origin
-            : ALLOWED_ORIGINS[0],
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block',
-      }),
-    })
+// Rate limiting
+export const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+})
 
-    return response
-  } catch (error) {
-    logger.error('Security middleware error:', error)
-    return new Response(null, { status: 500 })
+// Security headers middleware
+export const securityHeaders = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", process.env.VITE_SUPABASE_URL].filter(
+        Boolean
+      ) as ContentSecurityPolicyDirective[],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: true,
+  crossOriginOpenerPolicy: true,
+  crossOriginResourcePolicy: { policy: 'same-site' },
+  dnsPrefetchControl: true,
+  frameguard: { action: 'deny' },
+  hidePoweredBy: true,
+  hsts: true,
+  ieNoOpen: true,
+  noSniff: true,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  xssFilter: true,
+})
+
+// XSS Protection
+export const xssProtection = xss()
+
+// Parameter Pollution Protection
+export const parameterProtection = hpp()
+
+// CSRF Protection
+export const csrfProtection = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = req.headers['x-csrf-token']
+  if (!token || token !== process.env.CSRF_TOKEN) {
+    return res.status(403).json({ error: 'Invalid CSRF token' })
   }
+  next()
+}
+
+// Input Sanitization
+export const sanitizeInput = (input: string): string => {
+  return xss()
+}
+
+// Apply all security middleware
+export const applySecurityMiddleware = (app: any) => {
+  app.use(securityHeaders)
+  app.use(limiter)
+  app.use(xssProtection)
+  app.use(parameterProtection)
+  app.use('/api', csrfProtection)
 }

@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -90,7 +91,7 @@ export default function UserActivity() {
           mostActiveDay,
         })
       } catch (error) {
-        logger.error('Error fetching activity metrics:', error)
+        console.error('Error fetching activity metrics:', error)
       } finally {
         setLoading(false)
       }
@@ -99,13 +100,14 @@ export default function UserActivity() {
     fetchMetrics()
   }, [timeRange])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">User Activity</h1>
         <select
+          title="Select a time range"
           value={timeRange}
           onChange={e => setTimeRange(e.target.value)}
           className="rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-white"

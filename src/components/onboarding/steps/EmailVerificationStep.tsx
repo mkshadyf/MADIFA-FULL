@@ -1,9 +1,10 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { motion } from 'framer-motion'
 
 import type { OnboardingState } from '@/lib/services/onboarding'
-import type { User } from '@/lib/types/auth'
+import type { User } from '@/types/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 
@@ -38,7 +39,7 @@ export default function EmailVerificationStep({
       await user?.sendEmailVerification()
       showToast('Verification email sent!', 'success')
     } catch (error) {
-      logger.error('Error sending verification email:', error)
+      console.error('Error sending verification email:', error)
       showToast('Failed to send verification email', 'error')
     } finally {
       setIsResending(false)

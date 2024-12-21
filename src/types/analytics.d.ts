@@ -5,20 +5,25 @@ export interface ViewingStats {
   qualityChanges: number
   bufferingEvents: number
   averageBufferDuration: number
+  totalViews: number
+  uniqueViewers: number
+  averageWatchTime: number
+  completionRate: number
+  events: AnalyticsEvent[]
 }
 
 export interface AnalyticsEvent {
   user_id: string
   video_id: string
   event_type:
-    | 'play'
-    | 'pause'
-    | 'seek'
-    | 'complete'
-    | 'quality_change'
-    | 'error'
-    | 'buffer'
-    | 'progress'
+  | 'play'
+  | 'pause'
+  | 'seek'
+  | 'complete'
+  | 'quality_change'
+  | 'error'
+  | 'buffer'
+  | 'progress'
   timestamp: number
   data?: {
     position?: number

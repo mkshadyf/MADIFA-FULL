@@ -1,3 +1,4 @@
+ 
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -9,7 +10,7 @@ import { vimeoService } from '@/lib/services/vimeo'
 import { getWatchHistory } from '@/lib/services/watch-history'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import VimeoPlayer from '@/components/ui/vimeo-player'
-import { logger } from '@/lib/logger'
+
 
 export default function WatchPage() {
   const { id } = useParams()
@@ -34,7 +35,7 @@ export default function WatchPage() {
           }
         }
       } catch (error) {
-        logger.error('Error loading video:', error)
+        console.error('Error loading video:', error)
       } finally {
         setLoading(false)
       }

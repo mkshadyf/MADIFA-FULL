@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 
 interface UserInteraction {
   favorite?: boolean
@@ -36,7 +36,7 @@ export async function toggleFavorite(
 
     return newState
   } catch (error) {
-    logger.error('Error toggling favorite:', error)
+    console.error('Error toggling favorite:', error)
     throw error
   }
 }
@@ -70,7 +70,7 @@ export async function toggleWatchlist(
 
     return newState
   } catch (error) {
-    logger.error('Error toggling watchlist:', error)
+    console.error('Error toggling watchlist:', error)
     throw error
   }
 }
@@ -92,7 +92,7 @@ export async function rateContent(
 
     if (error) throw error
   } catch (error) {
-    logger.error('Error rating content:', error)
+    console.error('Error rating content:', error)
     throw error
   }
 }
@@ -109,7 +109,7 @@ export async function getUserFavorites(userId: string): Promise<Content[]> {
 
     return data || []
   } catch (error) {
-    logger.error('Error getting favorites:', error)
+    console.error('Error getting favorites:', error)
     throw error
   }
 }
@@ -126,7 +126,7 @@ export async function getUserWatchlist(userId: string): Promise<Content[]> {
 
     return data || []
   } catch (error) {
-    logger.error('Error getting watchlist:', error)
+    console.error('Error getting watchlist:', error)
     throw error
   }
 }
@@ -150,7 +150,7 @@ export async function getUserRatings(userId: string): Promise<
 
     return data || []
   } catch (error) {
-    logger.error('Error getting ratings:', error)
+    console.error('Error getting ratings:', error)
     throw error
   }
 }
@@ -177,7 +177,7 @@ export async function getContentInteractions(
       rating: data?.rating || 0,
     }
   } catch (error) {
-    logger.error('Error getting content interactions:', error)
+    console.error('Error getting content interactions:', error)
     throw error
   }
 }

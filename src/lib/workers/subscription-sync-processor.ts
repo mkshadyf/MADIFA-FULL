@@ -1,15 +1,18 @@
 import { handleSyncError } from '@/lib/services/subscription-error-handler'
 import { handleRetry } from '@/lib/services/subscription-retry-handler'
 import { createClient } from '@/lib/supabase/server'
+import type { Database } from '../database.types'
 
 const MAX_CONCURRENT_JOBS = 5
 const PROCESSING_INTERVAL = 1000 * 60 // 1 minute
 
-export async function startSyncProcessor() {
+type SyncJob = Database['public']['Tables']['videos']['Row']
+
+export async function startSyncProcessor(): Promise<void> {
   const supabase = createClient()
   let isProcessing = false
 
-  const processJobs = async () => {
+  const processJobs = async (): Promise<void> => {
     if (isProcessing) return
     isProcessing = true
 
@@ -27,7 +30,7 @@ export async function startSyncProcessor() {
 
       // Process jobs in parallel with rate limiting
       await Promise.all(
-        jobs.map(async job => {
+        jobs.map(async (job: SyncJob) => {
           try {
             // Check if job should be retried
             if (job.retry_count > 0) {
@@ -46,32 +49,36 @@ export async function startSyncProcessor() {
         })
       )
     } catch (error) {
-      logger.error('Error in sync processor:', error)
+      console.error('Error in sync processor:', error)
     } finally {
       isProcessing = false
     }
   }
 
   // Start processing loop
-  setInterval(processJobs, PROCESSING_INTERVAL)
+  // Using setInterval in Node.js environment
+  const interval = setInterval(processJobs, PROCESSING_INTERVAL)
+
+  // Cleanup on process exit
+  process.on('SIGTERM', () => {
+    clearInterval(interval)
+  })
 }
 
-async function handleSyncJob(job: any) {
+async function handleSyncJob(job: SyncJob): Promise<void> {
   const supabase = createClient()
 
-  try {
-    // Process the job
-    // Implementation depends on job type (grant/revoke access)
+  // Process the job
+  // Implementation depends on job type (grant/revoke access)
+  const { error } = await supabase
+    .from('subscription_sync_jobs')
+    .update({
+      status: 'completed',
+      processed_at: new Date().toISOString(),
+    })
+    .eq('id', job.id)
 
-    // Update job status
-    await supabase
-      .from('subscription_sync_jobs')
-      .update({
-        status: 'completed',
-        processed_at: new Date().toISOString(),
-      })
-      .eq('id', job.id)
-  } catch (error) {
+  if (error) {
     throw error
   }
 }

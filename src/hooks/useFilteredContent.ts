@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
+import type { Content } from '@/lib/database.types'
 import { contentService } from '@/lib/services/content'
-import type { Content } from '@/lib/supabase/database.types'
 
 type SortOption = 'newest' | 'oldest' | 'popular' | 'rating'
 

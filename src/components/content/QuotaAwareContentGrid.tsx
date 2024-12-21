@@ -62,7 +62,7 @@ export default function QuotaAwareContentGrid({
             className="group relative overflow-hidden rounded-lg bg-gray-900"
           >
             <img
-              src={content.thumbnail_url}
+              src={content.thumbnail_url || ''}
               alt={content.title}
               className="aspect-video w-full object-cover"
             />

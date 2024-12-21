@@ -38,6 +38,6 @@ export async function trackProgress(
       }),
     })
   } catch (error) {
-    logger.error('Progress tracking error:', error)
+    console.error('Progress tracking error:', error)
   }
 }

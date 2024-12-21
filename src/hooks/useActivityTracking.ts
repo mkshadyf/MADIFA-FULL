@@ -1,10 +1,10 @@
 import { useCallback } from 'react'
 
+import { useAuth } from '@/components/providers/AuthProvider'
 import {
   trackActivity,
   type ActivityType,
 } from '@/lib/services/activity-tracking'
-import { useAuth } from '@/components/providers/AuthProvider'
 
 interface UseActivityTrackingOptions {
   onError?: (error: Error) => void
@@ -36,7 +36,7 @@ export function useActivityTracking(options: UseActivityTrackingOptions = {}) {
           metadata: data?.metadata,
         })
       } catch (error) {
-        logger.error('Activity tracking error:', error)
+        console.error('Activity tracking error:', error)
         if (error instanceof Error && onError) {
           onError(error)
         }

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+ import { useEffect, useRef, useState } from 'react'
 import { useSwipeable } from 'react-swipeable'
 
-import { useDeviceDetection } from '@/lib/hooks/useDeviceDetection'
-import type { Content } from '@/lib/types/content'
+import { useDeviceDetection } from '@/hooks/useDeviceDetection'
+import type { Content } from '@/types/content'
 
 interface MobileVideoPlayerProps {
   content: Content
@@ -16,28 +16,28 @@ export default function MobileVideoPlayer({
   onComplete,
 }: MobileVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const { orientation, touchEnabled } = useDeviceDetection()
+  const { orientation } = useDeviceDetection()
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showControls, setShowControls] = useState(true)
 
   // Handle swipe gestures
   const handlers = useSwipeable({
-    onSwipeLeft: () => {
+    onSwipedLeft: () => {
       if (videoRef.current) {
         videoRef.current.currentTime += 10 // Forward 10 seconds
       }
     },
-    onSwipeRight: () => {
+    onSwipedRight: () => {
       if (videoRef.current) {
         videoRef.current.currentTime -= 10 // Rewind 10 seconds
       }
     },
-    onSwipeUp: () => {
+    onSwipedUp: () => {
       if (videoRef.current) {
         videoRef.current.volume = Math.min(1, videoRef.current.volume + 0.1)
       }
     },
-    onSwipeDown: () => {
+    onSwipedDown: () => {
       if (videoRef.current) {
         videoRef.current.volume = Math.max(0, videoRef.current.volume - 0.1)
       }
@@ -98,7 +98,7 @@ export default function MobileVideoPlayer({
     >
       <video
         ref={videoRef}
-        src={content.video_url}
+        src={content.video_url || ''}
         className="h-full w-full bg-black object-contain"
         playsInline
         controls={showControls}

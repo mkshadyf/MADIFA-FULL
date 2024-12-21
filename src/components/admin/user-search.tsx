@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
@@ -47,7 +47,7 @@ export default function UserSearch({ onSelect }: UserSearchProps) {
       if (error) throw error
       setResults(data || [])
     } catch (error) {
-      logger.error('Error searching users:', error)
+      console.error('Error searching users:', error)
     } finally {
       setLoading(false)
     }
@@ -70,6 +70,7 @@ export default function UserSearch({ onSelect }: UserSearchProps) {
           />
         </div>
         <select
+          title="Subscription Tier"
           value={subscriptionFilter}
           onChange={e => setSubscriptionFilter(e.target.value)}
           className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white"
@@ -97,7 +98,7 @@ export default function UserSearch({ onSelect }: UserSearchProps) {
                 <div className="flex items-center space-x-4">
                   <div className="flex-shrink-0">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-700 text-white">
-                      {user.full_name[0]}
+                      {user.full_name?.[0]}
                     </div>
                   </div>
                   <div className="flex-1">

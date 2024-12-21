@@ -1,8 +1,9 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 
-interface SyncJob {
+ interface SyncJob {
   id: string
   user_id: string
   subscription_id: string
@@ -19,7 +20,7 @@ export default function SubscriptionSyncJobMonitor() {
   const supabase = createClient()
 
   useEffect(() => {
-    loadJobs()
+    void loadJobs()
     const interval = setInterval(loadJobs, 10000) // Refresh every 10s
     return () => clearInterval(interval)
   }, [])
@@ -35,7 +36,7 @@ export default function SubscriptionSyncJobMonitor() {
       if (error) throw error
       setJobs(data)
     } catch (error) {
-      logger.error('Error loading jobs:', error)
+      console.error('Error loading jobs:', error)
     } finally {
       setLoading(false)
     }
@@ -54,7 +55,7 @@ export default function SubscriptionSyncJobMonitor() {
 
       await loadJobs()
     } catch (error) {
-      logger.error('Error retrying job:', error)
+      console.error('Error retrying job:', error)
     }
   }
 

@@ -3,7 +3,7 @@ export function measurePerformance(name: string, fn: () => void) {
     const start = performance.now()
     fn()
     const end = performance.now()
-    logger.log(`${name} took ${end - start}ms`)
+    console.log(`${name} took ${end - start}ms`)
   } else {
     fn()
   }
@@ -19,7 +19,7 @@ export function withPerformanceTracking<T extends (...args: any[]) => any>(
     const end = performance.now()
 
     if (process.env.NODE_ENV === 'development') {
-      logger.log(`${name} took ${end - start}ms`)
+      console.log(`${name} took ${end - start}ms`)
     }
 
     return result

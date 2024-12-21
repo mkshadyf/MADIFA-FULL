@@ -1,6 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 
-import { logger } from '@/lib/logger'
+
 import { createClient } from '@/lib/supabase/client'
 
 interface SubscriptionData {
@@ -25,7 +25,7 @@ export async function syncSubscriptions(): Promise<void> {
     }
 
     if (!subscriptions) {
-      logger.warn('No active subscriptions found')
+      console.warn('No active subscriptions found')
       return
     }
 
@@ -55,7 +55,7 @@ export async function syncSubscriptions(): Promise<void> {
         throw updateError
       }
 
-      logger.info(`Updated ${updates.length} subscriptions`)
+      console.info(`Updated ${updates.length} subscriptions`)
     }
   } catch (err) {
     const error = err as Error | PostgrestError
@@ -63,7 +63,7 @@ export async function syncSubscriptions(): Promise<void> {
       'message' in error
         ? error.message
         : 'Unknown error during subscription sync'
-    logger.error(errorMessage)
+    console.error(errorMessage)
     throw error
   }
 }

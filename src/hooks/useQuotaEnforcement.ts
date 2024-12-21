@@ -1,8 +1,7 @@
-import { useEffect, useRef } from 'react'
 import type { Content } from '@/types'
+import { useEffect, useRef } from 'react'
 
-import { quotaEnforcement } from '@/lib/middleware/quota-enforcement'
-
+import { QuotaEnforcementMiddleware } from '@/middleware/quota-enforcement'
 import { useAuth } from './useAuth'
 import { useToast } from './useToast'
 
@@ -24,7 +23,7 @@ export function useQuotaEnforcement() {
 
     try {
       const { canProceed, message } =
-        await quotaEnforcement.enforceQuotaBeforeDownload(user.id, content)
+        await QuotaEnforcementMiddleware.enforceQuotaBeforeDownload(user.id, content)
 
       if (!canProceed && message) {
         showToast(message, 'error')
@@ -32,7 +31,7 @@ export function useQuotaEnforcement() {
 
       return canProceed
     } catch (error) {
-      logger.error('Failed to check quota:', error)
+      console.error('Failed to check quota:', error)
       showToast('Failed to check storage quota', 'error')
       return false
     }
@@ -49,7 +48,7 @@ export function useQuotaEnforcement() {
 
       // Start new monitoring
       monitorCleanupRef.current =
-        await quotaEnforcement.monitorDownloadProgress(
+        await QuotaEnforcementMiddleware.monitorDownloadProgress(
           user.id,
           contentId,
           () => {
@@ -60,7 +59,7 @@ export function useQuotaEnforcement() {
           }
         )
     } catch (error) {
-      logger.error('Failed to start quota monitoring:', error)
+      console.error('Failed to start quota monitoring:', error)
     }
   }
 

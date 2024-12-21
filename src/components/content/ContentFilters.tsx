@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
@@ -180,6 +181,7 @@ export default function ContentFilters({
               Category
             </label>
             <select
+              title="Category"
               value={currentFilters.category}
               onChange={e => handleFilterChange('category', e.target.value)}
               className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
@@ -199,6 +201,7 @@ export default function ContentFilters({
               Language
             </label>
             <select
+              title="Language"
               value={currentFilters.language}
               onChange={e => handleFilterChange('language', e.target.value)}
               className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
@@ -218,6 +221,7 @@ export default function ContentFilters({
               Quality
             </label>
             <select
+              title="Quality"
               value={currentFilters.quality}
               onChange={e => handleFilterChange('quality', e.target.value)}
               className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
@@ -237,6 +241,7 @@ export default function ContentFilters({
               Sort By
             </label>
             <select
+              title="Sort By"
               value={currentFilters.sort}
               onChange={e => handleFilterChange('sort', e.target.value)}
               className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"

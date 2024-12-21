@@ -1,8 +1,9 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { createClient } from '@/lib/supabase/client'
-import type { WatchHistoryItem } from '@/lib/types/watch-history'
+import type { WatchHistoryItem } from '@/types/watch-history'
 
 export default function WatchHistory() {
   const { user } = useAuth()
@@ -35,7 +36,7 @@ export default function WatchHistory() {
       if (error) throw error
       setHistory(data)
     } catch (error) {
-      logger.error('Error loading watch history:', error)
+      console.error('Error loading watch history:', error)
     } finally {
       setLoading(false)
     }
@@ -51,7 +52,7 @@ export default function WatchHistory() {
       if (error) throw error
       setHistory([])
     } catch (error) {
-      logger.error('Error clearing history:', error)
+      console.error('Error clearing history:', error)
     }
   }
 

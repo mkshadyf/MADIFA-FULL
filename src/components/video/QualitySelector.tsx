@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { VideoQuality } from '@/types/vimeo'
+export type VideoQuality = 'auto' | '4K' | '2K' | '1080p' | '720p' | '480p' | '360p'
 
 interface QualitySelectorProps {
   currentQuality: VideoQuality
@@ -54,8 +54,7 @@ export default function QualitySelector({
         return '1080p'
       case '720p':
         return '720p'
-      case '540p':
-        return '540p'
+       
       case '360p':
         return '360p'
       default:
@@ -75,8 +74,7 @@ export default function QualitySelector({
         className="flex items-center space-x-1 rounded-md bg-gray-800 px-2 py-1 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Select video quality"
-        aria-expanded={isOpen}
-        aria-controls="quality-menu"
+         aria-controls="quality-menu"
       >
         <span className="text-sm text-white">
           {formatQualityLabel(currentQuality)}

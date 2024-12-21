@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -6,7 +7,7 @@ import {
   getBillingHistory,
   getCurrentSubscription,
 } from '@/lib/services/subscription-management'
-import type { BillingHistory, UserSubscription } from '@/lib/types/subscription'
+import type { BillingHistory, UserSubscription } from '@/types/subscription'
 
 export default function SubscriptionManager() {
   const { user } = useAuth()
@@ -31,7 +32,7 @@ export default function SubscriptionManager() {
         setSubscription(subscriptionData)
         setBillingHistory(billingData)
       } catch (error) {
-        logger.error('Error loading subscription data:', error)
+        console.error('Error loading subscription data:', error)
         setError(
           error instanceof Error
             ? error.message
@@ -63,7 +64,7 @@ export default function SubscriptionManager() {
           : null
       )
     } catch (error) {
-      logger.error('Error cancelling subscription:', error)
+      console.error('Error cancelling subscription:', error)
       setError(
         error instanceof Error ? error.message : 'Failed to cancel subscription'
       )

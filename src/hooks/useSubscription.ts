@@ -34,7 +34,7 @@ export function useSubscription() {
     },
     onError: error => {
       toast.error('Failed to update subscription')
-      logger.error('Subscription error:', error)
+      console.error('Subscription error:', error)
     },
   })
 
@@ -48,7 +48,7 @@ export function useSubscription() {
     },
     onError: error => {
       toast.error('Failed to cancel subscription')
-      logger.error('Cancellation error:', error)
+      console.error('Cancellation error:', error)
     },
   })
 
@@ -62,7 +62,7 @@ export function useSubscription() {
     },
     onError: error => {
       toast.error('Failed to reactivate subscription')
-      logger.error('Reactivation error:', error)
+      console.error('Reactivation error:', error)
     },
   })
 

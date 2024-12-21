@@ -36,7 +36,7 @@ export async function handleSubscriptionAccess(
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    logger.error('Error handling subscription access:', error)
+    console.error('Error handling subscription access:', error)
     throw error
   }
 }

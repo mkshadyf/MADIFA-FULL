@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
 import type { Content } from '@/types'
+import { useCallback, useEffect, useState } from 'react'
 
 import { downloadQueueManager } from '@/lib/services/download-queue'
 
@@ -34,7 +34,7 @@ export function useDownloadQueue() {
         await downloadQueueManager.addToQueue(content, priority)
         showToast('Added to download queue', 'success')
       } catch (error) {
-        logger.error('Failed to add to queue:', error)
+        console.error('Failed to add to queue:', error)
         showToast(
           error instanceof Error ? error.message : 'Failed to add to queue',
           'error'
@@ -50,7 +50,7 @@ export function useDownloadQueue() {
         await downloadQueueManager.removeFromQueue(contentId)
         showToast('Removed from download queue', 'success')
       } catch (error) {
-        logger.error('Failed to remove from queue:', error)
+        console.error('Failed to remove from queue:', error)
         showToast('Failed to remove from queue', 'error')
       }
     },
@@ -63,7 +63,7 @@ export function useDownloadQueue() {
         await downloadQueueManager.pauseDownload(contentId)
         showToast('Download paused', 'info')
       } catch (error) {
-        logger.error('Failed to pause download:', error)
+        console.error('Failed to pause download:', error)
         showToast('Failed to pause download', 'error')
       }
     },
@@ -76,7 +76,7 @@ export function useDownloadQueue() {
         await downloadQueueManager.resumeDownload(contentId)
         showToast('Download resumed', 'success')
       } catch (error) {
-        logger.error('Failed to resume download:', error)
+        console.error('Failed to resume download:', error)
         showToast('Failed to resume download', 'error')
       }
     },
@@ -88,7 +88,7 @@ export function useDownloadQueue() {
       await downloadQueueManager.clearQueue()
       showToast('Download queue cleared', 'success')
     } catch (error) {
-      logger.error('Failed to clear queue:', error)
+      console.error('Failed to clear queue:', error)
       showToast('Failed to clear queue', 'error')
     }
   }, [showToast])

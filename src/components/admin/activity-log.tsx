@@ -1,9 +1,10 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
-import { logger } from '@/lib/logger'
+
 import { createClient } from '@/lib/supabase/client'
 
-interface ActivityLog {
+interface activityLog {
   id: string
   user_id: string
   action: string
@@ -15,7 +16,7 @@ interface ActivityLog {
   }
 }
 export default function ActivityLog() {
-  const [activities, setActivities] = useState<ActivityLog[]>([])
+  const [activities, setActivities] = useState<activityLog[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
@@ -42,14 +43,14 @@ export default function ActivityLog() {
       setActivities(prev => (pageNumber === 1 ? data : [...prev, ...data]))
       setHasMore(data.length === 20)
     } catch (error) {
-      logger.error('Error fetching activity log:', error)
+      console.error('Error fetching activity log:', error)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchActivities(page)
+    void fetchActivities(page)
   }, [page])
 
   const formatDate = (date: string) => {

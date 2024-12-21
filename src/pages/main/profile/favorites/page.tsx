@@ -1,11 +1,12 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { getUserFavorites } from '@/lib/services/user-interactions'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 import ContentGrid from '@/components/ui/content-grid'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { logger } from '@/lib/logger'
+
 
 export default function FavoritesPage() {
   const { user } = useAuth()
@@ -21,7 +22,7 @@ export default function FavoritesPage() {
         const data = await getUserFavorites(user.id)
         setFavorites(data)
       } catch (error) {
-        logger.error('Error loading favorites:', error)
+        console.error('Error loading favorites:', error)
         setError(
           error instanceof Error ? error.message : 'Failed to load favorites'
         )

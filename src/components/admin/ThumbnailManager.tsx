@@ -5,6 +5,7 @@ import { vimeoService } from '@/lib/services/vimeo'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 
+
 interface ThumbnailManagerProps {
   videoId: string
   currentThumbnail?: string
@@ -17,7 +18,7 @@ export function ThumbnailManager({
   onThumbnailUpdate,
 }: ThumbnailManagerProps) {
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
+  const [isUploading, setIsUploading] = useState<boolean>(false)
   const [selectedTime, setSelectedTime] = useState(0)
 
   const onDrop = useCallback(
@@ -32,7 +33,7 @@ export function ThumbnailManager({
         toast.success('Thumbnail updated successfully')
       } catch (error) {
         toast.error('Failed to upload thumbnail')
-        logger.error(error)
+        console.error(error as string)
       } finally {
         setIsUploading(false)
       }
@@ -59,7 +60,7 @@ export function ThumbnailManager({
       toast.success('Thumbnail generated successfully')
     } catch (error) {
       toast.error('Failed to generate thumbnail')
-      logger.error(error)
+      console.error(error as string)
     } finally {
       setIsGenerating(false)
     }

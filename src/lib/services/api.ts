@@ -3,7 +3,7 @@ import type { RateLimitRequestHandler } from 'express-rate-limit'
 import rateLimit from 'express-rate-limit'
 import helmet from 'helmet'
 
-import { createAPIError } from '@/lib/utils/api-error'
+import { createAPIError } from '@/lib/utils/error-handler'
 
 // Import untyped modules
 const hpp = require('hpp')

@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useRef, type FC } from 'react'
 import { geoPath, geoMercator } from 'd3-geo'
 import { select } from 'd3-selection'
@@ -9,6 +10,8 @@ import {
 } from 'geojson'
 import * as topojson from 'topojson-client'
 import { type GeometryCollection, type Topology } from 'topojson-specification'
+
+import * as d3 from 'd3'
 
 interface WorldMapProps {
   data: Array<{
@@ -90,7 +93,7 @@ export const WorldMap: FC<WorldMapProps> = ({
 
         if (onCountryClick) {
           paths.style('cursor', 'pointer').on('click', (event, d) => {
-            if (d.id) onCountryClick(d.id)
+            if (d.id) onCountryClick(d.id as string)
           })
         }
 
@@ -108,7 +111,7 @@ export const WorldMap: FC<WorldMapProps> = ({
             : countryName
         })
       } catch (error) {
-        console.error('Error loading or rendering map:', error)
+          console.error('Error loading or rendering map:', error)
       }
     }
 

@@ -1,3 +1,4 @@
+import React from "react"
 import type { OnboardingState } from '@/lib/services/onboarding'
 import { Button } from '@/components/ui/button'
 

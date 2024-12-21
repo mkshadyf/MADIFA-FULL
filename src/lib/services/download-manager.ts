@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/types/content'
+import type { Content } from '@/types/content'
 
 interface DownloadOptions {
   quality: '480p' | '720p' | '1080p'
@@ -52,7 +52,7 @@ export async function startDownload(
       })
       .eq('content_id', contentId)
   } catch (error) {
-    logger.error('Download error:', error)
+    console.error('Download error:', error)
     throw error
   }
 }
@@ -93,7 +93,7 @@ export async function getDownloadStatus(
       localPath: data.local_path,
     }
   } catch (error) {
-    logger.error('Error getting download status:', error)
+    console.error('Error getting download status:', error)
     throw error
   }
 }
@@ -108,7 +108,7 @@ export async function deleteDownload(contentId: string): Promise<void> {
     // Update database
     await supabase.from('downloads').delete().eq('content_id', contentId)
   } catch (error) {
-    logger.error('Error deleting download:', error)
+    console.error('Error deleting download:', error)
     throw error
   }
 }

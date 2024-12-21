@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { Content } from '@/types'
 
 import { contentManager } from '@/lib/services/content-manager'
 import { useContent } from '@/hooks/useContent'
 import { useToast } from '@/hooks/useToast'
 import { IconButton } from '@/components/ui/button'
+
 
 interface ContentBatchOperationsProps {
   className?: string
@@ -60,7 +61,7 @@ export default function ContentBatchOperations({
       setNewValue('')
       showToast('Batch operation completed successfully', 'success')
     } catch (error) {
-      logger.error('Batch operation failed:', error)
+      console.error('Batch operation failed:', error)
       showToast('Failed to complete batch operation', 'error')
     } finally {
       setIsProcessing(false)
@@ -98,6 +99,7 @@ export default function ContentBatchOperations({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Batch Operations</h3>
         <IconButton
+          label="Batch Operations"
           icon="check"
           onClick={handleBatchOperation}
           disabled={!operation || isProcessing || !selectedItems.size}
@@ -156,7 +158,7 @@ export default function ContentBatchOperations({
         </div>
 
         <div className="max-h-48 overflow-y-auto">
-          {contents?.map(content => (
+          {contents?.map((content: Content) => (
             <div
               key={content.id}
               className="flex items-center space-x-2 rounded-lg p-2 hover:bg-gray-800"

@@ -1,10 +1,11 @@
+import React from "react"
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
-import { useRouter } from 'next/router'
 
 import { getUserRatings } from '@/lib/services/user-interactions'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { logger } from '@/lib/logger'
+
 
 interface RatedContent {
   content_id: string
@@ -18,7 +19,7 @@ export default function RatingsPage() {
   const [ratings, setRatings] = useState<RatedContent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const loadRatings = async () => {
@@ -28,7 +29,7 @@ export default function RatingsPage() {
         const data = await getUserRatings(user.id)
         setRatings(data)
       } catch (error) {
-        logger.error('Error loading ratings:', error)
+        console.error('Error loading ratings:', error)
         setError(
           error instanceof Error ? error.message : 'Failed to load ratings'
         )
@@ -55,7 +56,14 @@ export default function RatingsPage() {
               <div
                 key={item.content_id}
                 className="flex cursor-pointer items-center justify-between rounded-lg bg-gray-800 p-4 hover:bg-gray-700"
-                onClick={() => router.push(`/watch/${item.content_id}`)}
+                onClick={() => navigate(`/watch/${item.content_id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    navigate(`/watch/${item.content_id}`)
+                  }
+                }}
               >
                 <div>
                   <h3 className="text-lg font-medium text-white">
@@ -66,7 +74,7 @@ export default function RatingsPage() {
                   </p>
                 </div>
                 <div className="flex items-center space-x-1">
-                  {[...Array(5)].map((_, i) => (
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <svg
                       key={i}
                       className={`h-5 w-5 ${i < item.rating ? 'text-yellow-400' : 'text-gray-600'}`}

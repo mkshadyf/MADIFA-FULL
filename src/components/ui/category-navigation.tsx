@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { usePathname, useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Category } from '@/lib/types/content'
+import type { Category } from '@/types/content'
 
+import { usePathname } from "next/navigation"
 export default function CategoryNavigation() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
+   const navigate = useNavigate()
   const pathname = usePathname()
   const supabase = createClient()
 
@@ -25,7 +26,7 @@ export default function CategoryNavigation() {
 
         setCategories(data || [])
       } catch (error) {
-        logger.error('Error fetching categories:', error)
+        console.error('Error fetching categories:', error)
         setError(
           error instanceof Error ? error.message : 'Failed to load categories'
         )
@@ -57,7 +58,7 @@ export default function CategoryNavigation() {
     <nav className="overflow-x-auto whitespace-nowrap py-4">
       <div className="flex space-x-4">
         <button
-          onClick={() => router.push('/browse')}
+          onClick={() => navigate('/browse')}
           className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             pathname === '/browse'
               ? 'bg-indigo-600 text-white'
@@ -70,7 +71,7 @@ export default function CategoryNavigation() {
         {categories.map(category => (
           <button
             key={category.id}
-            onClick={() => router.push(`/category/${category.slug}`)}
+            onClick={() => navigate(`/category/${category.slug}`)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               pathname === `/category/${category.slug}`
                 ? 'bg-indigo-600 text-white'

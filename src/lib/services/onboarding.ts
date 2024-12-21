@@ -4,11 +4,11 @@ export type StreamingQuality = 'auto' | 'low' | 'medium' | 'high'
 
 export interface OnboardingState {
   step:
-    | 'welcome'
-    | 'plan-selection'
-    | 'payment'
-    | 'email-verification'
-    | 'profile-completion'
+  | 'welcome'
+  | 'plan-selection'
+  | 'payment'
+  | 'email-verification'
+  | 'profile-completion'
   planId?: string
   preferences?: {
     genres: string[]
@@ -49,14 +49,13 @@ export class OnboardingService {
     const { error } = await this.supabase.from('user_onboarding').upsert({
       user_id: userId,
       ...state,
-      updated_at: new Date().toISOString(),
     })
 
     if (error) throw error
   }
 
   async skipStep(userId: string, step: OnboardingState['step']) {
-    if (!OPTIONAL_STEPS.includes(step)) {
+    if (!OPTIONAL_STEPS.includes(step as OptionalStep)) {
       throw new Error(`Step ${step} is not optional`)
     }
 
@@ -69,7 +68,6 @@ export class OnboardingService {
     await this.updateOnboardingState(userId, {
       step: nextStep,
       skippedSteps,
-      updated_at: new Date().toISOString(),
     })
   }
 
@@ -86,7 +84,6 @@ export class OnboardingService {
     await this.updateOnboardingState(userId, {
       completedSteps,
       isCompleted,
-      updated_at: new Date().toISOString(),
     })
 
     if (isCompleted) {

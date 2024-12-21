@@ -1,13 +1,15 @@
+import React from "react"
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import Image, { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 import { GenreSelectionStep } from './steps/GenreSelectionStep'
 import { LanguageSelectionStep } from './steps/LanguageSelectionStep'
 import { SettingsStep } from './steps/SettingsStep'
-import { WelcomeStep } from './steps/WelcomeStep'
+import WelcomeStep from './steps/WelcomeStep'
 
 interface OnboardingPreferences {
   genres: string[]
@@ -30,7 +32,7 @@ interface OnboardingStep {
   component: React.ReactNode
 }
 
-export default function OnboardingFlow () {
+export default function OnboardingFlow() {
   const [currentStep, setCurrentStep] = useState(0)
   const [preferences, setPreferences] = useState<OnboardingPreferences>({
     genres: [],
@@ -38,7 +40,7 @@ export default function OnboardingFlow () {
     notifications: true,
     quality: '1080p',
   })
-  const router = useRouter()
+  const navigate = useNavigate()
   const supabase = createClient()
 
   const handleComplete = async () => {
@@ -58,9 +60,9 @@ export default function OnboardingFlow () {
       })
 
       if (error) throw error
-      router.push('/browse')
+      navigate('/browse')
     } catch (error) {
-      logger.error('Error saving preferences:', error)
+      console.error('Error saving preferences:', error)
     }
   }
 
@@ -69,7 +71,15 @@ export default function OnboardingFlow () {
       id: 'welcome',
       title: 'Welcome to MADIFA',
       description: "Let's personalize your experience",
-      component: <WelcomeStep onNext={() => setCurrentStep(1)} />,
+      component: (
+        <WelcomeStep
+          onNext={async () => {
+            await Promise.resolve();
+            setCurrentStep(1);
+          }}
+          data={{}}
+        />
+      ),
     },
     {
       id: 'genres',
@@ -108,8 +118,11 @@ export default function OnboardingFlow () {
             quality: preferences.quality,
           }}
           onUpdate={settings => {
-            480p' | '720p' | '1080p'
-            setPreferences({ ...preferences, notifications: settings.notifications, quality })
+            setPreferences({
+              ...preferences,
+              notifications: settings.notifications,
+              quality: settings.quality as '480p' | '720p' | '1080p',
+            })
           }}
           onComplete={handleComplete}
           onBack={() => setCurrentStep(2)}

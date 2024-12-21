@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
-import type { Content } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
+
+type Content = Database['public']['Tables']['videos']['Row'] & {
+  release_year: number
+  category: string
+}
 
 interface VideoDetailsModalProps {
   content: Content
@@ -38,13 +43,14 @@ export default function VideoDetailsModal({
       >
         <div className="relative aspect-video">
           <img
-            src={content.thumbnail_url}
+            src={content.thumbnail_url ?? ''}
             alt={content.title}
             className="h-full w-full rounded-t-lg object-cover"
           />
           <button
             onClick={onPlay}
             className="absolute inset-0 flex items-center justify-center bg-black/40 transition-colors hover:bg-black/60"
+            aria-label="Play video"
           >
             <svg
               className="h-20 w-20 text-white"

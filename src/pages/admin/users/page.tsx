@@ -1,7 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']

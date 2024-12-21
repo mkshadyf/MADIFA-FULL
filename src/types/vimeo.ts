@@ -1,207 +1,207 @@
-export type VideoQuality = '1080p' | '720p' | '480p' | '360p'
+import type Player from '@vimeo/player'
 
-export interface VimeoError {
-  message: string
-  name: string
-  status?: number
-}
-
-export interface VimeoRequestOptions {
-  method: string
-  path: string
-  query?: Record<string, any>
-  headers?: Record<string, string>
-  body?: any
-}
-
-export interface ContentSecurity {
-  privacy: {
-    view: 'anybody' | 'nobody' | 'password' | 'disable' | 'unlisted'
-    embed: 'public' | 'private'
-    comments: 'anybody' | 'nobody'
-    download: boolean
-    add: boolean
-  }
-  embed_settings: {
-    buttons: {
-      like: boolean
-      share: boolean
-      embed: boolean
-      watchlater: boolean
-      hd: boolean
-    }
-    logos: {
-      vimeo: boolean
-      custom: {
-        active: boolean
-        url?: string
-        link?: string
-      }
-    }
-    title: {
-      name: boolean
-      owner: boolean
-      portrait: boolean
-    }
-  }
-  domain_restrictions: {
-    allowed_domains: string[]
-    whitelist_enabled: boolean
-  }
-  type: 'jwt' | 'hmac'
-  key: string
-  secret: string
-  expiry?: number
-}
+export type VimeoPlayer = Player
 
 export interface VimeoVideo {
   uri: string
   name: string
-  description: string
+  description: string | null
+  type: string
+  link: string
   duration: number
   width: number
   height: number
-  privacy: ContentSecurity['privacy']
+  created_time: string
+  modified_time: string
+  release_time: string
+  content_rating: string[]
+  license: string | null
+  privacy: {
+    view: 'anybody' | 'nobody' | 'password' | 'disable'
+    embed: 'public' | 'private' | 'whitelist'
+    download: boolean
+    add: boolean
+    comments: 'anybody' | 'nobody'
+  }
   pictures: {
     uri: string
     active: boolean
     type: string
+    base_link: string
     sizes: Array<{
       width: number
       height: number
       link: string
+      link_with_play_button: string
     }>
   }
-  files: Array<{
-    quality: VideoQuality
-    type: string
-    width: number
-    height: number
-    link: string
-    size: number
-    fps: number
-    mime_type: 'application/x-mpegURL' | 'application/dash+xml' | 'video/mp4'
-  }>
-  status: string
-  transcode: {
-    status: string
-    progress: number
+  stats: {
+    plays: number | null
+    likes: number
+    comments: number
   }
-  upload: {
-    status: string
-    upload_link: string
-    form: string
-    approach: string
-    size: number
-    redirect_url: string
-  }
-  metadata: {
-    connections: {
-      views: {
-        total: number
-      }
-      likes: {
-        total: number
-      }
-      comments: {
-        total: number
-      }
-    }
-  }
-  categories?: Array<{
+  categories: Array<{
     uri: string
     name: string
     link: string
+    top_level: boolean
+    is_deprecated: boolean
   }>
-  stats: {
-    plays: number
+  metadata: {
+    connections: {
+      comments: {
+        uri: string
+        options: string[]
+        total: number
+      }
+      likes: {
+        uri: string
+        options: string[]
+        total: number
+      }
+      pictures: {
+        uri: string
+        options: string[]
+        total: number
+      }
+      texttracks: {
+        uri: string
+        options: string[]
+        total: number
+      }
+      related: {
+        uri: string
+        options: string[]
+      }
+      recommendations: {
+        uri: string
+        options: string[]
+      }
+    }
+    interactions: {
+      watchlater: {
+        uri: string
+        options: string[]
+        added: boolean
+        added_time: string | null
+      }
+      like: {
+        uri: string
+        options: string[]
+        added: boolean
+        added_time: string | null
+      }
+      report: {
+        uri: string
+        options: string[]
+        reason: string[]
+      }
+    }
+    is_vimeo_create: boolean
+    is_screen_record: boolean
   }
-  security?: ContentSecurity
-  created_time: string
-  modified_time: string
-  release_time: string
+  tags: Array<{
+    uri: string
+    name: string
+    tag: string
+    canonical: string
+    metadata: {
+      connections: {
+        videos: {
+          uri: string
+          options: string[]
+          total: number
+        }
+      }
+    }
+  }>
+  transcode: {
+    status: 'complete' | 'in_progress' | 'error'
+  }
 }
 
-export interface VimeoPlayer {
-  element: HTMLElement
-  origin: string
-  ready(): Promise<void>
-  destroy(): void
-  requestFullscreen(): Promise<void>
-  exitFullscreen(): Promise<void>
-  getVideoTitle(): Promise<string>
-  getVideoId(): Promise<string>
-  getVideoWidth(): Promise<number>
-  getVideoHeight(): Promise<number>
-  getDuration(): Promise<number>
-  getCurrentTime(): Promise<number>
-  setCurrentTime(seconds: number): Promise<void>
-  getPaused(): Promise<boolean>
-  play(): Promise<void>
-  pause(): Promise<void>
-  getEnded(): Promise<boolean>
-  getLoop(): Promise<boolean>
-  setLoop(loop: boolean): Promise<void>
-  getMuted(): Promise<boolean>
-  setMuted(muted: boolean): Promise<void>
-  getVolume(): Promise<number>
-  setVolume(volume: number): Promise<void>
-  getPlaybackRate(): Promise<number>
-  setPlaybackRate(rate: number): Promise<void>
-  getQuality(): Promise<VideoQuality>
-  setQuality(quality: VideoQuality): Promise<void>
-  on(event: string, callback: (data?: any) => void): void
-  off(event: string, callback?: (data?: any) => void): void
-  loadVideo(id: number | string): Promise<void>
-  unload(): Promise<void>
+export interface VimeoChapter {
+  uri: string
+  active: boolean
+  type: string
+  timecode: number
+  title: string
+}
+
+export interface VimeoStats {
+  plays: number
+  finishes: number
+  loads: number
+  likes: number
+  comments: number
+  downloads: number
+}
+
+export interface VimeoProgress {
+  seconds: number
+  percent: number
+}
+
+export interface VimeoThumbnail {
+  uri: string
+  active: boolean
+  type: string
+  base_link: string
+  sizes: Array<{
+    width: number
+    height: number
+    link: string
+    link_with_play_button: string
+  }>
+}
+
+export interface VimeoError {
+  message: string
+  name: string
+  status: number
+  error: string
+  developer_message: string
+  error_code: string
+}
+
+export interface VimeoFolder {
+  uri: string
+  name: string
+  created_time: string
+  modified_time: string
+  user: {
+    uri: string
+    name: string
+  }
+  metadata: {
+    connections: {
+      videos: {
+        uri: string
+        total: number
+      }
+    }
+  }
+  total: number
+  page: number
+  per_page: number
+  has_more: boolean
 }
 
 export interface VimeoUploadOptions {
-  name?: string
+  name: string
   description?: string
-  license?: string
-  review_page?: {
-    active: boolean
-  }
-  embed?: {
-    buttons?: {
-      like?: boolean
-      watchlater?: boolean
-      share?: boolean
-      embed?: boolean
-      hd?: boolean
-      fullscreen?: boolean
-      scaling?: boolean
-    }
-    logos?: {
-      vimeo?: boolean
-      custom?: {
-        active?: boolean
-        url?: string
-        link?: string
-      }
-    }
-    title?: {
-      name?: string
-      owner?: string
-      portrait?: string
-    }
-  }
   privacy?: {
-    view: 'anybody' | 'disable' | 'unlisted'
-    embed?: 'public' | 'private'
-    comments?: 'anybody' | 'nobody'
-    download?: boolean
-    add?: boolean
+    view: 'anybody' | 'nobody' | 'contacts' | 'disable' | 'unlisted'
+    embed: 'public' | 'private'
+    comments: 'anybody' | 'nobody'
+    download: boolean
   }
-  pictures?: {
-    active: boolean
-    uri?: string
-  }
-  folderUri?: string
-  onProgress?: (progress: {
-    loaded: number
-    total: number
-    percent: number
-  }) => void
+  folder_id?: string
+}
+
+export type VideoQuality = 'auto' | '4K' | '2K' | '1080p' | '720p' | '540p' | '360p'
+
+export interface VimeoQualityChangeEvent {
+  quality: VideoQuality
+  previousQuality: VideoQuality | null
 }

@@ -1,6 +1,6 @@
 import { Vimeo } from '@vimeo/vimeo'
 
-import type { VimeoResponse } from '@/lib/types/vimeo'
+import type { VimeoResponse } from '@/types/vimeo'
 
 interface VimeoVideo {
   uri: string
@@ -44,7 +44,7 @@ export async function GET(): Promise<Response> {
       )
     })
 
-    const videos = response.data as VimeoVideo[]
+    const videos = response.data as unknown as VimeoVideo[]
 
     return new Response(JSON.stringify(videos), {
       headers: {

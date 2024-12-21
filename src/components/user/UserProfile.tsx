@@ -1,20 +1,22 @@
 import { useAuth } from '@/providers/AuthProvider'
-import Image from 'react-router-dom'
-
-import { useQueryWithCache } from '@/lib/hooks/useQueryWithCache'
-import type { Database } from '@/lib/supabase/database.types'
-
+import { useQuery } from '@tanstack/react-query'
+import type { Database } from '@/lib/database.types'
+ 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 export default function UserProfile() {
   const { user } = useAuth()
 
-  const { data: profile, isLoading } = useQueryWithCache<UserProfile>(
+  const { data: profile } = useQuery<UserProfile>(
     ['profile', user?.id],
     async () => {
-      const response = await fetch(`/api/profile/${user?.id}`)
+      if (!user?.id) return null;
+      const response = await fetch(`/api/user/profile/${user.id}`)
       if (!response.ok) throw new Error('Failed to fetch profile')
-      return response.json()
+      return await response.json()
+    },
+    {
+      enabled: !!user?.id,
     }
   )
 
@@ -25,10 +27,9 @@ export default function UserProfile() {
         <div className="mb-12 flex flex-col items-center gap-8 md:flex-row md:items-start">
           <div className="relative h-32 w-32 md:h-40 md:w-40">
             {profile?.avatar_url ? (
-              <Image
+              <img
                 src={profile.avatar_url}
                 alt={profile.full_name || ''}
-                fill
                 className="rounded-2xl object-cover shadow-xl ring-2 ring-[rgb(var(--primary))] transition-transform hover:scale-105"
               />
             ) : (

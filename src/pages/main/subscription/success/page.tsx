@@ -1,17 +1,18 @@
+import React from "react"
+/* eslint-env browser */
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
-import { useRouter } from 'next/router'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { verifyPayment } from '@/lib/services/payment'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { useSearchParams } from 'next/navigation'
-import { logger } from '@/lib/logger'
 
-export default function SubscriptionSuccess () {
+
+export default function SubscriptionSuccess() {
   const [verifying, setVerifying] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-    const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const sessionId = searchParams.get('session_id')
 
@@ -27,14 +28,14 @@ export default function SubscriptionSuccess () {
         const result = await verifyPayment(sessionId)
         if (result.success) {
           // Wait a moment to show success message
-          setTimeout(() => {
-           void router.push('/browse')
+          window.setTimeout(() => {
+            void navigate('/browse')
           }, 2000)
         } else {
           throw new Error('Payment verification failed')
         }
       } catch (error) {
-        logger.error('Verification error:', error)
+        console.error('Verification error:', error)
         setError(error instanceof Error ? error.message : 'Failed to verify payment')
       } finally {
         setVerifying(false)
@@ -42,7 +43,7 @@ export default function SubscriptionSuccess () {
     }
 
     void verify()
-  }, [sessionId, user, router])
+  }, [sessionId, user, navigate])
 
   if (verifying) {
     return <LoadingSpinner />
@@ -55,7 +56,7 @@ export default function SubscriptionSuccess () {
           <>
             <div className="mb-4 text-xl font-semibold text-red-500">{error}</div>
             <button
-              onClick={() => router.push('/subscription')}
+              onClick={() => navigate('/subscription')}
               className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
               Try Again
@@ -69,7 +70,7 @@ export default function SubscriptionSuccess () {
               Thank you for subscribing. You now have access to premium content.
             </p>
             <button
-              onClick={() => router.push('/browse')}
+              onClick={() => navigate('/browse')}
               className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
             >
               Start Watching

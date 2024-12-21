@@ -1,7 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import UsersList from '@/components/admin/users-list'
 
@@ -91,7 +92,7 @@ export default function UserManagementDashboard() {
           recentSignups: recentSignups || [],
         })
       } catch (error) {
-        logger.error('Error fetching user metrics:', error)
+        console.error('Error fetching user metrics:', error)
       } finally {
         setLoading(false)
       }
@@ -100,7 +101,7 @@ export default function UserManagementDashboard() {
     fetchMetrics()
   }, [])
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">
@@ -115,6 +116,7 @@ export default function UserManagementDashboard() {
             className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white"
           />
           <select
+            title="Select a role"
             value={selectedRole}
             onChange={e => setSelectedRole(e.target.value)}
             className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white"
@@ -145,8 +147,8 @@ export default function UserManagementDashboard() {
         <div className="rounded-lg bg-gray-800 p-6">
           <h3 className="text-sm font-medium text-gray-400">Premium Users</h3>
           <p className="mt-2 text-3xl font-bold text-white">
-            {metrics?.subscriptionTiers.premium +
-              metrics?.subscriptionTiers.premium_plus}
+            {metrics?.subscriptionTiers.premium || 0 +
+              (metrics?.subscriptionTiers.premium_plus || 0)}
           </p>
         </div>
 

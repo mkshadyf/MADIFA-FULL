@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react'
-
+import React from "react"
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
-
-type Content = Database['public']['Tables']['content']['Row']
+import type { Content } from '@/types/content'
 
 interface ContentFormModalProps {
   content?: Content
@@ -70,24 +68,32 @@ export default function ContentFormModal({
       }
 
       // Update or create content
-      const contentData = {
+      const contentData: Partial<Content> = {
         title,
         description,
         category,
         release_year: releaseYear,
         thumbnail_url: thumbnailUrl,
         video_url: videoUrl,
+        status: 'processing',
+        updated_at: new Date().toISOString(),
+        ...(content ? {} : { 
+          created_at: new Date().toISOString(),
+          views: 0,
+          duration: 0,
+          size: videoFile?.size || 0,
+        }),
       }
 
-      if (content) {
+      if (content?.id) {
         const { error } = await supabase
-          .from('content')
+          .from('videos')
           .update(contentData)
           .eq('id', content.id)
 
         if (error) throw error
       } else {
-        const { error } = await supabase.from('content').insert([contentData])
+        const { error } = await supabase.from('videos').insert([contentData])
 
         if (error) throw error
       }
@@ -113,6 +119,8 @@ export default function ContentFormModal({
               Title
             </label>
             <input
+              title="Title"
+              placeholder="Title"
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -126,6 +134,8 @@ export default function ContentFormModal({
               Description
             </label>
             <textarea
+              title="Description"
+              placeholder="Description"
               value={description}
               onChange={e => setDescription(e.target.value)}
               className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
@@ -140,6 +150,7 @@ export default function ContentFormModal({
                 Category
               </label>
               <select
+                title="Category"
                 value={category}
                 onChange={e => setCategory(e.target.value)}
                 className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
@@ -157,6 +168,8 @@ export default function ContentFormModal({
                 Release Year
               </label>
               <input
+                title="Release Year"
+                placeholder="Release Year"
                 type="number"
                 value={releaseYear}
                 onChange={e => setReleaseYear(Number(e.target.value))}
@@ -171,6 +184,8 @@ export default function ContentFormModal({
               Thumbnail
             </label>
             <input
+              title="Thumbnail"
+              placeholder="Thumbnail"
               type="file"
               accept="image/*"
               onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
@@ -183,6 +198,8 @@ export default function ContentFormModal({
               Video File
             </label>
             <input
+              title="Video File"
+              placeholder="Video File"
               type="file"
               accept="video/*"
               onChange={e => setVideoFile(e.target.files?.[0] || null)}

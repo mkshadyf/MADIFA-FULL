@@ -33,7 +33,7 @@ export async function syncSubscriptions(subscriptions: SubscriptionSync[]) {
       })
     )
   } catch (error) {
-    logger.error('Error syncing subscriptions:', error)
+    console.error('Error syncing subscriptions:', error)
     throw error
   }
 }

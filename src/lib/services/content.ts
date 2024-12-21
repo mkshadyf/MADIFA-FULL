@@ -1,7 +1,7 @@
 import { openDB, type IDBPDatabase } from 'idb'
 
+import type { Database } from '@/lib/database.types'
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
 
 type Content = Database['public']['Tables']['content']['Row']
 type ContentMetadata = Database['public']['Tables']['content_metadata']['Row']

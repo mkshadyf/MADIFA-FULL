@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
@@ -39,7 +39,7 @@ export default function ManageUsers() {
       if (error) throw error
       setUsers(data || [])
     } catch (error) {
-      logger.error('Error fetching users:', error)
+      console.error('Error fetching users:', error)
     } finally {
       setLoading(false)
     }
@@ -55,11 +55,11 @@ export default function ManageUsers() {
       if (error) throw error
       fetchUsers()
     } catch (error) {
-      logger.error('Error updating user role:', error)
+      console.error('Error updating user role:', error)
     }
   }
 
-  if (loading) return <Loading />
+  if (loading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">

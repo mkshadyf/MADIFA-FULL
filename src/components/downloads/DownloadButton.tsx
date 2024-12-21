@@ -33,7 +33,7 @@ export default function DownloadButton({
       setIsLoading(true)
       await addToQueue(content, priority)
     } catch (error) {
-      logger.error('Failed to start download:', error)
+      console.error('Failed to start download:', error)
       showToast(
         error instanceof Error ? error.message : 'Failed to start download',
         'error'
@@ -45,6 +45,7 @@ export default function DownloadButton({
 
   return (
     <IconButton
+      label="Download content"
       icon={isLoading ? 'loader' : 'download'}
       onClick={handleDownload}
       disabled={isLoading}

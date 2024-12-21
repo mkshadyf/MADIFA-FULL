@@ -69,7 +69,7 @@ export async function handleRetry(jobId: string, userId: string) {
       throw syncError
     }
   } catch (error) {
-    logger.error('Error handling retry:', error)
+    console.error('Error handling retry:', error)
     throw error
   }
 }

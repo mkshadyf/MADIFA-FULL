@@ -1,6 +1,7 @@
+import React from "react"
 import { useState } from 'react'
 
-import type { Database } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/database.types'
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 

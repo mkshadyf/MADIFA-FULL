@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { authService } from '@/lib/services/auth'
-import type { User } from '@/lib/types/auth'
+import type { User } from '@/types/auth'
 
 export function useSession() {
   const [session, setSession] = useState<{

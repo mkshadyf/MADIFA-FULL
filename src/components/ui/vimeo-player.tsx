@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useRef } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import Player from '@vimeo/player'

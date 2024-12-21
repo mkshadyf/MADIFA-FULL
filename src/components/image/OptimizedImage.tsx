@@ -39,7 +39,7 @@ export function OptimizedImage({
         })
         setOptimizedSrc(optimized)
       } catch (err) {
-        logger.error('Failed to optimize image:', err)
+        console.error('Failed to optimize image:', err)
         setError(
           err instanceof Error ? err : new Error('Failed to optimize image')
         )
@@ -53,7 +53,7 @@ export function OptimizedImage({
   }, [src, width, height, quality, format, blur])
 
   if (error) {
-    logger.warn('Image optimization failed, using original source:', error)
+    console.warn('Image optimization failed, using original source:', error)
   }
 
   return (
@@ -69,7 +69,7 @@ export function OptimizedImage({
         className={`${props.className || ''} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
         onLoad={() => setIsLoading(false)}
         onError={e => {
-          logger.error('Image failed to load:', e)
+          console.error('Image failed to load:', e)
           setError(new Error('Failed to load image'))
           setIsLoading(false)
           // If optimized version fails, fall back to original

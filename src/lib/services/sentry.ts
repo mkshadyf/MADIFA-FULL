@@ -1,119 +1,93 @@
-import * as Sentry from '@sentry/browser'
-import { browserTracingIntegration } from '@sentry/browser'
-import { Replay } from '@sentry/replay'
-import type { Event, EventHint } from '@sentry/types'
+import { env } from '@/config/env'
+import type { User } from '@/types/auth'
+import * as Sentry from '@sentry/react'
+import type { ReactNode } from 'react'
 
-const isBrowser = typeof window !== 'undefined'
-
-export const initSentry = (): void => {
-  if (!import.meta.env.VITE_SENTRY_DSN) return
-
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    environment: import.meta.env.MODE,
-    integrations: [
-      browserTracingIntegration({
-        idleTimeout: 1000,
-        finalTimeout: 30000,
-        heartbeatInterval: 5000,
-        instrumentPageLoad: true,
-        enableLongTask: true,
-        enableInp: false,
-        interactionsSampleRate: 1,
-      }),
-      new Replay(),
-    ],
-    // Performance monitoring
-    tracesSampleRate: 1.0,
-    // Session replay
-    replaysSessionSampleRate: 0.1, // Sample rate for session replays
-    replaysOnErrorSampleRate: 1.0, // Sample rate for replays when errors occur
-    beforeSend(event: Event, hint: EventHint) {
-      if (import.meta.env.DEV) {
-        console.log('Sentry event in development:', event)
-        return null
-      }
-      return event
-    },
-  })
-}
-
-export const captureException = (
-  error: Error,
-  context?: Record<string, unknown>
-): void => {
-  if (!import.meta.env.VITE_SENTRY_DSN) {
-    console.error('Error:', error, context)
-    return
+export function initializeSentry(): void {
+  if (env.NODE_ENV === 'production') {
+    Sentry.init({
+      dsn: env.VITE_SENTRY_DSN,
+      environment: env.NODE_ENV,
+      tracesSampleRate: 1.0,
+      beforeSend(event) {
+        if (event.exception) {
+          Sentry.showReportDialog({ eventId: event.event_id })
+        }
+        return event
+      },
+    })
   }
-
-  Sentry.setContext('error_context', context || null)
-  Sentry.captureException(error)
 }
 
-export const captureMessage = (
-  message: string,
-  context?: Record<string, unknown>
-): void => {
-  if (!import.meta.env.VITE_SENTRY_DSN) {
-    console.log('Message:', message, context)
-    return
+export function setUser(user: User | null): void {
+  if (user) {
+    Sentry.setUser({
+      id: user.id,
+      email: user.email,
+      username: user.full_name,
+    })
+  } else {
+    Sentry.setUser(null)
   }
-
-  Sentry.setContext('message_context', context || null)
-  Sentry.captureMessage(message)
 }
 
-export const setUser = (
-  id: string,
-  email?: string,
-  username?: string
-): void => {
-  if (!import.meta.env.VITE_SENTRY_DSN) return
-
-  Sentry.setUser({
-    id,
-    email,
-    username,
-  })
-}
-
-export const clearUser = (): void => {
-  if (!import.meta.env.VITE_SENTRY_DSN) return
-  Sentry.setUser(null)
-}
-
-// New utility functions based on latest Sentry features
-export const addBreadcrumb = (
-  message: string,
-  category?: string,
-  level?: Sentry.SeverityLevel
-): void => {
-  Sentry.addBreadcrumb({
-    message,
-    category,
-    level,
-  })
-}
-
-export const setTag = (key: string, value: string): void => {
+export function setTag(key: string, value: string): void {
   Sentry.setTag(key, value)
 }
 
-export const setExtra = (key: string, value: any): void => {
+export function setExtra(key: string, value: unknown): void {
   Sentry.setExtra(key, value)
 }
 
-// Performance monitoring utilities
-export const startTransaction = (name: string, op: string) => {
-  return Sentry.startTransaction({
-    name,
-    op,
+export function setContext(name: string, context: Record<string, unknown>): void {
+  Sentry.setContext(name, context)
+}
+
+export function captureMessage(message: string, level?: Sentry.SeverityLevel): void {
+  Sentry.captureMessage(message, level)
+}
+
+export function captureException(error: unknown, context?: Record<string, unknown>): void {
+  Sentry.captureException(error, {
+    extra: context,
   })
 }
 
-export const configureScope = (
-  callback: (scope: Sentry.Scope) => void
-): void => {
-  Sentry.configureScope(callback)
+export function addBreadcrumb(breadcrumb: Sentry.Breadcrumb): void {
+  Sentry.addBreadcrumb(breadcrumb)
 }
+
+export function flush(timeout?: number): Promise<boolean> {
+  return Sentry.flush(timeout)
+}
+
+export function close(timeout?: number): Promise<boolean> {
+  return Sentry.close(timeout)
+}
+
+export function wrap<T>(fn: () => T): T {
+  try {
+    return fn()
+  } catch (error) {
+    captureException(error)
+    throw error
+  }
+}
+
+export async function wrapAsync<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn()
+  } catch (error) {
+    captureException(error)
+    throw error
+  }
+}
+
+interface ErrorBoundaryProps {
+  children: ReactNode
+  fallback?: ReactNode
+  onError?: (error: Error) => void
+}
+
+export const ErrorBoundary: React.ComponentType<ErrorBoundaryProps> = Sentry.ErrorBoundary
+

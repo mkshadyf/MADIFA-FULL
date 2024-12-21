@@ -1,5 +1,5 @@
 import React from 'react'
-import { createErrorContext, handleError } from '@/utils/error-handler'
+import { handleError } from '@/lib/utils/error-handler'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/useAuth'
@@ -23,11 +23,7 @@ export default function SignInPage(): JSX.Element {
     rememberMe: false,
   })
 
-  const context = createErrorContext(
-    'SignInPage',
-    'handleSubmit',
-    'signing in user'
-  )
+  const context = 'SignInPage.handleSubmit: signing in user'
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value, type, checked } = e.target
@@ -44,7 +40,7 @@ export default function SignInPage(): JSX.Element {
     setIsLoading(true)
 
     try {
-      await signIn(formData.email, formData.password)
+      await signIn('google')
       const redirectTo = searchParams.get('redirectTo') || '/'
       navigate(redirectTo)
     } catch (error) {

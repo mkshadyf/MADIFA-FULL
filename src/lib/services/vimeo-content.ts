@@ -44,7 +44,7 @@ class VimeoContentManager {
       this.lastSyncTime = new Date()
       return hierarchy
     } catch (error) {
-      logger.error('Error syncing content hierarchy:', error)
+      console.error('Error syncing content hierarchy:', error)
       throw error
     }
   }
@@ -69,15 +69,16 @@ class VimeoContentManager {
     return allVideos.filter(
       video =>
         video.name.toLowerCase().includes(query.toLowerCase()) ||
-        video.description.toLowerCase().includes(query.toLowerCase())
+        (video.description &&
+          video.description.toLowerCase().includes(query.toLowerCase()))
     )
   }
 
   async getFeaturedContent(): Promise<VimeoVideo[]> {
-    const featuredFolder = await vimeoService.getFolderByName('Featured')
+    const featuredFolder = await vimeoService.getFolders({ query: 'Featured' })
     if (featuredFolder) {
       return vimeoService.getVideosByFolder(
-        featuredFolder.uri.split('/').pop()!
+        featuredFolder[0].uri.split('/').pop()!
       )
     }
     return []

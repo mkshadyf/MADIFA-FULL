@@ -9,7 +9,12 @@ interface UseSwipeOptions {
   preventDefault?: boolean
 }
 
-export function useSwipe ({
+interface TouchPosition {
+  x: number
+  y: number
+}
+
+export function useSwipe({
   onSwipeLeft,
   onSwipeRight,
   onSwipeUp,
@@ -17,8 +22,8 @@ export function useSwipe ({
   threshold = 50,
   preventDefault = true,
 }: UseSwipeOptions) {
-   y: number } | null>(null)
-   y: number } | null>(null)
+  const touchStart = useRef<TouchPosition | null>(null)
+  const touchEnd = useRef<TouchPosition | null>(null)
 
   const handleTouchStart = useCallback((event: React.TouchEvent) => {
     touchEnd.current = null

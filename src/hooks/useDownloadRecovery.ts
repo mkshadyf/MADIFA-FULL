@@ -20,7 +20,7 @@ export function useDownloadRecovery() {
         await downloadRecoveryService.recoverDownloads(user.id)
         setLastRecoveryTime(new Date())
       } catch (error) {
-        logger.error('Failed to recover downloads:', error)
+        console.error('Failed to recover downloads:', error)
         showToast('Failed to recover downloads', 'error')
       } finally {
         setIsRecovering(false)
@@ -41,7 +41,7 @@ export function useDownloadRecovery() {
     const cleanupInterval = setInterval(
       () => {
         downloadRecoveryService.cleanupOrphanedDownloads().catch(error => {
-          logger.error('Failed to cleanup orphaned downloads:', error)
+          console.error('Failed to cleanup orphaned downloads:', error)
         })
       },
       1000 * 60 * 60 * 24
@@ -61,7 +61,7 @@ export function useDownloadRecovery() {
       setLastRecoveryTime(new Date())
       showToast('Downloads recovered successfully', 'success')
     } catch (error) {
-      logger.error('Failed to recover downloads:', error)
+      console.error('Failed to recover downloads:', error)
       showToast('Failed to recover downloads', 'error')
     } finally {
       setIsRecovering(false)

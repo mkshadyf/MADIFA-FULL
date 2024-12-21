@@ -1,11 +1,11 @@
+import React from "react"
 import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/supabase/types'
-import type { UploadProgress } from '@/lib/types/upload'
+import type { UploadProgress } from '@/types/upload'
 import { uploadContent } from '@/lib/utils/content-upload'
 
-export default function ContentForm () {
+export default function ContentForm() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
@@ -34,12 +34,12 @@ export default function ContentForm () {
 
     try {
       // Upload thumbnail
-      thumbnails', {
+      const thumbnailUrl = await uploadContent(thumbnailFile, {
         onProgress: handleUploadProgress,
       })
 
       // Upload video
-      videos', {
+      const videoUrl = await uploadContent(videoFile, {
         onProgress: handleUploadProgress,
       })
 
@@ -65,7 +65,7 @@ export default function ContentForm () {
       setVideoFile(null)
       setUploadProgress(0)
     } catch (error) {
-      logger.error('Upload error:', error)
+      console.error('Upload error:', error)
       setError(error instanceof Error ? error.message : 'Upload failed')
     } finally {
       setLoading(false)
@@ -78,6 +78,8 @@ export default function ContentForm () {
         <div>
           <label className="block text-sm font-medium text-gray-300">Title</label>
           <input
+            title="Title"
+            placeholder="Title"
             type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
@@ -89,7 +91,8 @@ export default function ContentForm () {
         <div>
           <label className="block text-sm font-medium text-gray-300">Category</label>
           <select
-            value={category}
+            title="Category"
+             value={category}
             onChange={e => setCategory(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white"
             required
@@ -105,6 +108,8 @@ export default function ContentForm () {
       <div>
         <label className="block text-sm font-medium text-gray-300">Description</label>
         <textarea
+          title="Description"
+          placeholder="Description"
           value={description}
           onChange={e => setDescription(e.target.value)}
           rows={3}
@@ -117,6 +122,8 @@ export default function ContentForm () {
         <div>
           <label className="block text-sm font-medium text-gray-300">Thumbnail</label>
           <input
+            title="Thumbnail"
+            placeholder="Thumbnail"
             type="file"
             accept="image/*"
             onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
@@ -127,6 +134,8 @@ export default function ContentForm () {
         <div>
           <label className="block text-sm font-medium text-gray-300">Video File</label>
           <input
+            title="Video File"
+            placeholder="Video File"
             type="file"
             accept="video/*"
             onChange={e => setVideoFile(e.target.files?.[0] || null)}

@@ -1,6 +1,5 @@
-import Image, { useRouter } from 'react-router-dom'
-
-import type { Content } from '@/lib/types/content'
+import { useNavigate } from 'react-router-dom'
+import type { Content } from '@/types/content'
 
 interface FeaturedContentProps {
   content: Content
@@ -11,18 +10,16 @@ export default function FeaturedContent({
   content,
   className = '',
 }: FeaturedContentProps) {
-  const router = useRouter()
+  const navigate = useNavigate()
 
   return (
     <div className={`group relative ${className}`}>
       {/* Background Image */}
       <div className="absolute inset-0">
-        <Image
-          src={content.thumbnail_url}
+        <img
+          src={content.thumbnail_url || ''}
           alt={content.title}
-          fill
           className="object-cover"
-          priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
       </div>
@@ -37,7 +34,7 @@ export default function FeaturedContent({
             <p className="mb-8 text-lg text-gray-300">{content.description}</p>
             <div className="flex flex-wrap gap-4">
               <button
-                onClick={() => router.push(`/watch/${content.id}`)}
+                onClick={() => navigate(`/watch/${content.id}`)}
                 className="btn-primary px-8 py-4 text-lg"
               >
                 <svg

@@ -1,267 +1,284 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React from "react"
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Player from '@vimeo/player'
 
-import type { VideoQuality, VimeoPlayer } from '@/types/vimeo'
-import { handleVideoError } from '@/lib/utils/video-errors'
-import { useAuth } from '@/hooks/useAuth'
-import { useVideoAds } from '@/hooks/useVideoAds'
+
+import { useVideoPlayer } from '@/hooks/useVideoPlayer'
 import { useVideoAnalytics } from '@/hooks/useVideoAnalytics'
-import { useVideoControls } from '@/hooks/useVideoControls'
-import { useVideoKeyboard } from '@/hooks/useVideoKeyboard'
-import { useVideoProgress } from '@/hooks/useVideoProgress'
+import { useVideoSubscription } from '@/hooks/useVideoSubscription'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Button } from '@/components/ui/button'
 
 import BufferingIndicator from './BufferingIndicator'
-import ThumbnailPreview from './ThumbnailPreview'
-import VideoControls from './VideoControls'
+import type { VideoQuality } from '@/types/video'
+import type { VimeoPlayer, VimeoPlayerOptions, VimeoTimeUpdateEvent, VimeoProgressEvent } from '@/types/vimeo'
 
 interface VimeoPlayerProps {
   videoId: string
-  title?: string
-  className?: string
+  thumbnailUrl?: string
+  autoplay?: boolean
+  loop?: boolean
+  muted?: boolean
+  controls?: boolean
+  responsive?: boolean
+  speed?: boolean
+  title?: boolean
+  byline?: boolean
+  portrait?: boolean
+  quality?: VideoQuality
+  startTime?: number
+  requiresSubscription?: boolean
+  onError?: (error: Error) => void
+  onReady?: () => void
+  onPlay?: () => void
+  onPause?: () => void
+  onEnd?: () => void
+  onTimeUpdate?: (currentTime: number) => void
+  onProgress?: (progress: number) => void
+  onQualityChange?: (quality: VideoQuality) => void
 }
 
-export default function VimeoPlayer ({ videoId, title, className = '' }: VimeoPlayerProps) {
+export function VimeoPlayer({
+  videoId,
+  thumbnailUrl,
+  autoplay = false,
+  loop = false,
+  muted = false,
+  controls = true,
+  responsive = true,
+  speed = true,
+  title = false,
+  byline = false,
+  portrait = false,
+  quality = 'auto',
+  startTime = 0,
+  requiresSubscription = false,
+  onError,
+  onReady,
+  onPlay,
+  onPause,
+  onEnd,
+  onTimeUpdate,
+  onProgress,
+  onQualityChange,
+}: VimeoPlayerProps) {
   const playerRef = useRef<HTMLDivElement>(null)
   const [player, setPlayer] = useState<VimeoPlayer | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isPiPActive, setIsPiPActive] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-  const [currentQuality, setCurrentQuality] = useState<VideoQuality>('auto')
-  const [availableQualities, setAvailableQualities] = useState<VideoQuality[]>([])
-  const { profile } = useAuth()
-  const [isBuffering, setIsBuffering] = useState(false)
-  const [previewData, setPreviewData] = useState<{
-    visible: boolean
-    time: number
-    position: { x: number; y: number }
-  }>({
-    visible: false,
-    time: 0,
-    position: { x: 0, y: 0 },
-  })
+  const [hasError, setHasError] = useState(false)
 
-  const { currentTime, duration, handleSeek } = useVideoProgress(player)
-  const { handleQualityChange } = useVideoControls(player)
-  useVideoAnalytics(player, videoId)
-  useVideoAds({
-    player,
-    isSubscribed: profile?.subscription_tier !== 'free',
-    videoId,
-  })
-  useVideoKeyboard({
-    player,
-    onToggleFullscreen: () => handleFullscreen(),
-    onTogglePiP: () => handlePiP(),
-  })
+  const {
+    currentTime,
+    duration,
+    handleQualityChange: handleQualityChangeInternal,
+  } = useVideoPlayer(player)
+
+  const { hasAccess, isLoading: isCheckingSubscription, error: subscriptionError } = useVideoSubscription(requiresSubscription)
 
   useEffect(() => {
-    if (!playerRef.current) return
+    if (subscriptionError) {
+      setHasError(true)
+      onError?.(subscriptionError)
+    }
+  }, [subscriptionError, onError])
 
-    const vimeoPlayer = new Player(playerRef.current, {
-      id: videoId,
+  useEffect(() => {
+    if (onTimeUpdate) {
+      onTimeUpdate(currentTime)
+    }
+  }, [currentTime, onTimeUpdate])
+
+  useEffect(() => {
+    if (onProgress && duration > 0) {
+      onProgress(currentTime / duration)
+    }
+  }, [currentTime, duration, onProgress])
+
+  useVideoAnalytics(player, videoId)
+
+  useEffect(() => {
+    if (!playerRef.current || !hasAccess) return
+
+    const options: VimeoPlayerOptions = {
+      id: parseInt(videoId, 10),
       autopause: false,
-      background: false,
-      controls: false,
-      keyboard: true,
-      pip: true,
-      playsinline: true,
-      responsive: true,
-      speed: true,
-      transparent: false,
-      quality: currentQuality,
-    }) as VimeoPlayer
+      autoplay,
+      loop,
+      muted,
+      controls,
+      responsive,
+      speed,
+      title,
+      byline,
+      portrait,
+      quality,
+    }
+
+    const vimeoPlayer = new Player(playerRef.current, options) as VimeoPlayer
 
     setPlayer(vimeoPlayer)
 
-    vimeoPlayer.ready().then(async () => {
-      try {
-        const qualities = await vimeoPlayer.getQualities()
-        setAvailableQualities(qualities)
+    const handlePlayerError = (error: Error) => {
+      console.error('Video player error:', error)
+      setHasError(true)
         setIsLoading(false)
-      } catch (err) {
-        const error = handleVideoError(err)
-        setError(error)
-        setIsLoading(false)
+      onError?.(error)
+    }
+
+    const handlePlayerReady = async () => {
+      setIsLoading(false)
+      if (startTime > 0) {
+        try {
+          await vimeoPlayer.setCurrentTime(startTime)
+        } catch (error) {
+          console.error('Error setting start time:', error)
+        }
       }
-    })
+      onReady?.()
+    }
+
+    const handlePlayerPlay = () => {
+      onPlay?.()
+    }
+
+    const handlePlayerPause = () => {
+      onPause?.()
+    }
+
+    const handlePlayerEnd = () => {
+      onEnd?.()
+    }
+
+    const handlePlayerTimeUpdate = (data: VimeoTimeUpdateEvent) => {
+      if (onTimeUpdate) {
+        onTimeUpdate(data.seconds)
+      }
+    }
+
+    const handlePlayerProgress = (data: VimeoProgressEvent) => {
+      if (onProgress) {
+        onProgress(data.percent)
+      }
+    }
+
+    void vimeoPlayer.ready().then(handlePlayerReady).catch(handlePlayerError)
+
+    vimeoPlayer.on('play', handlePlayerPlay)
+    vimeoPlayer.on('pause', handlePlayerPause)
+    vimeoPlayer.on('ended', handlePlayerEnd)
+    vimeoPlayer.on('timeupdate', handlePlayerTimeUpdate)
+    vimeoPlayer.on('progress', handlePlayerProgress)
 
     return () => {
+      vimeoPlayer.off('play', handlePlayerPlay)
+      vimeoPlayer.off('pause', handlePlayerPause)
+      vimeoPlayer.off('ended', handlePlayerEnd)
+      vimeoPlayer.off('timeupdate', handlePlayerTimeUpdate)
+      vimeoPlayer.off('progress', handlePlayerProgress)
       vimeoPlayer.destroy()
     }
-  }, [videoId, currentQuality])
+  }, [
+    videoId,
+    autoplay,
+    loop,
+    muted,
+    controls,
+    responsive,
+    speed,
+    title,
+    byline,
+    portrait,
+    quality,
+    startTime,
+    hasAccess,
+    onError,
+    onReady,
+    onPlay,
+    onPause,
+    onEnd,
+    onTimeUpdate,
+    onProgress,
+  ])
 
-  useEffect(() => {
-    if (!player) return
-
-    const handlePlay = () => setIsPlaying(true)
-    const handlePause = () => setIsPlaying(false)
-    const handleLoading = () => setIsLoading(true)
-    const handleLoaded = () => setIsLoading(false)
-    const handleError = (err: Error) => {
-      logger.error('Vimeo player error:', err)
-      setError(err)
-      setIsLoading(false)
-    }
-
-    player.on('play', handlePlay)
-    player.on('pause', handlePause)
-    player.on('bufferstart', handleLoading)
-    player.on('bufferend', handleLoaded)
-    player.on('error', handleError)
-
-    return () => {
-      player.off('play', handlePlay)
-      player.off('pause', handlePause)
-      player.off('bufferstart', handleLoading)
-      player.off('bufferend', handleLoaded)
-      player.off('error', handleError)
-    }
-  }, [player])
-
-  useEffect(() => {
-    if (!player) return
-
-    const handleBufferStart = () => setIsBuffering(true)
-    const handleBufferEnd = () => setIsBuffering(false)
-    const handlePlaying = () => setIsBuffering(false)
-
-    player.on('bufferstart', handleBufferStart)
-    player.on('bufferend', handleBufferEnd)
-    player.on('playing', handlePlaying)
-
-    return () => {
-      player.off('bufferstart', handleBufferStart)
-      player.off('bufferend', handleBufferEnd)
-      player.off('playing', handlePlaying)
-    }
-  }, [player])
-
-  const handlePlayPause = async () => {
-    if (!player) return
-    try {
-      if (isPlaying) {
-        await player.pause()
-      } else {
-        await player.play()
+  const handleQualityChangeWrapper = useCallback(
+    async (newQuality: VideoQuality) => {
+      try {
+        await handleQualityChangeInternal(newQuality)
+        onQualityChange?.(newQuality)
+      } catch (error) {
+        console.error('Error changing quality:', error)
+        onError?.(error as Error)
       }
-    } catch (err) {
-      logger.error('Error toggling play state:', err)
-    }
-  }
-
-  const handleFullscreen = async () => {
-    if (!playerRef.current) return
-
-    try {
-      if (!isFullscreen) {
-        if (playerRef.current.requestFullscreen) {
-          await playerRef.current.requestFullscreen()
-        }
-      } else {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen()
-        }
-      }
-      setIsFullscreen(!isFullscreen)
-    } catch (err) {
-      logger.error('Error toggling fullscreen:', err)
-    }
-  }
-
-  const handlePiP = async () => {
-    if (!player) return
-
-    try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture()
-        setIsPiPActive(false)
-      } else if (playerRef.current) {
-        video')
-        if (video) {
-          await video.requestPictureInPicture()
-          setIsPiPActive(true)
-        }
-      }
-    } catch (err) {
-      logger.error('Error toggling PiP:', err)
-    }
-  }
-
-  const handlePreviewHover = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      const rect = event.currentTarget.getBoundingClientRect()
-      const position = {
-        x: event.clientX - rect.left,
-        y: rect.top,
-      }
-      const time = (position.x / rect.width) * duration
-
-      setPreviewData({
-        visible: true,
-        time,
-        position,
-      })
     },
-    [duration]
+    [handleQualityChangeInternal, onQualityChange, onError]
   )
 
-  if (error) {
+  useEffect(() => {
+    if (quality && handleQualityChangeWrapper) {
+      void handleQualityChangeWrapper(quality).catch(error => {
+        console.error('Error setting initial quality:', error)
+        onError?.(error as Error)
+      })
+    }
+  }, [quality, handleQualityChangeWrapper, onError])
+
+  if (isCheckingSubscription) {
     return (
-      <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-900">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <p className="mb-2 text-red-500">Failed to load video</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500"
+      <div className="flex h-full w-full items-center justify-center bg-black">
+        <LoadingSpinner className="h-12 w-12 text-primary" />
+      </div>
+    )
+  }
+
+  if (!hasAccess) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center bg-black p-4 text-center">
+        <h2 className="mb-4 text-2xl font-bold text-white">Premium Content</h2>
+        <p className="mb-6 text-gray-300">This content requires an active subscription.</p>
+        <a href="/subscription" className="rounded-md bg-primary px-6 py-2 text-white hover:bg-primary/90">
+          Subscribe Now
+        </a>
+      </div>
+    )
+  }
+
+  if (hasError) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-black">
+        <div className="text-center text-white">
+          <p className="mb-4">Failed to load video</p>
+          <Button
+            onClick={() => {
+              if (typeof globalThis !== 'undefined') {
+                globalThis.location.reload()
+              }
+            }}
+            variant="primary"
             >
               Retry
-            </button>
-          </div>
+          </Button>
         </div>
       </div>
     )
   }
 
   return (
-    <div
-      className={`relative aspect-video overflow-hidden rounded-lg bg-gray-900 ${className}`}
-      ref={playerRef}
-    >
-      {isLoading ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <LoadingState />
+    <div className="relative h-full w-full">
+      <div ref={playerRef} className="h-full w-full" />
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black">
+          {thumbnailUrl ? (
+            <img
+              src={thumbnailUrl}
+              alt="Video thumbnail"
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <LoadingSpinner className="h-12 w-12 text-primary" />
+          )}
         </div>
-      ) : null}
-
-      <BufferingIndicator isBuffering={isBuffering} />
-
-      <ThumbnailPreview
-        thumbnailUrl={thumbnailUrl}
-        time={previewData.time}
-        position={previewData.position}
-        visible={previewData.visible}
-      />
-
-      <VideoControls
-        onPlayPause={handlePlayPause}
-        onFullscreen={handleFullscreen}
-        onPiP={handlePiP}
-        onQualityChange={handleQualityChange}
-        isPlaying={isPlaying}
-        isFullscreen={isFullscreen}
-        isPiPActive={isPiPActive}
-        currentQuality={currentQuality}
-        availableQualities={availableQualities}
-        currentTime={currentTime}
-        duration={duration}
-        onSeek={handleSeek}
-        onProgressHover={handlePreviewHover}
-        onProgressLeave={() => setPreviewData(prev => ({ ...prev, visible: false }))}
-      />
+      )}
+      <BufferingIndicator isBuffering={isLoading} />
     </div>
   )
 }

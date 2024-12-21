@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react'
 import type { VimeoPlayer } from '@vimeo/player'
+import { useCallback, useEffect, useRef } from 'react'
 
 import { useToast } from './useToast'
 
@@ -142,7 +142,7 @@ export function useVideoKeyboard({
             break
         }
       } catch (error) {
-        logger.error('Keyboard control error:', error)
+        console.error('Keyboard control error:', error)
         showToast('Failed to execute command', 'error')
       }
     },

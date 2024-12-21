@@ -1,44 +1,35 @@
-import { createClient } from '@/lib/supabase/client'
-import type { FileOptions, UploadProgress } from '@/lib/types/upload'
+import type { UploadProgress } from '@/types/upload'
 
-interface UploadOptions extends FileOptions {
-  onProgress?: (progress: { loaded: number; total: number }) => void
+interface UploadOptions {
+  onProgress?: (progress: UploadProgress) => void
 }
 
-export async function uploadContent(
-  file: File,
-  path: string,
-  options?: UploadOptions
-): Promise<string> {
-  const supabase = createClient()
-  let loaded = 0
+export async function uploadContent(file: File, options?: UploadOptions): Promise<string> {
+  // Upload implementation
+  const formData = new FormData()
+  formData.append('file', file)
 
-  try {
-    const { data, error } = await supabase.storage
-      .from('content')
-      .upload(`${path}/${crypto.randomUUID()}`, file, {
-        cacheControl: options?.cacheControl || '3600',
-        contentType: options?.contentType || file.type,
-        upsert: options?.upsert || false,
-        duplex: 'half',
-        onUploadProgress: (progress: UploadProgress) => {
-          loaded += progress.loaded
-          options?.onProgress?.({
-            loaded,
-            total: file.size,
-          })
-        },
+  const xhr = new XMLHttpRequest()
+
+  return new Promise((resolve, reject) => {
+    xhr.upload.onprogress = (event) => {
+      options?.onProgress?.({
+        loaded: event.loaded,
+        total: event.total,
+        percent: (event.loaded / event.total) * 100
       })
+    }
 
-    if (error) throw error
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        resolve(JSON.parse(xhr.response).url)
+      } else {
+        reject(new Error('Upload failed'))
+      }
+    }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('content').getPublicUrl(data.path)
-
-    return publicUrl
-  } catch (error) {
-    logger.error('Upload error:', error)
-    throw error
-  }
+    xhr.onerror = () => reject(new Error('Upload failed'))
+    xhr.open('POST', '/api/upload')
+    xhr.send(formData)
+  })
 }

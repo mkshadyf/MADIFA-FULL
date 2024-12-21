@@ -1,6 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 interface SyncMetrics {
   totalJobs: number
@@ -17,7 +19,7 @@ export default function SubscriptionSyncDashboard () {
   const supabase = createClient()
 
   useEffect(() => {
-    loadMetrics()
+    void loadMetrics()
     const interval = setInterval(loadMetrics, 30000) // Refresh every 30s
     return () => clearInterval(interval)
   }, [])
@@ -45,14 +47,14 @@ export default function SubscriptionSyncDashboard () {
 
       setMetrics(metrics)
     } catch (error) {
-      logger.error('Error loading metrics:', error)
+      console.error('Error loading metrics:', error)
     } finally {
       setLoading(false)
     }
   }
 
   const calculateAverageProcessingTime = (jobs: any[]): number => {
-    completed' && j.processed_at)
+    const completedJobs = jobs.filter(j => j.status === 'completed' && j.processed_at)
     if (!completedJobs.length) return 0
 
     const totalTime = completedJobs.reduce((acc, job) => {

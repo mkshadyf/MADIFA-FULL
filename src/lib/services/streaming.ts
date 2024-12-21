@@ -19,7 +19,7 @@ export async function initializeStream(
 
     return response.json()
   } catch (error) {
-    logger.error('Stream initialization error:', error)
+    console.error('Stream initialization error:', error)
     throw new Error('Failed to initialize stream')
   }
 }
@@ -41,6 +41,6 @@ export async function trackProgress(
       }),
     })
   } catch (error) {
-    logger.error('Progress tracking error:', error)
+    console.error('Progress tracking error:', error)
   }
 }

@@ -17,17 +17,19 @@ interface BatchFile {
   error?: string
 }
 
-export default function ContentBatchUpload () {
+export default function ContentBatchUpload() {
   const [files, setFiles] = useState<BatchFile[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
+  const generateId = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
+
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return
 
     const newFiles: BatchFile[] = Array.from(e.target.files).map(file => ({
-      id: crypto.randomUUID(),
+      id: generateId(),
       file,
       title: file.name.split('.')[0],
       description: '',
@@ -43,35 +45,45 @@ export default function ContentBatchUpload () {
     setFiles(prev => prev.filter(file => file.id !== id))
   }
 
+  const uploadFile = async (file: BatchFile) => {
+    try {
+      const url = await uploadContent(file.file, {
+        onProgress: (progress) => {
+          setFiles(prev =>
+            prev.map(f =>
+              f.id === file.id ? { ...f, progress: progress.percent } : f
+            )
+          )
+        }
+      })
+      return url
+    } catch (error) {
+      console.error('Upload error:', error)
+      throw error
+    }
+  }
+
   const handleUpload = async (e: FormEvent) => {
     e.preventDefault()
     setUploading(true)
 
     try {
       await Promise.all(
-        files.map(async file => {
+        files.map(async batchFile => {
           try {
             // Update file status
-            setFiles(prev => prev.map(f => (f.id === file.id ? { ...f, status: 'uploading' } : f)))
+            setFiles(prev =>
+              prev.map(f => (f.id === batchFile.id ? { ...f, status: 'uploading' } : f))
+            )
 
             // Upload file
-            content', {
-              onProgress: progress => {
-                setFiles(prev =>
-                  prev.map(f =>
-                    f.id === file.id
-                      ? { ...f, progress: (progress.loaded / progress.total) * 100 }
-                      : f
-                  )
-                )
-              },
-            })
+            const contentUrl = await uploadFile(batchFile)
 
             // Create content record
             const { error: dbError } = await supabase.from('content').insert({
-              title: file.title,
-              description: file.description,
-              category: file.category,
+              title: batchFile.title,
+              description: batchFile.description,
+              category: batchFile.category,
               thumbnail_url: contentUrl,
               release_year: new Date().getFullYear(),
             })
@@ -79,12 +91,14 @@ export default function ContentBatchUpload () {
             if (dbError) throw dbError
 
             // Update file status to complete
-            setFiles(prev => prev.map(f => (f.id === file.id ? { ...f, status: 'complete' } : f)))
+            setFiles(prev =>
+              prev.map(f => (f.id === batchFile.id ? { ...f, status: 'complete' } : f))
+            )
           } catch (error) {
             // Update file status to error
             setFiles(prev =>
               prev.map(f =>
-                f.id === file.id
+                f.id === batchFile.id
                   ? {
                       ...f,
                       status: 'error',

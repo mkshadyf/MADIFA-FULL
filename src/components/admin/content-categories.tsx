@@ -2,11 +2,18 @@ import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 
+
 interface CategoryStats {
   name: string
   count: number
   totalViews: number
   averageRating: number
+}
+
+interface ViewingData {
+  content: {
+    category: string
+  } | null
 }
 
 export default function ContentCategories() {
@@ -27,7 +34,7 @@ export default function ContentCategories() {
         // Get viewing stats by category
         const { data: viewingData, error: viewingError } = await supabase
           .from('viewing_history')
-          .select('content(category)')
+          .select('content(category)') as { data: ViewingData[] | null, error: any }
 
         if (viewingError) throw viewingError
 
@@ -50,16 +57,18 @@ export default function ContentCategories() {
         )
 
         // Add viewing stats
-        viewingData.forEach(view => {
-          const category = view.content?.category
-          if (category && categoryStats[category]) {
-            categoryStats[category].totalViews++
-          }
-        })
+        if (viewingData) {
+          viewingData.forEach(view => {
+            const category = view.content?.category
+            if (category && categoryStats[category]) {
+              categoryStats[category].totalViews++
+            }
+          })
+        }
 
         setCategories(Object.values(categoryStats))
       } catch (error) {
-        logger.error('Error fetching categories:', error)
+        console.error('Error fetching categories:', error)
       } finally {
         setLoading(false)
       }

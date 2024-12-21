@@ -44,7 +44,7 @@ export default function QueueBatchOperations({
       }
       onBatchComplete?.()
     } catch (error) {
-      logger.error('Failed to perform batch operation:', error)
+      console.error('Failed to perform batch operation:', error)
     } finally {
       setIsProcessing(false)
       setSelectedOperation(null)
@@ -61,6 +61,7 @@ export default function QueueBatchOperations({
             {selectedItems.size} selected
           </span>
           <IconButton
+            label='Apply batch operation'
             icon="check"
             onClick={handleBatchOperation}
             disabled={!selectedOperation || isProcessing}

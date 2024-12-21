@@ -1,12 +1,13 @@
+import React from "react"
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
-import { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import {
   getSubscriptionPlans,
   upgradePlan,
 } from '@/lib/services/subscription-management'
-import type { BillingPeriod, SubscriptionPlan } from '@/lib/types/subscription'
+import type { BillingPeriod, SubscriptionPlan } from '@/types/subscription'
 
 export default function SubscriptionPlans() {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
@@ -16,7 +17,7 @@ export default function SubscriptionPlans() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
-  const router = useRouter()
+   const navigate = useNavigate()
   const plans = getSubscriptionPlans()
 
   const handleUpgrade = async () => {
@@ -39,7 +40,7 @@ export default function SubscriptionPlans() {
       // Redirect to checkout
       window.location.href = checkoutUrl
     } catch (error) {
-      logger.error('Plan upgrade error:', error)
+      console.error('Plan upgrade error:', error)
       setError(
         error instanceof Error ? error.message : 'Failed to upgrade plan'
       )

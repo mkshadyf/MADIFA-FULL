@@ -1,6 +1,8 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
+
 
 interface Stats {
   totalUsers: number
@@ -74,13 +76,13 @@ export default function StatsOverview() {
           bandwidthUsed: 0, // TODO: Implement bandwidth metrics
         })
       } catch (error) {
-        logger.error('Error fetching stats:', error)
+        console.error('Error fetching stats:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStats()
+    void fetchStats()
   }, [])
 
   if (loading) return <div>Loading stats...</div>

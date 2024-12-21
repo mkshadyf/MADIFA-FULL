@@ -48,7 +48,7 @@ export function useQueueAnalytics() {
           showToast('Queue optimization recommendations available', 'info')
         }
       } catch (error) {
-        logger.error('Failed to analyze queue:', error)
+        console.error('Failed to analyze queue:', error)
       }
     }
 
@@ -57,7 +57,7 @@ export function useQueueAnalytics() {
         const queueHistory = await queueAnalytics.getQueueHistory(user.id)
         setHistory(queueHistory)
       } catch (error) {
-        logger.error('Failed to load queue history:', error)
+        console.error('Failed to load queue history:', error)
       }
     }
 
@@ -85,7 +85,7 @@ export function useQueueAnalytics() {
       setEfficiency(metrics)
       setHistory(queueHistory)
     } catch (error) {
-      logger.error('Failed to refresh analytics:', error)
+      console.error('Failed to refresh analytics:', error)
       showToast('Failed to refresh queue analytics', 'error')
     } finally {
       setIsLoading(false)

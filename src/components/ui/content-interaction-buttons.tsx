@@ -1,7 +1,8 @@
+import React from "react"
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
-import { useActivityTracking } from '@/lib/hooks/useActivityTracking'
+import { useActivityTracking } from '@/hooks/useActivityTracking'
 import {
   rateContent,
   toggleFavorite,
@@ -43,7 +44,7 @@ export default function ContentInteractionButtons({
       }
       onInteraction?.()
     } catch (error) {
-      logger.error('Error toggling favorite:', error)
+      console.error(`Error toggling favorite: ${error}`)
     } finally {
       setLoading(false)
     }
@@ -63,7 +64,7 @@ export default function ContentInteractionButtons({
       }
       onInteraction?.()
     } catch (error) {
-      logger.error('Error toggling watchlist:', error)
+      console.error(`Error toggling watchlist: ${error}`)
     } finally {
       setLoading(false)
     }
@@ -78,7 +79,7 @@ export default function ContentInteractionButtons({
       setRating(value)
       onInteraction?.()
     } catch (error) {
-      logger.error('Error rating content:', error)
+      console.error(`Error rating content: ${error}`)
     } finally {
       setLoading(false)
     }
@@ -87,6 +88,8 @@ export default function ContentInteractionButtons({
   return (
     <div className="flex items-center space-x-4">
       <button
+        type="button"
+        title="Favorite"
         onClick={handleFavoriteClick}
         disabled={loading}
         className={`rounded-full p-2 transition-colors ${
@@ -111,6 +114,8 @@ export default function ContentInteractionButtons({
       </button>
 
       <button
+        type="button"
+        title="Add to watchlist"
         onClick={handleWatchlistClick}
         disabled={loading}
         className={`rounded-full p-2 transition-colors ${
@@ -137,6 +142,8 @@ export default function ContentInteractionButtons({
       <div className="flex items-center space-x-1">
         {[1, 2, 3, 4, 5].map(value => (
           <button
+            title={`Rate ${value} stars`}
+            type="button"
             key={value}
             onClick={() => handleRating(value)}
             disabled={loading}

@@ -1,4 +1,4 @@
-import type { Database } from './database.types'
+import type { Database } from '../database.types'
 
 export type Profile = {
   id: string
@@ -10,7 +10,7 @@ export type Profile = {
   updated_at: string
 }
 
-export type UserProfile = Database['public']['Tables']['user_profiles']['Row']
+export type UserProfile = Database['public']['Tables']['profiles']['Row']
 
 export interface Content {
   id: string

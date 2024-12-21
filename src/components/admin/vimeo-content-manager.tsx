@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 
 import type { VimeoVideo } from '@/types/vimeo'
 import { getVideosFromFolder, updateVideoPrivacy } from '@/lib/services/vimeo'
-import { logger } from '@/lib/logger'
+
 
 interface Props {
   onVideoSelect?: (video: VimeoVideo) => void
@@ -26,9 +26,9 @@ export default function VimeoContentManager({
     try {
       setLoading(true)
       const fetchedVideos = await getVideosFromFolder(folderId)
-      setVideos(fetchedVideos)
+      setVideos(fetchedVideos as VimeoVideo[])
     } catch (error) {
-      logger.error('Error loading videos:', error)
+      console.error('Error loading videos:', error)
     } finally {
       setLoading(false)
     }
@@ -40,7 +40,7 @@ export default function VimeoContentManager({
       await loadVideos() // Refresh the list
       onSuccess?.()
     } catch (error) {
-      logger.error('Error updating video privacy:', error)
+      console.error('Error updating video privacy:', error)
     }
   }
 
@@ -54,7 +54,7 @@ export default function VimeoContentManager({
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
+      { }
       {videos.map(video => (
         <div
           key={video.uri}
@@ -72,7 +72,7 @@ export default function VimeoContentManager({
             }}
           >
             <img
-              src={video.pictures.sizes[3].link}
+              src={video.pictures?.sizes[3]?.link || ''}
               alt={video.name}
               className="absolute inset-0 h-full w-full object-cover"
             />

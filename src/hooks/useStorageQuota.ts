@@ -38,7 +38,7 @@ export function useStorageQuota() {
           )
         }
       } catch (error) {
-        logger.error('Failed to check quota:', error)
+        console.error('Failed to check quota:', error)
       }
     }
 
@@ -68,7 +68,7 @@ export function useStorageQuota() {
 
       return canDownload
     } catch (error) {
-      logger.error('Failed to check download quota:', error)
+      console.error('Failed to check download quota:', error)
       showToast('Failed to check storage quota', 'error')
       return false
     } finally {
@@ -84,7 +84,7 @@ export function useStorageQuota() {
       const stats = await storageQuotaManager.getQuotaStats(user.id)
       setQuotaStats(stats)
     } catch (error) {
-      logger.error('Failed to enforce quota:', error)
+      console.error('Failed to enforce quota:', error)
       showToast('Failed to enforce storage quota', 'error')
     }
   }

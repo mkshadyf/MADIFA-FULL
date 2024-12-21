@@ -5,6 +5,7 @@ import { contentManager } from '@/lib/services/content-manager'
 import { useContent } from '@/hooks/useContent'
 import { useToast } from '@/hooks/useToast'
 
+
 interface OrganizationSuggestion {
   type: 'category' | 'tag' | 'metadata'
   content: Content
@@ -27,7 +28,7 @@ export default function ContentOrganizationHelper() {
       const newSuggestions: OrganizationSuggestion[] = []
 
       // Check for uncategorized content
-      contents.forEach(content => {
+      contents.forEach((content: Content) => {
         if (!content.category || content.category === 'uncategorized') {
           newSuggestions.push({
             type: 'category',
@@ -60,7 +61,7 @@ export default function ContentOrganizationHelper() {
 
       setSuggestions(newSuggestions)
     } catch (error) {
-      logger.error('Failed to analyze content:', error)
+      console.error('Failed to analyze content:', error)
       showToast('Failed to analyze content organization', 'error')
     } finally {
       setIsAnalyzing(false)

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+ import { useEffect, useState } from 'react'
 
-import type { VimeoVideo } from '@/lib/types/vimeo'
+import type { VimeoVideo } from '@/types/vimeo'
 
 export default function VimeoAnalytics() {
   const [analytics, setAnalytics] = useState<VimeoVideo[]>([])
@@ -67,13 +67,13 @@ export default function VimeoAnalytics() {
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Impressions</p>
                   <p className="text-2xl font-bold">
-                    {video.stats.impressions}
+                    {video.stats.plays}
                   </p>
                 </div>
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Watch Time (hrs)</p>
                   <p className="text-2xl font-bold">
-                    {Math.round(video.stats.time_watched / 3600)}
+                    {Math.round(video.stats.finishes / 3600)}
                   </p>
                 </div>
               </div>

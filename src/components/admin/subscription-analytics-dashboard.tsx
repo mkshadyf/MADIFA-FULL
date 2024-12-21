@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from 'react'
 
 import type { PlanId } from '@/lib/config/subscription-plans'
@@ -14,7 +15,7 @@ export default function SubscriptionAnalyticsDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadMetrics()
+    void loadMetrics()
   }, [])
 
   const loadMetrics = async () => {
@@ -22,7 +23,7 @@ export default function SubscriptionAnalyticsDashboard() {
       const data = await getSubscriptionMetrics()
       setMetrics(data)
     } catch (error) {
-      logger.error('Error loading metrics:', error)
+      console.error('Error loading metrics:', error)
     } finally {
       setLoading(false)
     }

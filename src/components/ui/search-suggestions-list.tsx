@@ -1,9 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-import { useDebounce } from '@/lib/hooks/useDebounce'
-import { getSearchSuggestions } from '@/lib/services/search'
+import { useDebounce } from '@/hooks/useDebounce'
 import { trackSearchSuggestion } from '@/lib/services/search-analytics'
-
+import { searchContent } from '@/lib/services/search'
 interface SearchSuggestionsListProps {
   query: string
   onSelect: (suggestion: string) => void
@@ -31,10 +30,15 @@ export default function SearchSuggestionsList({
 
       setLoading(true)
       try {
-        const results = await getSearchSuggestions(debouncedQuery)
-        setSuggestions(results)
+        const results = await searchContent(debouncedQuery)
+        if (Array.isArray(results)) {
+          setSuggestions(results.map((result: { title: string }) => result.title))
+        } else {
+          setSuggestions([])
+        }
       } catch (error) {
-        logger.error('Error fetching suggestions:', error)
+        console.error('Error fetching suggestions:', error)
+        setSuggestions([])
       } finally {
         setLoading(false)
       }

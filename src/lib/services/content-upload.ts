@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { FileOptions, UploadProgress } from '@/lib/types/upload'
+import type { FileOptions, UploadProgress } from '@/types/upload'
 
 interface UploadOptions extends FileOptions {
   onProgress?: (progress: UploadProgress) => void
@@ -39,7 +39,7 @@ export async function uploadContent(
 
     return publicUrl
   } catch (error) {
-    logger.error('Upload error:', error)
+    console.error('Upload error:', error)
     throw error
   }
 }

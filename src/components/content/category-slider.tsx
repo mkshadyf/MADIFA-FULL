@@ -1,14 +1,16 @@
+import React from "react"
 import { useEffect, useState } from 'react'
-import Image, { useRouter } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import type { Tables } from '@/types/supabase'
 import { createClient } from '@/lib/supabase/client'
 
-type Category = Tables<'categories'>
+
+type Category = Tables['categories']['Row']
 
 export default function CategorySlider() {
   const [categories, setCategories] = useState<Category[]>([])
-  const router = useRouter()
+  const navigate = useNavigate()
   const supabase = createClient()
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export default function CategorySlider() {
           )
         }
       } catch (error) {
-        logger.error('Error loading categories:', error)
+        console.error('Error loading categories:', error)
       }
     }
 
@@ -41,17 +43,16 @@ export default function CategorySlider() {
         {categories.map(category => (
           <div
             key={category.id}
-            onClick={() => router.push(`/category/${category.slug}`)}
+            onClick={() => navigate(`/category/${category.slug}`)}
             className="group relative w-64 flex-none cursor-pointer"
           >
             <div className="relative h-36 overflow-hidden rounded-xl">
-              <Image
+              <img
                 src={
                   category.thumbnail_url || '/images/category-placeholder.jpg'
                 }
                 alt={category.name}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-110"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0" />
               <div className="absolute inset-0 flex items-end p-4">

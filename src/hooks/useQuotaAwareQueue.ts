@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import type { Content } from '@/types'
+import { useEffect, useState } from 'react'
 
 import { quotaAwareQueue } from '@/lib/services/quota-aware-queue'
 
@@ -39,7 +39,7 @@ export function useQuotaAwareQueue() {
           )
         }
       } catch (error) {
-        logger.error('Failed to get queue stats:', error)
+        console.error('Failed to get queue stats:', error)
       }
     }
 
@@ -61,7 +61,7 @@ export function useQuotaAwareQueue() {
       const stats = await quotaAwareQueue.getQueueStats(user.id)
       setQueueStats(stats)
     } catch (error) {
-      logger.error('Failed to add to queue:', error)
+      console.error('Failed to add to queue:', error)
       showToast(
         error instanceof Error ? error.message : 'Failed to add to queue',
         'error'
@@ -83,7 +83,7 @@ export function useQuotaAwareQueue() {
 
       showToast('Queue optimized successfully', 'success')
     } catch (error) {
-      logger.error('Failed to optimize queue:', error)
+      console.error('Failed to optimize queue:', error)
       showToast('Failed to optimize queue', 'error')
     } finally {
       setIsProcessing(false)
@@ -98,7 +98,7 @@ export function useQuotaAwareQueue() {
       await quotaAwareQueue.reorderQueueByPriority(user.id)
       showToast('Queue reordered successfully', 'success')
     } catch (error) {
-      logger.error('Failed to reorder queue:', error)
+      console.error('Failed to reorder queue:', error)
       showToast('Failed to reorder queue', 'error')
     } finally {
       setIsProcessing(false)

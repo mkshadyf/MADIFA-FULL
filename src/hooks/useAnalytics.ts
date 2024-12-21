@@ -1,31 +1,27 @@
-import { useQuery } from '@tanstack/react-query'
+import { useActivityTracking } from '@/hooks/useActivityTracking'
+import type { VimeoPlayer } from '@/types/vimeo'
+import { useVideoAnalytics } from './useVideoAnalytics'
 
-import type { AnalyticsReport } from '@/types/analytics'
-
-interface UseAnalyticsOptions {
-  from: string
-  to: string
+interface UseAnalyticsProps {
+  player?: VimeoPlayer | null
   videoId?: string
-  granularity?: 'hour' | 'day' | 'week' | 'month'
+  onError?: (error: Error) => void
 }
 
-export function useAnalytics(options: UseAnalyticsOptions) {
-  return useQuery<AnalyticsReport>({
-    queryKey: ['analytics', options],
-    queryFn: async () => {
-      const response = await fetch('/api/analytics', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(options),
-      })
+export function useAnalytics({ player, videoId, onError }: UseAnalyticsProps = {}) {
+  // Video-specific analytics
+  const videoAnalytics = videoId && player ? useVideoAnalytics(player, videoId) : null
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch analytics data')
-      }
-
-      return response.json()
-    },
+  // General activity tracking
+  const activityTracking = useActivityTracking({
+    onError: (error) => {
+      console.error('Analytics error:', error)
+      onError?.(error)
+    }
   })
+
+  return {
+    ...activityTracking,
+    videoAnalytics,
+  }
 }

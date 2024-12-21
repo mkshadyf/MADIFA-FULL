@@ -1,3 +1,4 @@
+import React from "react"
 import { lazy, Suspense, type ComponentType, type FC } from 'react'
 import type { RouteObject } from 'react-router-dom'
 

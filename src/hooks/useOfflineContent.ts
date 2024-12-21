@@ -18,7 +18,7 @@ export function useOfflineContent(contentId: string) {
       const isAvailable = await contentService.isAvailableOffline(contentId)
       setIsAvailableOffline(isAvailable)
     } catch (error) {
-      logger.error('Error checking offline availability:', error)
+      console.error('Error checking offline availability:', error)
     }
   }
 
@@ -30,7 +30,7 @@ export function useOfflineContent(contentId: string) {
       toast.success('Content saved for offline viewing')
     } catch (error) {
       toast.error('Failed to save content offline')
-      logger.error('Error downloading content:', error)
+      console.error('Error downloading content:', error)
     } finally {
       setIsProcessing(false)
     }
@@ -44,7 +44,7 @@ export function useOfflineContent(contentId: string) {
       toast.success('Content removed from offline storage')
     } catch (error) {
       toast.error('Failed to remove offline content')
-      logger.error('Error removing offline content:', error)
+      console.error('Error removing offline content:', error)
     } finally {
       setIsProcessing(false)
     }

@@ -43,7 +43,7 @@ export default async function handler(
     if (error) throw error
 
     // Log violation for monitoring
-    logger.warn('CSP Violation:', {
+    console.warn('CSP Violation:', {
       ...violation['csp-report'],
       userAgent: req.headers['user-agent'],
       ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
@@ -51,7 +51,7 @@ export default async function handler(
 
     return res.status(204).end()
   } catch (error) {
-    logger.error('Error processing CSP violation:', error)
+    console.error('Error processing CSP violation:', error)
     throw createAPIError(
       500,
       'Failed to process CSP violation',

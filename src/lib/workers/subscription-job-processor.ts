@@ -67,7 +67,7 @@ export async function processSyncJobBatch() {
         })
       )
     } catch (error) {
-      logger.error('Error processing job batch:', error)
+      console.error('Error processing job batch:', error)
     } finally {
       isProcessing = false
     }

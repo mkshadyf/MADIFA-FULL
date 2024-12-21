@@ -1,3 +1,4 @@
+import React from "react"
 import { useState } from 'react'
 import Image, { Link, useNavigate } from 'react-router-dom'
 
@@ -33,12 +34,11 @@ export default function ResetPasswordPage() {
     <div className="relative flex min-h-screen flex-col justify-center">
       {/* Dynamic Background with Overlay */}
       <div className="fixed inset-0 -z-10">
-        <Image
+        <img
           src="/images/auth-bg-3.jpg"
           alt="Background"
-          fill
-          className="object-cover"
-          priority
+          className="object-cover w-full h-full"
+          loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
       </div>

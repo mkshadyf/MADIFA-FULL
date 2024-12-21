@@ -26,12 +26,12 @@ export async function startSyncScheduler() {
           try {
             await retryFailedSyncJobs()
           } catch (error) {
-            logger.error('Error processing sync job:', error)
+            console.error('Error processing sync job:', error)
           }
         })
       )
     } catch (error) {
-      logger.error('Error in sync scheduler:', error)
+      console.error('Error in sync scheduler:', error)
     }
   }
 

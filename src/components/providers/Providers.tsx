@@ -1,8 +1,9 @@
+import React from "react"
 import { AuthProvider } from '@/providers/AuthProvider'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
-import ErrorBoundary from '@/components/ui/ErrorBoundary'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {

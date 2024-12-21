@@ -1,3 +1,4 @@
+import React from "react"
 import { useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
 
@@ -14,9 +15,9 @@ export default function VimeoShowcaseCreator() {
     }
 
     const vimeoClient = new Vimeo(
-      process.env.NEXT_PUBLIC_VIMEO_CLIENT_ID!,
-      process.env.NEXT_PUBLIC_VIMEO_CLIENT_SECRET!,
-      process.env.NEXT_PUBLIC_VIMEO_ACCESS_TOKEN!
+      import.meta.env.VITE_VIMEO_CLIENT_ID!,
+      import.meta.env.VITE_VIMEO_CLIENT_SECRET!,
+      import.meta.env.VITE_VIMEO_ACCESS_TOKEN!
     )
 
     setCreating(true)
@@ -61,6 +62,7 @@ export default function VimeoShowcaseCreator() {
             Name
           </label>
           <input
+            placeholder="Showcase Name"
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
@@ -74,6 +76,7 @@ export default function VimeoShowcaseCreator() {
             Description
           </label>
           <textarea
+            placeholder="Showcase Description"
             value={description}
             onChange={e => setDescription(e.target.value)}
             disabled={creating}

@@ -32,6 +32,7 @@ export default function QuotaAwareDownloadQueue() {
               {queueItems.length} item{queueItems.length !== 1 ? 's' : ''}
             </span>
             <IconButton
+              label='Clear'
               icon="x"
               onClick={clearQueue}
               className="text-gray-400 hover:text-white"
@@ -60,6 +61,7 @@ export default function QuotaAwareDownloadQueue() {
                 </p>
               </div>
               <IconButton
+                label='Remove'
                 icon="trash"
                 onClick={() => removeFromQueue(item.id)}
                 className="text-gray-400 hover:text-red-500"
@@ -67,22 +69,7 @@ export default function QuotaAwareDownloadQueue() {
             </div>
 
             <DownloadProgress
-              progress={item.progress}
-              downloaded={(item.progress * (item.content.size || 0)) / 100}
-              total={item.content.size || 0}
-              status={item.status}
-              error={item.error}
-              onPause={
-                item.status === 'downloading'
-                  ? () => pauseDownload(item.id)
-                  : undefined
-              }
-              onResume={
-                item.status === 'paused'
-                  ? () => resumeDownload(item.id)
-                  : undefined
-              }
-              onCancel={() => removeFromQueue(item.id)}
+              contentId={item.id}
             />
 
             {quotaStats.isNearLimit ? (

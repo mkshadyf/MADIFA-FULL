@@ -1,4 +1,6 @@
-import Link, { usePathname } from 'react-router-dom'
+import React from "react"
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 const navigation = [
   {
@@ -116,7 +118,7 @@ export default function AdminSidebar() {
               {navigation.map(item => {
                 const isActive = pathname === item.href
                 return (
-                  <Link
+                  <a
                     key={item.name}
                     href={item.href}
                     className={`group flex items-center rounded-md px-2 py-2 text-sm font-medium ${
@@ -135,7 +137,7 @@ export default function AdminSidebar() {
                       {item.icon}
                     </div>
                     {item.name}
-                  </Link>
+                  </a>
                 )
               })}
             </nav>

@@ -1,3 +1,4 @@
+import React from "react"
 import { useQueueStore } from '@/stores/queueStore'
 import { AnimatePresence, motion } from 'framer-motion'
 
@@ -41,7 +42,7 @@ export default function DownloadProgress({ contentId }: DownloadProgressProps) {
             backgroundColor="bg-gray-100"
           />
         )}
-
+ 
         {item.status === 'error' && (
           <div className="text-sm text-red-600">{item.error}</div>
         )}

@@ -1,102 +1,140 @@
-import { env } from '@/config/env'
 
-interface AppLovinConfig {
-  sdkKey: string
-  bannerAdUnitId: string
-  interstitialAdUnitId: string
-  rewardedAdUnitId: string
+declare global {
+  interface Window {
+    AppLovinMAX: any;
+  }
 }
 
-export class AppLovinService {
+
+// Add type declarations for window and document
+declare const window: Window & typeof globalThis
+declare const document: Document
+
+const isClient = typeof window !== 'undefined' && typeof document !== 'undefined'
+
+export class AppLovin {
+  private static instance: AppLovin
   private initialized = false
-  private config: AppLovinConfig
+  private sdkKey: string
+  private interstitialId: string
+  private rewardedId: string
 
-  constructor() {
-    this.config = {
-      sdkKey: env.VITE_APPLOVIN_SDK_KEY,
-      bannerAdUnitId: env.VITE_APPLOVIN_BANNER_ID,
-      interstitialAdUnitId: env.VITE_APPLOVIN_INTERSTITIAL_ID,
-      rewardedAdUnitId: env.VITE_APPLOVIN_REWARDED_ID,
-    }
+  private constructor() {
+    this.sdkKey = import.meta.env.VITE_APPLOVIN_SDK_KEY || ''
+    this.interstitialId = import.meta.env.VITE_APPLOVIN_INTERSTITIAL_ID || ''
+    this.rewardedId = import.meta.env.VITE_APPLOVIN_REWARDED_ID || ''
   }
 
-  async init(): Promise<void> {
-    if (this.initialized) return
-
-    try {
-      // Load AppLovin SDK
-      const script = document.createElement('script')
-      script.src = `https://sdk.applovin.com/js/applovin-max-sdk-web.js`
-      script.async = true
-      document.head.appendChild(script)
-
-      await new Promise<void>(resolve => {
-        script.onload = () => {
-          // @ts-ignore - AppLovin global object
-          window.AppLovinMAX.initialize(this.config.sdkKey, {
-            debugMode: env.NODE_ENV === 'development',
-          })
-          this.initialized = true
-          resolve()
-        }
-      })
-    } catch (error) {
-      logger.error('Failed to initialize AppLovin:', error)
+  public static getInstance(): AppLovin {
+    if (!AppLovin.instance) {
+      AppLovin.instance = new AppLovin()
     }
+    return AppLovin.instance
   }
 
-  async showBanner(containerId: string): Promise<void> {
-    if (!this.initialized) await this.init()
+  private loadScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!isClient) {
+        resolve()
+        return
+      }
 
-    try {
-      // @ts-ignore - AppLovin global object
-      window.AppLovinMAX.createBanner(this.config.bannerAdUnitId, {
-        position: 'bottom',
-        container: containerId,
-      })
-    } catch (error) {
-      logger.error('Failed to show banner:', error)
-    }
-  }
-
-  async showInterstitial(): Promise<void> {
-    if (!this.initialized) await this.init()
-
-    try {
-      // @ts-ignore - AppLovin global object
-      window.AppLovinMAX.showInterstitial(this.config.interstitialAdUnitId)
-    } catch (error) {
-      logger.error('Failed to show interstitial:', error)
-    }
-  }
-
-  async showRewardedAd(): Promise<boolean> {
-    if (!this.initialized) await this.init()
-
-    return new Promise(resolve => {
       try {
-        // @ts-ignore - AppLovin global object
-        window.AppLovinMAX.showRewardedAd(this.config.rewardedAdUnitId, {
-          onUserRewarded: () => resolve(true),
-          onAdClosed: () => resolve(false),
-        })
+        const script = document?.createElement('script')
+        if (!script) {
+          reject(new Error('Failed to create script element'))
+          return
+        }
+
+        script.src = 'https://sdkconfig.applovin.com/max/applovin.js'
+        script.async = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Failed to load AppLovin SDK'))
+        document?.head?.appendChild(script)
       } catch (error) {
-        logger.error('Failed to show rewarded ad:', error)
-        resolve(false)
+        reject(error)
       }
     })
   }
 
-  async hideBanner(containerId: string): Promise<void> {
-    if (!this.initialized) return
+  public async initialize(): Promise<void> {
+    if (this.initialized || !isClient) {
+      return
+    }
 
     try {
-      // @ts-ignore - AppLovin global object
-      window.AppLovinMAX.hideBanner(containerId)
+      await this.loadScript()
+      if (typeof window?.AppLovinMAX?.initialize === 'function') {
+        window.AppLovinMAX.initialize(this.sdkKey, () => {
+          this.initialized = true
+          console.info('AppLovin SDK initialized successfully')
+        })
+      } else {
+        throw new Error('AppLovin SDK not loaded properly')
+      }
     } catch (error) {
-      logger.error('Failed to hide banner:', error)
+      console.error('Failed to initialize AppLovin SDK:', error)
+      throw error
+    }
+  }
+
+  public async showInterstitial(): Promise<void> {
+    if (!isClient || !this.initialized) {
+      return
+    }
+
+    try {
+      if (typeof window?.AppLovinMAX?.showInterstitial === 'function') {
+        window.AppLovinMAX.showInterstitial(this.interstitialId)
+      }
+    } catch (error) {
+      console.error('Failed to show interstitial ad:', error)
+      throw error
+    }
+  }
+
+  public async showRewardedAd(): Promise<void> {
+    if (!isClient || !this.initialized) {
+      return
+    }
+
+    try {
+      if (typeof window?.AppLovinMAX?.showRewardedAd === 'function') {
+        window.AppLovinMAX.showRewardedAd(this.rewardedId)
+      }
+    } catch (error) {
+      console.error('Failed to show rewarded ad:', error)
+      throw error
+    }
+  }
+
+  public async loadInterstitial(): Promise<void> {
+    if (!isClient || !this.initialized) {
+      return
+    }
+
+    try {
+      if (typeof window?.AppLovinMAX?.loadInterstitial === 'function') {
+        window.AppLovinMAX.loadInterstitial(this.interstitialId)
+      }
+    } catch (error) {
+      console.error('Failed to load interstitial ad:', error)
+      throw error
+    }
+  }
+
+  public async loadRewardedAd(): Promise<void> {
+    if (!isClient || !this.initialized) {
+      return
+    }
+
+    try {
+      if (typeof window?.AppLovinMAX?.loadRewardedAd === 'function') {
+        window.AppLovinMAX.loadRewardedAd(this.rewardedId)
+      }
+    } catch (error) {
+      console.error('Failed to load rewarded ad:', error)
+      throw error
     }
   }
 }
-
-export const applovinService = new AppLovinService()
