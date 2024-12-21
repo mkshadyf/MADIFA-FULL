@@ -1,16 +1,15 @@
-
 declare global {
   interface Window {
-    AppLovinMAX: any;
+    AppLovinMAX: any
   }
 }
-
 
 // Add type declarations for window and document
 declare const window: Window & typeof globalThis
 declare const document: Document
 
-const isClient = typeof window !== 'undefined' && typeof document !== 'undefined'
+const isClient =
+  typeof window !== 'undefined' && typeof document !== 'undefined'
 
 export class AppLovin {
   private static instance: AppLovin

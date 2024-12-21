@@ -1,4 +1,3 @@
- 
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -11,7 +10,6 @@ import { getWatchHistory } from '@/lib/services/watch-history'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import VimeoPlayer from '@/components/ui/vimeo-player'
 
-
 export default function WatchPage() {
   const { id } = useParams()
   const { user } = useAuth()
@@ -23,7 +21,9 @@ export default function WatchPage() {
     const loadVideo = async () => {
       try {
         // Get video details from Vimeo
-        const videoDetails = await vimeoService.getVideoDetails(id as string) as VimeoVideo
+        const videoDetails = (await vimeoService.getVideoDetails(
+          id as string
+        )) as VimeoVideo
         setVideo(videoDetails as VimeoVideo)
 
         // Get watch progress if user is logged in

@@ -74,4 +74,4 @@ export interface VideoProgressProps {
 
 export interface BufferingIndicatorProps {
   isBuffering: boolean
-} 
+}

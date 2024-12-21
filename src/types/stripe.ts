@@ -149,12 +149,12 @@ export interface SetupIntentData {
   customer: string | null
   payment_method: string | null
   status:
-  | 'requires_payment_method'
-  | 'requires_confirmation'
-  | 'requires_action'
-  | 'processing'
-  | 'succeeded'
-  | 'canceled'
+    | 'requires_payment_method'
+    | 'requires_confirmation'
+    | 'requires_action'
+    | 'processing'
+    | 'succeeded'
+    | 'canceled'
   usage: 'off_session' | 'on_session'
   metadata: Record<string, string>
 }
@@ -167,12 +167,12 @@ export interface PaymentIntentData {
   currency: string
   payment_method: string | null
   status:
-  | 'requires_payment_method'
-  | 'requires_confirmation'
-  | 'requires_action'
-  | 'processing'
-  | 'succeeded'
-  | 'canceled'
+    | 'requires_payment_method'
+    | 'requires_confirmation'
+    | 'requires_action'
+    | 'processing'
+    | 'succeeded'
+    | 'canceled'
   metadata: Record<string, string>
 }
 

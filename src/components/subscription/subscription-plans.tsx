@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { useNavigate } from 'react-router-dom'
@@ -17,7 +17,7 @@ export default function SubscriptionPlans() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
-   const navigate = useNavigate()
+  const navigate = useNavigate()
   const plans = getSubscriptionPlans()
 
   const handleUpgrade = async () => {

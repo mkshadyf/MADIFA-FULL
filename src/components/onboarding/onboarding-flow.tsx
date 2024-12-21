@@ -1,10 +1,9 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 
 import { createClient } from '@/lib/supabase/client'
-
 
 import { GenreSelectionStep } from './steps/GenreSelectionStep'
 import { LanguageSelectionStep } from './steps/LanguageSelectionStep'
@@ -74,8 +73,8 @@ export default function OnboardingFlow() {
       component: (
         <WelcomeStep
           onNext={async () => {
-            await Promise.resolve();
-            setCurrentStep(1);
+            await Promise.resolve()
+            setCurrentStep(1)
           }}
           data={{}}
         />
@@ -143,8 +142,12 @@ export default function OnboardingFlow() {
             transition={{ duration: 0.3 }}
           >
             <div className="mb-12 text-center">
-              <h1 className="mb-4 text-4xl font-bold text-white">{steps[currentStep].title}</h1>
-              <p className="text-lg text-gray-400">{steps[currentStep].description}</p>
+              <h1 className="mb-4 text-4xl font-bold text-white">
+                {steps[currentStep].title}
+              </h1>
+              <p className="text-lg text-gray-400">
+                {steps[currentStep].description}
+              </p>
             </div>
 
             {steps[currentStep].component}

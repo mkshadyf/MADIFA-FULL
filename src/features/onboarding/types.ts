@@ -24,4 +24,4 @@ export type OnboardingStep =
   | 'language'
   | 'plan'
   | 'payment'
-  | 'settings' 
+  | 'settings'

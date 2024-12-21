@@ -1,11 +1,10 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 
 import type { Tables } from '@/types/supabase'
 import { createClient } from '@/lib/supabase/client'
 import ContentGrid from '@/components/ui/content-grid'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-
 
 type Category = Tables['categories']['Row']
 

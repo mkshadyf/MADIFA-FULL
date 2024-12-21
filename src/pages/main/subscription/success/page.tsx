@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 /* eslint-env browser */
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { verifyPayment } from '@/lib/services/payment'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-
 
 export default function SubscriptionSuccess() {
   const [verifying, setVerifying] = useState(true)
@@ -36,7 +35,9 @@ export default function SubscriptionSuccess() {
         }
       } catch (error) {
         console.error('Verification error:', error)
-        setError(error instanceof Error ? error.message : 'Failed to verify payment')
+        setError(
+          error instanceof Error ? error.message : 'Failed to verify payment'
+        )
       } finally {
         setVerifying(false)
       }
@@ -54,7 +55,9 @@ export default function SubscriptionSuccess() {
       <div className="w-full max-w-md rounded-lg bg-gray-800 p-8 text-center">
         {error ? (
           <>
-            <div className="mb-4 text-xl font-semibold text-red-500">{error}</div>
+            <div className="mb-4 text-xl font-semibold text-red-500">
+              {error}
+            </div>
             <button
               onClick={() => navigate('/subscription')}
               className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
@@ -65,7 +68,9 @@ export default function SubscriptionSuccess() {
         ) : (
           <>
             <div className="mb-4 text-5xl text-green-500">✓</div>
-            <h1 className="mb-4 text-2xl font-bold text-white">Subscription Activated!</h1>
+            <h1 className="mb-4 text-2xl font-bold text-white">
+              Subscription Activated!
+            </h1>
             <p className="mb-8 text-gray-300">
               Thank you for subscribing. You now have access to premium content.
             </p>

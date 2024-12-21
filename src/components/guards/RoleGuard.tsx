@@ -1,9 +1,14 @@
-import React from "react"
-import { useAuth } from '@/hooks/useAuth';
-import { createErrorContext, ErrorCodes, handleError, throwAppError } from '@/lib/utils/error-handler';
-import { hasRequiredPermissions } from '@/types/auth';
-import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React from 'react'
+import { useAuth } from '@/hooks/useAuth'
+import {
+  createErrorContext,
+  ErrorCodes,
+  handleError,
+  throwAppError,
+} from '@/lib/utils/error-handler'
+import { hasRequiredPermissions } from '@/types/auth'
+import { useEffect } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import type { UserRole } from '@/types/auth'
 interface RoleGuardProps {

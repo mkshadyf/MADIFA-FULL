@@ -1,7 +1,7 @@
 import React from 'react'
 import type { OnboardingState } from '../types'
 
-export type OnboardingStep = 
+export type OnboardingStep =
   | 'welcome'
   | 'profile'
   | 'email'
@@ -18,7 +18,12 @@ interface OnboardingContentProps {
   state: OnboardingState
 }
 
-export function OnboardingContent({ step, onNext, onBack, state }: OnboardingContentProps) {
+export function OnboardingContent({
+  step,
+  onNext,
+  onBack,
+  state,
+}: OnboardingContentProps) {
   const renderStep = () => {
     switch (step) {
       case 'welcome':
@@ -28,7 +33,7 @@ export function OnboardingContent({ step, onNext, onBack, state }: OnboardingCon
             <p className="mt-4">Let's get you set up with your account</p>
             <button
               onClick={() => onNext({})}
-              className="mt-6 px-6 py-2 bg-primary text-white rounded-lg"
+              className="mt-6 rounded-lg bg-primary px-6 py-2 text-white"
             >
               Get Started
             </button>
@@ -40,9 +45,5 @@ export function OnboardingContent({ step, onNext, onBack, state }: OnboardingCon
     }
   }
 
-  return (
-    <div className="w-full max-w-2xl mx-auto p-6">
-      {renderStep()}
-    </div>
-  )
-} 
+  return <div className="mx-auto w-full max-w-2xl p-6">{renderStep()}</div>
+}

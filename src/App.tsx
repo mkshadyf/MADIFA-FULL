@@ -1,4 +1,4 @@
- import { Suspense, useEffect, type FC } from 'react'
+import { Suspense, useEffect, type FC } from 'react'
 import { AuthProvider } from '@/providers/AuthProvider'
 import { AppRoutes } from '@/routes'
 import { QueryClientProvider } from '@tanstack/react-query'

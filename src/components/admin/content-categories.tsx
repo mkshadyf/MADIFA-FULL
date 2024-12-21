@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 
-
 interface CategoryStats {
   name: string
   count: number
@@ -32,9 +31,12 @@ export default function ContentCategories() {
         if (contentError) throw contentError
 
         // Get viewing stats by category
-        const { data: viewingData, error: viewingError } = await supabase
+        const { data: viewingData, error: viewingError } = (await supabase
           .from('viewing_history')
-          .select('content(category)') as { data: ViewingData[] | null, error: any }
+          .select('content(category)')) as {
+          data: ViewingData[] | null
+          error: any
+        }
 
         if (viewingError) throw viewingError
 

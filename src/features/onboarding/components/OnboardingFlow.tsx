@@ -14,7 +14,7 @@ const STEPS: OnboardingStep[] = [
   'language',
   'plan',
   'payment',
-  'settings'
+  'settings',
 ]
 
 export function OnboardingFlow() {
@@ -24,7 +24,7 @@ export function OnboardingFlow() {
 
   const handleNext = async (stepData: Partial<OnboardingState>) => {
     await updateState(stepData)
-    
+
     if (currentStepIndex === STEPS.length - 1) {
       await completeOnboarding()
       navigate('/browse')
@@ -44,10 +44,7 @@ export function OnboardingFlow() {
 
   return (
     <OnboardingLayout>
-      <OnboardingProgress 
-        steps={STEPS} 
-        currentStep={currentStepIndex} 
-      />
+      <OnboardingProgress steps={STEPS} currentStep={currentStepIndex} />
       <OnboardingContent
         step={STEPS[currentStepIndex]}
         onNext={handleNext}
@@ -56,4 +53,4 @@ export function OnboardingFlow() {
       />
     </OnboardingLayout>
   )
-} 
+}

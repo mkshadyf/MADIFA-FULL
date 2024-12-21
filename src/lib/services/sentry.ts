@@ -39,15 +39,24 @@ export function setExtra(key: string, value: unknown): void {
   Sentry.setExtra(key, value)
 }
 
-export function setContext(name: string, context: Record<string, unknown>): void {
+export function setContext(
+  name: string,
+  context: Record<string, unknown>
+): void {
   Sentry.setContext(name, context)
 }
 
-export function captureMessage(message: string, level?: Sentry.SeverityLevel): void {
+export function captureMessage(
+  message: string,
+  level?: Sentry.SeverityLevel
+): void {
   Sentry.captureMessage(message, level)
 }
 
-export function captureException(error: unknown, context?: Record<string, unknown>): void {
+export function captureException(
+  error: unknown,
+  context?: Record<string, unknown>
+): void {
   Sentry.captureException(error, {
     extra: context,
   })
@@ -89,5 +98,5 @@ interface ErrorBoundaryProps {
   onError?: (error: Error) => void
 }
 
-export const ErrorBoundary: React.ComponentType<ErrorBoundaryProps> = Sentry.ErrorBoundary
-
+export const ErrorBoundary: React.ComponentType<ErrorBoundaryProps> =
+  Sentry.ErrorBoundary

@@ -1,10 +1,10 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export default function SearchBar() {
   const [query, setQuery] = useState('')
-   const navigate = useNavigate()
+  const navigate = useNavigate()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

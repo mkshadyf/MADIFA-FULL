@@ -18,7 +18,7 @@ const mapVimeoVideoToContent = (video: VimeoVideo): Content => ({
   status: video.status === 'available' ? 'ready' : 'processing',
   created_at: video.created_time,
   updated_at: video.modified_time,
-  error: video.status === 'error' ? video.error_message : undefined
+  error: video.status === 'error' ? video.error_message : undefined,
 })
 
 export function useContent(id?: string) {
@@ -81,7 +81,7 @@ export function useFavorites() {
 
       // Fetch video details from Vimeo for each favorite
       const favoriteVideos = await Promise.all(
-        (data || []).map(async (fav) => {
+        (data || []).map(async fav => {
           const video = await vimeoService.getVideoDetails(fav.video_id)
           return mapVimeoVideoToContent(video)
         })
@@ -89,7 +89,9 @@ export function useFavorites() {
 
       setFavorites(favoriteVideos)
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch favorites'))
+      setError(
+        err instanceof Error ? err : new Error('Failed to fetch favorites')
+      )
     } finally {
       setIsLoading(false)
     }
@@ -104,7 +106,9 @@ export function useFavorites() {
       if (error) throw error
       setFavorites([...favorites, content])
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to add to favorites'))
+      setError(
+        err instanceof Error ? err : new Error('Failed to add to favorites')
+      )
       throw err
     }
   }
@@ -120,7 +124,11 @@ export function useFavorites() {
       if (error) throw error
       setFavorites(favorites.filter(fav => fav.id !== contentId))
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to remove from favorites'))
+      setError(
+        err instanceof Error
+          ? err
+          : new Error('Failed to remove from favorites')
+      )
       throw err
     }
   }

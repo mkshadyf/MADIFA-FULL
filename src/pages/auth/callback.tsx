@@ -1,11 +1,11 @@
-import React from "react"
+import React from 'react'
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { useToast } from '@/hooks/useToast'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
- 
-export default function AuthCallback () {
+
+export default function AuthCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { showToast } = useToast()

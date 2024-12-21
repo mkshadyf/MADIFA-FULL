@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -66,7 +66,9 @@ export default function AdminSettings() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="rounded-lg bg-gray-800 p-6">
-          <h2 className="mb-4 text-xl font-semibold text-white">Cache Management</h2>
+          <h2 className="mb-4 text-xl font-semibold text-white">
+            Cache Management
+          </h2>
           <p className="mb-4 text-gray-400">
             Clear the CDN cache to ensure users get the latest content.
           </p>
@@ -80,8 +82,12 @@ export default function AdminSettings() {
         </div>
 
         <div className="rounded-lg bg-gray-800 p-6">
-          <h2 className="mb-4 text-xl font-semibold text-white">Content Revalidation</h2>
-          <p className="mb-4 text-gray-400">Force revalidation of all content pages.</p>
+          <h2 className="mb-4 text-xl font-semibold text-white">
+            Content Revalidation
+          </h2>
+          <p className="mb-4 text-gray-400">
+            Force revalidation of all content pages.
+          </p>
           <button
             onClick={handleRevalidateContent}
             disabled={loading}

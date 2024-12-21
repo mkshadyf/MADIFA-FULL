@@ -18,7 +18,7 @@ interface SecurityManagerProps {
 }
 
 export function SecurityManager({
-   currentSecurity,
+  currentSecurity,
   onUpdate,
   loading,
 }: SecurityManagerProps) {
@@ -43,14 +43,20 @@ export function SecurityManager({
     <div className="space-y-4">
       <div className="space-y-2">
         <div>
-          <label htmlFor="view-privacy" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="view-privacy"
+            className="block text-sm font-medium text-gray-700"
+          >
             View Privacy
           </label>
           <select
             id="view-privacy"
             value={security.view}
             onChange={e =>
-              handleChange('view', e.target.value as ContentSecurity['privacy']['view'])
+              handleChange(
+                'view',
+                e.target.value as ContentSecurity['privacy']['view']
+              )
             }
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             aria-label="Select view privacy setting"
@@ -63,14 +69,20 @@ export function SecurityManager({
         </div>
 
         <div>
-          <label htmlFor="embed-privacy" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="embed-privacy"
+            className="block text-sm font-medium text-gray-700"
+          >
             Embed Privacy
           </label>
           <select
             id="embed-privacy"
             value={security.embed}
             onChange={e =>
-              handleChange('embed', e.target.value as ContentSecurity['privacy']['embed'])
+              handleChange(
+                'embed',
+                e.target.value as ContentSecurity['privacy']['embed']
+              )
             }
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             aria-label="Select embed privacy setting"
@@ -81,14 +93,20 @@ export function SecurityManager({
         </div>
 
         <div>
-          <label htmlFor="comments-privacy" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="comments-privacy"
+            className="block text-sm font-medium text-gray-700"
+          >
             Comments
           </label>
           <select
             id="comments-privacy"
             value={security.comments}
             onChange={e =>
-              handleChange('comments', e.target.value as ContentSecurity['privacy']['comments'])
+              handleChange(
+                'comments',
+                e.target.value as ContentSecurity['privacy']['comments']
+              )
             }
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             aria-label="Select comments privacy setting"
@@ -108,7 +126,10 @@ export function SecurityManager({
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               aria-label="Allow download"
             />
-            <label htmlFor="download-toggle" className="ml-2 block text-sm text-gray-900">
+            <label
+              htmlFor="download-toggle"
+              className="ml-2 block text-sm text-gray-900"
+            >
               Allow download
             </label>
           </div>
@@ -122,7 +143,10 @@ export function SecurityManager({
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               aria-label="Allow adding to collections"
             />
-            <label htmlFor="add-toggle" className="ml-2 block text-sm text-gray-900">
+            <label
+              htmlFor="add-toggle"
+              className="ml-2 block text-sm text-gray-900"
+            >
               Allow adding to collections
             </label>
           </div>

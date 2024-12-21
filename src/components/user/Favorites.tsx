@@ -1,10 +1,9 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/types/content'
-
 
 export default function Favorites() {
   const { user } = useAuth()

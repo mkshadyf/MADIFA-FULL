@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -6,7 +6,6 @@ import { getUserWatchlist } from '@/lib/services/user-interactions'
 import type { Content } from '@/types/content'
 import ContentGrid from '@/components/ui/content-grid'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-
 
 export default function WatchlistPage() {
   const { user } = useAuth()

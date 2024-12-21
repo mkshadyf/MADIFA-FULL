@@ -39,12 +39,12 @@ class ContentManager {
     const videos = await vimeoService.getVideos({
       query: filters?.category,
       sort: sort?.field === 'title' ? 'name' : 'date',
-      direction: sort?.direction || 'desc'
+      direction: sort?.direction || 'desc',
     })
 
     // Assuming we want the first video that matches the id
-    const video = videos.find(v => v.uri.split('/').pop() === filters?.id);
-    if (!video) return null; // Return null if no video found
+    const video = videos.find(v => v.uri.split('/').pop() === filters?.id)
+    if (!video) return null // Return null if no video found
 
     // Map Vimeo response to our Content type
     return {
@@ -57,8 +57,8 @@ class ContentManager {
       release_year: new Date(video.created_time).getFullYear(),
       status: video.status,
       created_at: video.created_time,
-      updated_at: video.modified_time
-    };
+      updated_at: video.modified_time,
+    }
   }
 
   async deleteContent(contentId: string): Promise<void> {
@@ -75,7 +75,7 @@ class ContentManager {
       name: metadata.title,
       description: metadata.description,
       privacy: { view: 'disable' }, // Adjust based on your needs
-      ...metadata
+      ...metadata,
     })
   }
 
@@ -88,7 +88,7 @@ class ContentManager {
     const showcase = await vimeoService.createShowcase({
       name,
       description,
-      privacy: { view: 'password' } // Adjust based on your needs
+      privacy: { view: 'password' }, // Adjust based on your needs
     })
 
     return {
@@ -96,7 +96,7 @@ class ContentManager {
       user_id: userId,
       name: showcase.name,
       description: showcase.description || '',
-      items: []
+      items: [],
     }
   }
 
@@ -114,7 +114,7 @@ class ContentManager {
     const videos = await vimeoService.getVideos({
       sort: 'plays',
       direction: 'desc',
-      per_page: limit
+      per_page: limit,
     })
 
     return videos.map(video => ({
@@ -127,7 +127,7 @@ class ContentManager {
       release_year: new Date(video.created_time).getFullYear(),
       status: video.status,
       created_at: video.created_time,
-      updated_at: video.modified_time
+      updated_at: video.modified_time,
     }))
   }
 }

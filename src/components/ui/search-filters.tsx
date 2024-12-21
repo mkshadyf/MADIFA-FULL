@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 
 interface SearchFiltersProps {
@@ -21,8 +21,22 @@ const initialFilters: FilterState = {
   rating: '',
 }
 
-const categories = ['Movies', 'Series', 'Folk Music', 'Poetry', 'Theatre', 'Documentaries'] as const
-const languages = ['English', 'Zulu', 'Xhosa', 'Afrikaans', 'Sotho', 'Tswana'] as const
+const categories = [
+  'Movies',
+  'Series',
+  'Folk Music',
+  'Poetry',
+  'Theatre',
+  'Documentaries',
+] as const
+const languages = [
+  'English',
+  'Zulu',
+  'Xhosa',
+  'Afrikaans',
+  'Sotho',
+  'Tswana',
+] as const
 const years = ['2024', '2023', '2022', '2021', '2020', 'Older'] as const
 const durations = ['< 30 min', '30-60 min', '1-2 hrs', '> 2 hrs'] as const
 const ratings = ['All Ages', '7+', '13+', '16+', '18+'] as const
@@ -43,7 +57,12 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 text-gray-300 hover:text-white"
       >
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -58,7 +77,9 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
         <div className="absolute top-full z-50 mt-2 w-64 rounded-lg bg-gray-800 p-4 shadow-lg">
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">Category</label>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Category
+              </label>
               <select
                 title="Category"
                 value={filters.category}
@@ -66,7 +87,7 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
                 className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
               >
                 <option value="">All Categories</option>
-                {categories.map((category) => (
+                {categories.map(category => (
                   <option key={category} value={category.toLowerCase()}>
                     {category}
                   </option>
@@ -75,7 +96,9 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">Language</label>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Language
+              </label>
               <select
                 title="Language"
                 value={filters.language}
@@ -83,7 +106,7 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
                 className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
               >
                 <option value="">All Languages</option>
-                {languages.map((language) => (
+                {languages.map(language => (
                   <option key={language} value={language.toLowerCase()}>
                     {language}
                   </option>
@@ -92,7 +115,9 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">Year</label>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Year
+              </label>
               <select
                 title="Year"
                 value={filters.year}
@@ -100,7 +125,7 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
                 className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
               >
                 <option value="">All Years</option>
-                {years.map((year) => (
+                {years.map(year => (
                   <option key={year} value={year.toLowerCase()}>
                     {year}
                   </option>
@@ -109,7 +134,9 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">Duration</label>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Duration
+              </label>
               <select
                 title="Duration"
                 value={filters.duration}
@@ -117,7 +144,7 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
                 className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
               >
                 <option value="">Any Duration</option>
-                {durations.map((duration) => (
+                {durations.map(duration => (
                   <option key={duration} value={duration.toLowerCase()}>
                     {duration}
                   </option>
@@ -126,7 +153,9 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-300">Age Rating</label>
+              <label className="mb-2 block text-sm font-medium text-gray-300">
+                Age Rating
+              </label>
               <select
                 title="Age Rating"
                 value={filters.rating}
@@ -134,7 +163,7 @@ export default function SearchFilters({ onFilterChange }: SearchFiltersProps) {
                 className="w-full rounded-md bg-gray-700 px-3 py-2 text-white"
               >
                 <option value="">Any Rating</option>
-                {ratings.map((rating) => (
+                {ratings.map(rating => (
                   <option key={rating} value={rating.toLowerCase()}>
                     {rating}
                   </option>

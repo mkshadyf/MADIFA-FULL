@@ -4,7 +4,14 @@ import { formatDuration } from '@/lib/utils/format'
 import { useDoubleTap } from '@/hooks/useDoubleTap'
 import { useSwipe } from '@/hooks/useSwipe'
 
-export type VideoQuality = 'auto' | '4k' | '2k' | '1080p' | '720p' | '540p' | '360p'
+export type VideoQuality =
+  | 'auto'
+  | '4k'
+  | '2k'
+  | '1080p'
+  | '720p'
+  | '540p'
+  | '360p'
 
 import { IconButton } from '../ui/button'
 import { Slider } from '../ui/Slider'
@@ -49,8 +56,8 @@ export default function MobileVideoControls({
   })
 
   const { bind: doubleTapBind } = useDoubleTap({
-      onDoubleTap: () => {
-        onPlayPause()
+    onDoubleTap: () => {
+      onPlayPause()
     },
   })
 

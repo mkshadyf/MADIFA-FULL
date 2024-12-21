@@ -1,9 +1,8 @@
- import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
 
 import type { VimeoVideo } from '@/types/vimeo'
 
- 
 interface Showcase {
   uri: string
   name: string
@@ -111,10 +110,14 @@ export default function VimeoShowcaseManager() {
             <div
               key={showcase.uri}
               className="cursor-pointer rounded-lg bg-gray-800 p-6 hover:bg-gray-700"
-              onClick={() => setSelectedShowcase(showcase.uri.split('/').pop()!)}
+              onClick={() =>
+                setSelectedShowcase(showcase.uri.split('/').pop()!)
+              }
             >
               <h3 className="mb-2 text-lg font-semibold">{showcase.name}</h3>
-              <p className="mb-4 text-sm text-gray-400">{showcase.description}</p>
+              <p className="mb-4 text-sm text-gray-400">
+                {showcase.description}
+              </p>
               <p className="text-sm text-gray-500">
                 {showcase.metadata.connections.videos.total} videos
               </p>
@@ -131,7 +134,10 @@ export default function VimeoShowcaseManager() {
           </button>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {videos.map(video => (
-              <div key={video.uri} className="overflow-hidden rounded-lg bg-gray-800">
+              <div
+                key={video.uri}
+                className="overflow-hidden rounded-lg bg-gray-800"
+              >
                 <img
                   src={video.pictures?.sizes[3]?.link || ''}
                   alt={video.name}

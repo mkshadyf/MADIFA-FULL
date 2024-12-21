@@ -1,4 +1,3 @@
- 
 declare const window: Window & typeof globalThis
 
 import { useCallback, useEffect, useState, type FC } from 'react'
@@ -8,7 +7,6 @@ import { toast } from 'react-hot-toast'
 import { vimeoService } from '@/lib/services/vimeo'
 import { cn } from '@/lib/utils'
 import { Progress } from '@/components/ui/progress'
-
 
 type VideoStatus = 'uploading' | 'transcoding' | 'available' | 'error'
 
@@ -56,7 +54,12 @@ export const BatchUploader: FC<BatchUploaderProps> = ({
               [fileName]: {
                 ...prev[fileName],
                 status: videoDetails?.status as VideoStatus,
-                transcodingProgress: videoDetails?.status === 'available' ? 100 : videoDetails?.status === 'transcoding' ? 0 : undefined,
+                transcodingProgress:
+                  videoDetails?.status === 'available'
+                    ? 100
+                    : videoDetails?.status === 'transcoding'
+                      ? 0
+                      : undefined,
               },
             }))
 

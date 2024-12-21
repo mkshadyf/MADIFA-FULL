@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import Image, { Link, useNavigate } from 'react-router-dom'
 
@@ -37,7 +37,7 @@ export default function ResetPasswordPage() {
         <img
           src="/images/auth-bg-3.jpg"
           alt="Background"
-          className="object-cover w-full h-full"
+          className="h-full w-full object-cover"
           loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />

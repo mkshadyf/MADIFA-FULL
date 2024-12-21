@@ -23,7 +23,10 @@ export function useQuotaEnforcement() {
 
     try {
       const { canProceed, message } =
-        await QuotaEnforcementMiddleware.enforceQuotaBeforeDownload(user.id, content)
+        await QuotaEnforcementMiddleware.enforceQuotaBeforeDownload(
+          user.id,
+          content
+        )
 
       if (!canProceed && message) {
         showToast(message, 'error')

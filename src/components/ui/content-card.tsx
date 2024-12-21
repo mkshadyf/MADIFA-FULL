@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -20,7 +20,7 @@ export default function ContentCard({
   priority = false,
 }: ContentCardProps) {
   const [showDetails, setShowDetails] = useState(false)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
 
   const handlePlay = () => {
     navigate(`/watch/${content.id}`)

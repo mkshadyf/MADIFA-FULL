@@ -61,7 +61,7 @@ export default function QueueBatchOperations({
             {selectedItems.size} selected
           </span>
           <IconButton
-            label='Apply batch operation'
+            label="Apply batch operation"
             icon="check"
             onClick={handleBatchOperation}
             disabled={!selectedOperation || isProcessing}

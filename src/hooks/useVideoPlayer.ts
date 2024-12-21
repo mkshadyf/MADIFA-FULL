@@ -3,7 +3,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useToast } from './useToast'
 
-type VideoQuality = 'auto' | '4K' | '2K' | '1080p' | '720p' | '540p' | '360p' | '240p'
+type VideoQuality =
+  | 'auto'
+  | '4K'
+  | '2K'
+  | '1080p'
+  | '720p'
+  | '540p'
+  | '360p'
+  | '240p'
 
 interface ProgressState {
   currentTime: number
@@ -57,21 +65,15 @@ export function useVideoPlayer(player: Player | null) {
 
     const initializePlayer = async () => {
       try {
-        const [
-          duration,
-          currentTime,
-          quality,
-          volume,
-          playbackRate,
-          isPaused,
-        ] = await Promise.all([
-          player.getDuration(),
-          player.getCurrentTime(),
-          player.getQuality(),
-          player.getVolume(),
-          player.getPlaybackRate(),
-          player.getPaused(),
-        ])
+        const [duration, currentTime, quality, volume, playbackRate, isPaused] =
+          await Promise.all([
+            player.getDuration(),
+            player.getCurrentTime(),
+            player.getQuality(),
+            player.getVolume(),
+            player.getPlaybackRate(),
+            player.getPaused(),
+          ])
 
         setState(prev => ({
           ...prev,
@@ -94,7 +96,9 @@ export function useVideoPlayer(player: Player | null) {
   useEffect(() => {
     if (!player) return
 
-    const handleTimeUpdate = ({ seconds }: VimeoPlayerEventMap['timeupdate']) => {
+    const handleTimeUpdate = ({
+      seconds,
+    }: VimeoPlayerEventMap['timeupdate']) => {
       if (!isSeekingRef.current) {
         setState(prev => ({
           ...prev,
@@ -110,14 +114,18 @@ export function useVideoPlayer(player: Player | null) {
       }))
     }
 
-    const handleVolumeChange = ({ volume }: VimeoPlayerEventMap['volumechange']) => {
+    const handleVolumeChange = ({
+      volume,
+    }: VimeoPlayerEventMap['volumechange']) => {
       setState(prev => ({
         ...prev,
         volume,
       }))
     }
 
-    const handlePlaybackRateChange = ({ playbackRate }: VimeoPlayerEventMap['playbackratechange']) => {
+    const handlePlaybackRateChange = ({
+      playbackRate,
+    }: VimeoPlayerEventMap['playbackratechange']) => {
       setState(prev => ({
         ...prev,
         playbackRate,
@@ -137,24 +145,24 @@ export function useVideoPlayer(player: Player | null) {
       setState(prev => ({ ...prev, isSeeking: false }))
     }
 
-      // Add event listeners
-      ; (player as any).on('timeupdate', handleTimeUpdate)
-      ; (player as any).on('progress', handleProgress)
-      ; (player as any).on('volumechange', handleVolumeChange)
-      ; (player as any).on('playbackratechange', handlePlaybackRateChange)
-      ; (player as any).on('play', handlePlay)
-      ; (player as any).on('pause', handlePause)
-      ; (player as any).on('seeked', handleSeeked)
+    // Add event listeners
+    ;(player as any).on('timeupdate', handleTimeUpdate)
+    ;(player as any).on('progress', handleProgress)
+    ;(player as any).on('volumechange', handleVolumeChange)
+    ;(player as any).on('playbackratechange', handlePlaybackRateChange)
+    ;(player as any).on('play', handlePlay)
+    ;(player as any).on('pause', handlePause)
+    ;(player as any).on('seeked', handleSeeked)
 
     // Cleanup
     return () => {
-      ; (player as any).off('timeupdate', handleTimeUpdate)
-        ; (player as any).off('progress', handleProgress)
-        ; (player as any).off('volumechange', handleVolumeChange)
-        ; (player as any).off('playbackratechange', handlePlaybackRateChange)
-        ; (player as any).off('play', handlePlay)
-        ; (player as any).off('pause', handlePause)
-        ; (player as any).off('seeked', handleSeeked)
+      ;(player as any).off('timeupdate', handleTimeUpdate)
+      ;(player as any).off('progress', handleProgress)
+      ;(player as any).off('volumechange', handleVolumeChange)
+      ;(player as any).off('playbackratechange', handlePlaybackRateChange)
+      ;(player as any).off('play', handlePlay)
+      ;(player as any).off('pause', handlePause)
+      ;(player as any).off('seeked', handleSeeked)
     }
   }, [player])
 
@@ -292,4 +300,4 @@ export function useVideoPlayer(player: Player | null) {
     seekToPercent,
     formatTime,
   }
-} 
+}

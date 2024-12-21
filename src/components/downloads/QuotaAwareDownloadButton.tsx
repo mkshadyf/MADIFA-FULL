@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/useToast'
 
 import { IconButton } from '../ui/button'
 
-
 interface QuotaAwareDownloadButtonProps {
   content: Content
   priority?: number

@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -6,13 +6,12 @@ import { authService } from '@/lib/services/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
 
-
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-   const { showToast } = useToast()
+  const { showToast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

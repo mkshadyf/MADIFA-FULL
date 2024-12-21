@@ -26,7 +26,10 @@ export function useErrorHandler() {
     }
 
     // Log to server in production
-    if (import.meta.env.VITE_NODE_ENV === 'production' && options.logToServer !== false) {
+    if (
+      import.meta.env.VITE_NODE_ENV === 'production' &&
+      options.logToServer !== false
+    ) {
       try {
         await fetch('/api/log-error', {
           method: 'POST',

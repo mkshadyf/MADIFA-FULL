@@ -31,7 +31,9 @@ export function useAds({ player, videoId }: UseAdsOptions = {}) {
 
       try {
         // Check if user has premium subscription
-        const subscription = await subscriptionService.getCurrentSubscription(user.id)
+        const subscription = await subscriptionService.getCurrentSubscription(
+          user.id
+        )
         const userHasSubscription = subscription?.status === 'active'
         setAdsEnabled(!userHasSubscription)
         setAdsLoaded(true)
@@ -167,4 +169,4 @@ export function useAds({ player, videoId }: UseAdsOptions = {}) {
     showVideoAd,
     getAdStats,
   }
-} 
+}

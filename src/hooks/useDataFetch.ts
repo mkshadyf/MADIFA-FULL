@@ -15,10 +15,7 @@ export function useDataFetch<TData>(
   fetcher: () => Promise<TData>,
   options: FetchOptions<TData> = {}
 ) {
-  const {
-    onError,
-    ...restOptions
-  } = options
+  const { onError, ...restOptions } = options
 
   return useQuery<TData, Error>({
     queryKey: key,

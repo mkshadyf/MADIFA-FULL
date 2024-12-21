@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -76,7 +76,9 @@ export default function ContentForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-300">Title</label>
+          <label className="block text-sm font-medium text-gray-300">
+            Title
+          </label>
           <input
             title="Title"
             placeholder="Title"
@@ -89,10 +91,12 @@ export default function ContentForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300">Category</label>
+          <label className="block text-sm font-medium text-gray-300">
+            Category
+          </label>
           <select
             title="Category"
-             value={category}
+            value={category}
             onChange={e => setCategory(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white"
             required
@@ -106,7 +110,9 @@ export default function ContentForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-300">Description</label>
+        <label className="block text-sm font-medium text-gray-300">
+          Description
+        </label>
         <textarea
           title="Description"
           placeholder="Description"
@@ -120,7 +126,9 @@ export default function ContentForm() {
 
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-300">Thumbnail</label>
+          <label className="block text-sm font-medium text-gray-300">
+            Thumbnail
+          </label>
           <input
             title="Thumbnail"
             placeholder="Thumbnail"
@@ -132,7 +140,9 @@ export default function ContentForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300">Video File</label>
+          <label className="block text-sm font-medium text-gray-300">
+            Video File
+          </label>
           <input
             title="Video File"
             placeholder="Video File"

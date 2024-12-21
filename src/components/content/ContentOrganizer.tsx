@@ -43,21 +43,21 @@ export default function ContentOrganizer({
           break
 
         case 'size':
-            organizedContent.sort((a, b) => (a.size || 0) - (b.size || 0))
+          organizedContent.sort((a, b) => (a.size || 0) - (b.size || 0))
           break
 
         case 'date':
-          organizedContent.sort(
-            (a, b) => {
-              const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-              const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-              return dateB - dateA;
-            }
-          )
+          organizedContent.sort((a, b) => {
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0
+            return dateB - dateA
+          })
           break
 
         case 'category':
-          organizedContent.sort((a, b) => (a.category || '').localeCompare(b.category || ''))
+          organizedContent.sort((a, b) =>
+            (a.category || '').localeCompare(b.category || '')
+          )
           break
       }
 
@@ -129,7 +129,8 @@ export default function ContentOrganizer({
               {Object.entries(
                 contents.reduce(
                   (acc: Record<string, number>, content: Content) => {
-                    acc[content.category || ''] = (acc[content.category || ''] || 0) + 1
+                    acc[content.category || ''] =
+                      (acc[content.category || ''] || 0) + 1
                     return acc
                   },
                   {}

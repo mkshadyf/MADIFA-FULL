@@ -1,11 +1,10 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { getUserRatings } from '@/lib/services/user-interactions'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-
 
 interface RatedContent {
   content_id: string
@@ -59,7 +58,7 @@ export default function RatingsPage() {
                 onClick={() => navigate(`/watch/${item.content_id}`)}
                 role="button"
                 tabIndex={0}
-                onKeyPress={(e) => {
+                onKeyPress={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     navigate(`/watch/${item.content_id}`)
                   }

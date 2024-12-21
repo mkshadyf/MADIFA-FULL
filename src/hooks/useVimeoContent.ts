@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import type { VimeoError } from '@/types/vimeo'
 import { vimeoService } from '@/lib/services/vimeo'
+import type { VimeoError } from '@/types/vimeo'
 
 import { useToast } from './useToast'
 

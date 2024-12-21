@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useRef } from 'react'
 import Chart from 'chart.js/auto'
 
@@ -13,7 +13,7 @@ interface AnalyticsChartsProps {
   subscriptionData: ChartData
 }
 
-export default function AnalyticsCharts ({
+export default function AnalyticsCharts({
   viewingData,
   categoryData,
   subscriptionData,
@@ -140,12 +140,16 @@ export default function AnalyticsCharts ({
       </div>
 
       <div className="rounded-lg bg-gray-800 p-6">
-        <h3 className="mb-4 text-lg font-medium text-white">Content by Category</h3>
+        <h3 className="mb-4 text-lg font-medium text-white">
+          Content by Category
+        </h3>
         <canvas ref={categoryChartRef} />
       </div>
 
       <div className="rounded-lg bg-gray-800 p-6 lg:col-span-2">
-        <h3 className="mb-4 text-lg font-medium text-white">Subscription Growth</h3>
+        <h3 className="mb-4 text-lg font-medium text-white">
+          Subscription Growth
+        </h3>
         <canvas ref={subscriptionChartRef} />
       </div>
     </div>

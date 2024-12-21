@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client'
 
 interface SearchMetrics {
   totalSearches: number
@@ -26,7 +26,7 @@ export async function getSearchMetrics(
     const totalSearches = searches?.length || 0
     const averageResults =
       (searches?.reduce((acc, curr) => acc + curr.results_count, 0) || 0) /
-      totalSearches || 0
+        totalSearches || 0
 
     // Get popular queries
     const { data: popularQueries } = await supabase.rpc('get_popular_queries', {

@@ -23,7 +23,8 @@ export default function ContentBatchUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
-  const generateId = () => Math.random().toString(36).substring(2) + Date.now().toString(36);
+  const generateId = () =>
+    Math.random().toString(36).substring(2) + Date.now().toString(36)
 
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return
@@ -48,13 +49,13 @@ export default function ContentBatchUpload() {
   const uploadFile = async (file: BatchFile) => {
     try {
       const url = await uploadContent(file.file, {
-        onProgress: (progress) => {
+        onProgress: progress => {
           setFiles(prev =>
             prev.map(f =>
               f.id === file.id ? { ...f, progress: progress.percent } : f
             )
           )
-        }
+        },
       })
       return url
     } catch (error) {
@@ -73,7 +74,9 @@ export default function ContentBatchUpload() {
           try {
             // Update file status
             setFiles(prev =>
-              prev.map(f => (f.id === batchFile.id ? { ...f, status: 'uploading' } : f))
+              prev.map(f =>
+                f.id === batchFile.id ? { ...f, status: 'uploading' } : f
+              )
             )
 
             // Upload file
@@ -92,7 +95,9 @@ export default function ContentBatchUpload() {
 
             // Update file status to complete
             setFiles(prev =>
-              prev.map(f => (f.id === batchFile.id ? { ...f, status: 'complete' } : f))
+              prev.map(f =>
+                f.id === batchFile.id ? { ...f, status: 'complete' } : f
+              )
             )
           } catch (error) {
             // Update file status to error
@@ -102,7 +107,10 @@ export default function ContentBatchUpload() {
                   ? {
                       ...f,
                       status: 'error',
-                      error: error instanceof Error ? error.message : 'Upload failed',
+                      error:
+                        error instanceof Error
+                          ? error.message
+                          : 'Upload failed',
                     }
                   : f
               )
@@ -149,7 +157,11 @@ export default function ContentBatchUpload() {
                       value={file.title}
                       onChange={e =>
                         setFiles(prev =>
-                          prev.map(f => (f.id === file.id ? { ...f, title: e.target.value } : f))
+                          prev.map(f =>
+                            f.id === file.id
+                              ? { ...f, title: e.target.value }
+                              : f
+                          )
                         )
                       }
                       className="rounded-md bg-gray-700 px-2 py-1 text-white"
@@ -161,7 +173,11 @@ export default function ContentBatchUpload() {
                       value={file.category}
                       onChange={e =>
                         setFiles(prev =>
-                          prev.map(f => (f.id === file.id ? { ...f, category: e.target.value } : f))
+                          prev.map(f =>
+                            f.id === file.id
+                              ? { ...f, category: e.target.value }
+                              : f
+                          )
                         )
                       }
                       className="ml-2 rounded-md bg-gray-700 px-2 py-1 text-white"
@@ -188,7 +204,11 @@ export default function ContentBatchUpload() {
                   value={file.description}
                   onChange={e =>
                     setFiles(prev =>
-                      prev.map(f => (f.id === file.id ? { ...f, description: e.target.value } : f))
+                      prev.map(f =>
+                        f.id === file.id
+                          ? { ...f, description: e.target.value }
+                          : f
+                      )
                     )
                   }
                   className="mb-4 w-full rounded-md bg-gray-700 px-2 py-1 text-white"
@@ -217,7 +237,9 @@ export default function ContentBatchUpload() {
         </form>
       )}
 
-      {!files.length && <div className="py-12 text-center text-gray-400">No files selected</div>}
+      {!files.length && (
+        <div className="py-12 text-center text-gray-400">No files selected</div>
+      )}
     </div>
   )
 }

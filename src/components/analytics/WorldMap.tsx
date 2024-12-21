@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useRef, type FC } from 'react'
 import { geoPath, geoMercator } from 'd3-geo'
 import { select } from 'd3-selection'
@@ -111,7 +111,7 @@ export const WorldMap: FC<WorldMapProps> = ({
             : countryName
         })
       } catch (error) {
-          console.error('Error loading or rendering map:', error)
+        console.error('Error loading or rendering map:', error)
       }
     }
 

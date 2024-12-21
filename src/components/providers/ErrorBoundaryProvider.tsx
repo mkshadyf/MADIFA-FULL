@@ -13,7 +13,10 @@ export default function ErrorBoundaryProvider({ children }: Props) {
 
   useEffect(() => {
     // Initialize error monitoring
-    errorMonitoring.captureMessage(import.meta.env.VITE_SENTRY_DSN || '', 'init')
+    errorMonitoring.captureMessage(
+      import.meta.env.VITE_SENTRY_DSN || '',
+      'init'
+    )
 
     // Set up global error handlers
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
@@ -43,8 +46,8 @@ export default function ErrorBoundaryProvider({ children }: Props) {
 
   return (
     <ErrorBoundary
-      onError={(error) => {
-          errorMonitoring.captureMessage(error.message, 'error')
+      onError={error => {
+        errorMonitoring.captureMessage(error.message, 'error')
         showToast('An error occurred', 'error')
       }}
       fallback={
@@ -67,7 +70,7 @@ export default function ErrorBoundaryProvider({ children }: Props) {
 
 // HOC for wrapping components with error boundary
 export function withErrorBoundary<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
+  WrappedComponent: React.ComponentType<P>
 ) {
   return function WithErrorBoundaryWrapper(props: P) {
     return (

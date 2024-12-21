@@ -1,7 +1,6 @@
-import React from "react"
+import React from 'react'
 import { useRef, useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
-
 
 interface UploadProgress {
   loaded: number

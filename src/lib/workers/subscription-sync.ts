@@ -1,6 +1,5 @@
 import type { PostgrestError } from '@supabase/supabase-js'
 
-
 import { createClient } from '@/lib/supabase/client'
 
 interface SubscriptionData {

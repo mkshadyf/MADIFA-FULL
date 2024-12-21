@@ -1,7 +1,7 @@
- import { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
- 
+
 import type { Content } from '@/types/content'
 
 interface ContentGridProps {
@@ -22,7 +22,7 @@ export default function ContentGrid({
   isLoading = false,
 }: ContentGridProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
 
   const container = {
     hidden: { opacity: 0 },

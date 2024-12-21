@@ -1,4 +1,3 @@
- 
 import { formatBytes } from '@/lib/utils/format'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
 
@@ -25,7 +24,7 @@ export default function DownloadQueue() {
             {queueItems.length} item{queueItems.length !== 1 ? 's' : ''}
           </span>
           <IconButton
-            label='x'
+            label="x"
             icon="x"
             onClick={clearQueue}
             className="text-gray-400 hover:text-white"
@@ -53,9 +52,7 @@ export default function DownloadQueue() {
               />
             </div>
 
-            <DownloadProgress
-              contentId={item.id}
-            />
+            <DownloadProgress contentId={item.id} />
           </div>
         ))}
       </div>

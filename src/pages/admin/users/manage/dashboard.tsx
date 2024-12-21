@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -6,7 +6,7 @@ import type { Database } from '@/lib/database.types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import UsersList from '@/components/admin/users-list'
 
-type UserProfile = Database['public']['Tables']['user_profiles']['Row']
+type UserProfile = Database['public']['Tables']['user_profile']['Row']
 
 interface UserMetrics {
   totalUsers: number
@@ -147,8 +147,8 @@ export default function UserManagementDashboard() {
         <div className="rounded-lg bg-gray-800 p-6">
           <h3 className="text-sm font-medium text-gray-400">Premium Users</h3>
           <p className="mt-2 text-3xl font-bold text-white">
-            {metrics?.subscriptionTiers.premium || 0 +
-              (metrics?.subscriptionTiers.premium_plus || 0)}
+            {metrics?.subscriptionTiers.premium ||
+              0 + (metrics?.subscriptionTiers.premium_plus || 0)}
           </p>
         </div>
 

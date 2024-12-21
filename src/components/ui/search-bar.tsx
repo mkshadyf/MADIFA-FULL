@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -14,7 +14,7 @@ export function SearchBar() {
   const [results, setResults] = useState<Content[]>([])
   const [loading, setLoading] = useState(false)
   const debouncedQuery = useDebounce(query, 300)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
   const inputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 

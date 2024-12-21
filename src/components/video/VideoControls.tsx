@@ -112,7 +112,11 @@ export default function VideoControls({
             />
 
             <IconButton
-              label={isPiPActive ? 'Exit picture in picture' : 'Enter picture in picture'}
+              label={
+                isPiPActive
+                  ? 'Exit picture in picture'
+                  : 'Enter picture in picture'
+              }
               icon="pip"
               onClick={onPiP}
               className={`text-white hover:text-indigo-400 ${isPiPActive ? 'text-indigo-400' : ''}`}

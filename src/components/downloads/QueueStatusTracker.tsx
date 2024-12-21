@@ -30,31 +30,40 @@ export default function QueueStatusTracker() {
 
   useEffect(() => {
     const calculateStats = () => {
-      const totalSize = queueItems.reduce((sum: number, item: QueueItemWithStats) => 
-        sum + (item.content?.size || 0), 0)
-      
+      const totalSize = queueItems.reduce(
+        (sum: number, item: QueueItemWithStats) =>
+          sum + (item.content?.size || 0),
+        0
+      )
+
       const downloadedSize = queueItems.reduce(
-        (sum: number, item: QueueItemWithStats) => 
+        (sum: number, item: QueueItemWithStats) =>
           sum + ((item.content?.size || 0) * (item.progress || 0)) / 100,
         0
       )
 
-      const activeItems = queueItems.filter(item => item.status === 'downloading')
+      const activeItems = queueItems.filter(
+        item => item.status === 'downloading'
+      )
       const averageSpeed =
-        activeItems.reduce((sum: number, item: QueueItemWithStats) => 
-          sum + (item.speed || 0), 0) /
-        Math.max(activeItems.length, 1)
+        activeItems.reduce(
+          (sum: number, item: QueueItemWithStats) => sum + (item.speed || 0),
+          0
+        ) / Math.max(activeItems.length, 1)
 
       setStats({
         totalItems: queueItems.length,
         activeItems: activeItems.length,
-        completedItems: queueItems.filter(item => item.status === 'completed').length,
+        completedItems: queueItems.filter(item => item.status === 'completed')
+          .length,
         failedItems: queueItems.filter(item => item.status === 'error').length,
-        
+
         totalSize,
         downloadedSize,
         averageSpeed,
-        estimatedCompletion: averageSpeed ? (totalSize - downloadedSize) / averageSpeed : 0,
+        estimatedCompletion: averageSpeed
+          ? (totalSize - downloadedSize) / averageSpeed
+          : 0,
       })
     }
 
@@ -87,7 +96,9 @@ export default function QueueStatusTracker() {
 
         <div>
           <p className="text-sm text-gray-400">Download Speed</p>
-          <p className="text-xl font-semibold text-white">{formatBytes(stats.averageSpeed)}/s</p>
+          <p className="text-xl font-semibold text-white">
+            {formatBytes(stats.averageSpeed)}/s
+          </p>
         </div>
       </div>
 
@@ -100,7 +111,9 @@ export default function QueueStatusTracker() {
         </div>
         <div>
           <p className="text-sm text-gray-400">Time Remaining</p>
-          <p className="text-white">{formatDuration(stats.estimatedCompletion)}</p>
+          <p className="text-white">
+            {formatDuration(stats.estimatedCompletion)}
+          </p>
         </div>
       </div>
     </div>

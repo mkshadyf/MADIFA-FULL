@@ -5,14 +5,13 @@ import { useToast } from '@/hooks/useToast'
 import { Content } from '@/types/content'
 import { IconButton } from '../ui/button'
 
-
 interface ContentMetadataEditorProps {
   className?: string
   contentId: string
   onUpdate?: () => void
 }
 
-export default function ContentMetadataEditor ({
+export default function ContentMetadataEditor({
   className = '',
   contentId,
   onUpdate,
@@ -44,7 +43,10 @@ export default function ContentMetadataEditor ({
             tags: content.tags || [],
             releaseYear: content.release_year || new Date().getFullYear(),
             expirationDate: content.expiration_date || '',
-            availabilityWindow: typeof content.availability_window === 'number' ? content.availability_window : 0,
+            availabilityWindow:
+              typeof content.availability_window === 'number'
+                ? content.availability_window
+                : 0,
             isPublic: content.is_public ?? true,
             customFields: content.custom_fields || {},
           })
@@ -138,41 +140,59 @@ export default function ContentMetadataEditor ({
                 aria-label="title"
                 type="text"
                 value={metadata.title}
-                onChange={e => setMetadata(prev => ({ ...prev, title: e.target.value }))}
+                onChange={e =>
+                  setMetadata(prev => ({ ...prev, title: e.target.value }))
+                }
                 className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm text-gray-400">Description</label>
+              <label className="mb-1 block text-sm text-gray-400">
+                Description
+              </label>
               <textarea
                 aria-label="description"
                 value={metadata.description}
-                onChange={e => setMetadata(prev => ({ ...prev, description: e.target.value }))}
+                onChange={e =>
+                  setMetadata(prev => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="min-h-[100px] w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm text-gray-400">Category</label>
+                <label className="mb-1 block text-sm text-gray-400">
+                  Category
+                </label>
                 <input
                   aria-label="category"
                   type="text"
                   value={metadata.category}
-                  onChange={e => setMetadata(prev => ({ ...prev, category: e.target.value }))}
+                  onChange={e =>
+                    setMetadata(prev => ({ ...prev, category: e.target.value }))
+                  }
                   className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm text-gray-400">Release Year</label>
+                <label className="mb-1 block text-sm text-gray-400">
+                  Release Year
+                </label>
                 <input
                   aria-label="releaseYear"
                   type="number"
                   value={metadata.releaseYear}
                   onChange={e =>
-                    setMetadata(prev => ({ ...prev, releaseYear: Number(e.target.value) }))
+                    setMetadata(prev => ({
+                      ...prev,
+                      releaseYear: Number(e.target.value),
+                    }))
                   }
                   className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
                 />
@@ -180,7 +200,9 @@ export default function ContentMetadataEditor ({
             </div>
 
             <div>
-              <label className="mb-1 block text-sm text-gray-400">Tags (comma-separated)</label>
+              <label className="mb-1 block text-sm text-gray-400">
+                Tags (comma-separated)
+              </label>
               <input
                 aria-label="tags"
                 type="text"
@@ -192,24 +214,36 @@ export default function ContentMetadataEditor ({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm text-gray-400">Expiration Date</label>
+                <label className="mb-1 block text-sm text-gray-400">
+                  Expiration Date
+                </label>
                 <input
                   aria-label="expirationDate"
                   type="date"
                   value={metadata.expirationDate}
-                  onChange={e => setMetadata(prev => ({ ...prev, expirationDate: e.target.value }))}
+                  onChange={e =>
+                    setMetadata(prev => ({
+                      ...prev,
+                      expirationDate: e.target.value,
+                    }))
+                  }
                   className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm text-gray-400">Availability (days)</label>
+                <label className="mb-1 block text-sm text-gray-400">
+                  Availability (days)
+                </label>
                 <input
                   aria-label="availabilityWindow"
                   type="number"
                   value={metadata.availabilityWindow}
                   onChange={e =>
-                    setMetadata(prev => ({ ...prev, availabilityWindow: Number(e.target.value) }))
+                    setMetadata(prev => ({
+                      ...prev,
+                      availabilityWindow: Number(e.target.value),
+                    }))
                   }
                   className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
                 />
@@ -221,7 +255,9 @@ export default function ContentMetadataEditor ({
                 aria-label="isPublic"
                 type="checkbox"
                 checked={metadata.isPublic}
-                onChange={e => setMetadata(prev => ({ ...prev, isPublic: e.target.checked }))}
+                onChange={e =>
+                  setMetadata(prev => ({ ...prev, isPublic: e.target.checked }))
+                }
                 className="rounded border-gray-700 bg-gray-800"
               />
               <label className="text-sm text-gray-400">Public Content</label>
@@ -263,7 +299,9 @@ export default function ContentMetadataEditor ({
           <div className="space-y-4">
             <div>
               <h4 className="font-medium text-white">{metadata.title}</h4>
-              <p className="mt-1 text-sm text-gray-400">{metadata.description}</p>
+              <p className="mt-1 text-sm text-gray-400">
+                {metadata.description}
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -302,7 +340,9 @@ export default function ContentMetadataEditor ({
 
             <div className="text-sm">
               <span className="text-gray-400">Visibility:</span>
-              <span className="ml-2 text-white">{metadata.isPublic ? 'Public' : 'Private'}</span>
+              <span className="ml-2 text-white">
+                {metadata.isPublic ? 'Public' : 'Private'}
+              </span>
             </div>
 
             {Object.entries(metadata.customFields).length > 0 && (

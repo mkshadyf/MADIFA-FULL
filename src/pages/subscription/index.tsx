@@ -8,7 +8,7 @@ import { AppLovin } from '@/lib/services/applovin'
 const plans = [
   {
     id: 'free' as const,
-    name: 'Free', 
+    name: 'Free',
     price: 0,
     features: [
       'Limited content access',
@@ -22,7 +22,7 @@ const plans = [
     price: 9.99,
     features: [
       'Full content library',
-      'Ad-free viewing', 
+      'Ad-free viewing',
       'HD quality',
       'Download for offline',
     ],

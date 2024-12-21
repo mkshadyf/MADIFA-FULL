@@ -1,5 +1,5 @@
-import React from "react"
- 
+import React from 'react'
+
 import type { RealTimeStats as RealTimeStatsType } from '@/types/analytics'
 
 interface RealTimeStatsProps {

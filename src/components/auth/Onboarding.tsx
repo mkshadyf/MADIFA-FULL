@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 
 const steps = [
-  { 
+  {
     title: 'Welcome to Madifa',
     description:
       'Your premium streaming platform for movies, series, and music.',

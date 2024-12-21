@@ -32,7 +32,7 @@ export default function QuotaAwareDownloadQueue() {
               {queueItems.length} item{queueItems.length !== 1 ? 's' : ''}
             </span>
             <IconButton
-              label='Clear'
+              label="Clear"
               icon="x"
               onClick={clearQueue}
               className="text-gray-400 hover:text-white"
@@ -61,16 +61,14 @@ export default function QuotaAwareDownloadQueue() {
                 </p>
               </div>
               <IconButton
-                label='Remove'
+                label="Remove"
                 icon="trash"
                 onClick={() => removeFromQueue(item.id)}
                 className="text-gray-400 hover:text-red-500"
               />
             </div>
 
-            <DownloadProgress
-              contentId={item.id}
-            />
+            <DownloadProgress contentId={item.id} />
 
             {quotaStats.isNearLimit ? (
               <p className="mt-2 text-xs text-yellow-500">

@@ -1,8 +1,6 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
-
-
 
 interface VimeoFolder {
   uri: string

@@ -1,11 +1,10 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
 import { subscriptionService } from '@/lib/services/subscription'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
-
 
 interface Invoice {
   id: string
@@ -71,20 +70,29 @@ export default function InvoiceViewer() {
             className="flex items-center justify-between rounded-lg bg-gray-800 p-4"
           >
             <div>
-              <p className="font-medium text-white">Invoice #{invoice.invoice_number}</p>
+              <p className="font-medium text-white">
+                Invoice #{invoice.invoice_number}
+              </p>
               <p className="text-sm text-gray-400">
                 Issued: {new Date(invoice.issued_date).toLocaleDateString()}
               </p>
-              <p className="text-sm font-medium text-white">Amount: ${invoice.amount}</p>
+              <p className="text-sm font-medium text-white">
+                Amount: ${invoice.amount}
+              </p>
             </div>
 
-            <Button variant="secondary" onClick={() => handleDownload(invoice.id)}>
+            <Button
+              variant="secondary"
+              onClick={() => handleDownload(invoice.id)}
+            >
               Download
             </Button>
           </div>
         ))}
 
-        {invoices.length === 0 && <p className="text-center text-gray-400">No invoices found</p>}
+        {invoices.length === 0 && (
+          <p className="text-center text-gray-400">No invoices found</p>
+        )}
       </div>
     </div>
   )

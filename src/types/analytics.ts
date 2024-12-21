@@ -2,14 +2,14 @@ export interface AnalyticsEvent {
   user_id: string
   video_id: string
   event_type:
-  | 'play'
-  | 'pause'
-  | 'seek'
-  | 'complete'
-  | 'quality_change'
-  | 'error'
-  | 'buffer'
-  | 'progress'
+    | 'play'
+    | 'pause'
+    | 'seek'
+    | 'complete'
+    | 'quality_change'
+    | 'error'
+    | 'buffer'
+    | 'progress'
   timestamp: number
   data?: {
     position?: number

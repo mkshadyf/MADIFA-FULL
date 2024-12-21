@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { useNavigate } from 'react-router-dom'
@@ -18,7 +18,6 @@ import PlanSelectionStep from './steps/PlanSelectionStep'
 import ProfileCompletionStep from './steps/ProfileCompletionStep'
 import WelcomeStep from './steps/WelcomeStep'
 
-
 const steps = [
   'welcome',
   'plan-selection',
@@ -36,8 +35,11 @@ interface StepProps {
 export default function OnboardingFlow() {
   const { user } = useAuth()
   const { showToast } = useToast()
-  const [currentStep, setCurrentStep] = useState<OnboardingState['step']>('welcome')
-  const [onboardingData, setOnboardingData] = useState<Partial<OnboardingState>>({})
+  const [currentStep, setCurrentStep] =
+    useState<OnboardingState['step']>('welcome')
+  const [onboardingData, setOnboardingData] = useState<
+    Partial<OnboardingState>
+  >({})
   const [isLoading, setIsLoading] = useState(true)
   const navigate = useNavigate()
 
@@ -63,7 +65,10 @@ export default function OnboardingFlow() {
     }
   }
 
-  const persistProgress = async (step: OnboardingState['step'], data: Partial<OnboardingState>) => {
+  const persistProgress = async (
+    step: OnboardingState['step'],
+    data: Partial<OnboardingState>
+  ) => {
     try {
       if (!user) return
       await onboardingService.updateOnboardingState(user.id, {
@@ -93,7 +98,9 @@ export default function OnboardingFlow() {
       if (currentStep === 'plan-selection' && data.planId) {
         setIsLoading(true)
         const plans = await subscriptionService.getSubscriptionTiers()
-        const selectedPlan = plans.find((p: SubscriptionTier) => p.id === data.planId)
+        const selectedPlan = plans.find(
+          (p: SubscriptionTier) => p.id === data.planId
+        )
 
         if (!selectedPlan) {
           showToast('Invalid plan selected', 'error')
@@ -178,7 +185,10 @@ export default function OnboardingFlow() {
         />
 
         {currentStep === 'welcome' && (
-          <WelcomeStep onNext={data => handleStepCompletion(data)} data={onboardingData} />
+          <WelcomeStep
+            onNext={data => handleStepCompletion(data)}
+            data={onboardingData}
+          />
         )}
 
         {currentStep === 'plan-selection' && (
@@ -217,7 +227,9 @@ export default function OnboardingFlow() {
           currentStep={currentStep}
           onNext={handleStepCompletion}
           onBack={handleBack}
-          onSkip={OPTIONAL_STEPS.includes(currentStep as any) ? handleSkip : undefined}
+          onSkip={
+            OPTIONAL_STEPS.includes(currentStep as any) ? handleSkip : undefined
+          }
           isFirstStep={currentStep === 'welcome'}
           isLastStep={currentStep === 'profile-completion'}
           isLoading={isLoading}

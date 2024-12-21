@@ -12,4 +12,3 @@ declare global {
 }
 
 export type { SupabaseDatabase as Database, Enums, Tables }
-

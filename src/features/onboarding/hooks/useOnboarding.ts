@@ -12,8 +12,8 @@ const initialState: OnboardingState = {
   settings: {
     notifications: true,
     autoplay: true,
-    quality: 'auto'
-  }
+    quality: 'auto',
+  },
 }
 
 export function useOnboarding() {
@@ -31,6 +31,6 @@ export function useOnboarding() {
   return {
     state,
     updateState,
-    completeOnboarding
+    completeOnboarding,
   }
-} 
+}

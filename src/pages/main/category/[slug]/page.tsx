@@ -1,14 +1,13 @@
- 'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
- 
+
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/lib/supabase/types'
 import type { Category } from '@/types/content'
 import CategoryNavigation from '@/components/ui/category-navigation'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useNavigate } from 'react-router-dom'
-
 
 interface CategoryPageProps {
   params: {
@@ -21,7 +20,7 @@ export default function CategoryPage({ params }: CategoryPageProps) {
   const [content, setContent] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
   const supabase = createClient()
 
   useEffect(() => {

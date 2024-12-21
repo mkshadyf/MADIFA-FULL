@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
@@ -31,13 +31,13 @@ export default function ContentUpload() {
       const thumbnailUrl = await uploadContent(thumbnailFile, {
         onProgress: (progress: { loaded: number; total: number }) => {
           setUploadProgress((progress.loaded / progress.total) * 50)
-        }
+        },
       })
 
       const videoUrl = await uploadContent(videoFile, {
         onProgress: (progress: { loaded: number; total: number }) => {
           setUploadProgress(50 + (progress.loaded / progress.total) * 50)
-        }
+        },
       })
 
       // Create content record
@@ -74,7 +74,9 @@ export default function ContentUpload() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-300">Title</label>
+          <label className="block text-sm font-medium text-gray-300">
+            Title
+          </label>
           <input
             title="Title"
             type="text"
@@ -86,7 +88,9 @@ export default function ContentUpload() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300">Description</label>
+          <label className="block text-sm font-medium text-gray-300">
+            Description
+          </label>
           <textarea
             title="Description"
             value={description}
@@ -99,7 +103,9 @@ export default function ContentUpload() {
 
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300">Category</label>
+            <label className="block text-sm font-medium text-gray-300">
+              Category
+            </label>
             <select
               title="Category"
               value={category}
@@ -115,7 +121,9 @@ export default function ContentUpload() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300">Release Year</label>
+            <label className="block text-sm font-medium text-gray-300">
+              Release Year
+            </label>
             <input
               title="Release Year"
               type="number"
@@ -131,7 +139,9 @@ export default function ContentUpload() {
 
         <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300">Thumbnail</label>
+            <label className="block text-sm font-medium text-gray-300">
+              Thumbnail
+            </label>
             <input
               title="Thumbnail"
               type="file"
@@ -143,7 +153,9 @@ export default function ContentUpload() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300">Video</label>
+            <label className="block text-sm font-medium text-gray-300">
+              Video
+            </label>
             <input
               title="Video"
               type="file"

@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
 import 'chart.js/auto' // This registers the controllers
@@ -23,9 +23,9 @@ export default function ContentAnalyticsDashboard({
       try {
         const endDate = new Date()
         const startDate = new Date()
-        
+
         // Calculate start date based on period
-        switch(period) {
+        switch (period) {
           case '7d':
             startDate.setDate(startDate.getDate() - 7)
             break
@@ -38,7 +38,7 @@ export default function ContentAnalyticsDashboard({
         }
 
         const data = await analyticsService.generateReport(startDate, endDate, {
-          contentId
+          contentId,
         })
         setAnalytics(data)
       } catch (error) {
@@ -186,9 +186,12 @@ export default function ContentAnalyticsDashboard({
                 {
                   label: 'Events',
                   data: [
-                    analytics.events.filter(e => e.event_type === 'play').length,
-                    analytics.events.filter(e => e.event_type === 'complete').length,
-                    analytics.events.filter(e => e.event_type === 'progress').length,
+                    analytics.events.filter(e => e.event_type === 'play')
+                      .length,
+                    analytics.events.filter(e => e.event_type === 'complete')
+                      .length,
+                    analytics.events.filter(e => e.event_type === 'progress')
+                      .length,
                   ],
                   backgroundColor: '#4F46E5',
                 },

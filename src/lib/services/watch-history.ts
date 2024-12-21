@@ -10,15 +10,13 @@ export async function updateWatchProgress(
   const supabase = createClient()
 
   try {
-    const { error } = await supabase
-      .from('watch_history')
-      .upsert({
-        user_id: userId,
-        vimeo_id: vimeoId,
-        progress,
-        last_watched: new Date().toISOString(),
-        completed: progress >= 0.95,
-      })
+    const { error } = await supabase.from('watch_history').upsert({
+      user_id: userId,
+      vimeo_id: vimeoId,
+      progress,
+      last_watched: new Date().toISOString(),
+      completed: progress >= 0.95,
+    })
 
     if (error) throw error
   } catch (error) {
@@ -66,7 +64,7 @@ export async function getWatchHistory(
 
     // Fetch video details from Vimeo in parallel
     const watchHistory = await Promise.all(
-      history.map(async (item) => {
+      history.map(async item => {
         try {
           const videoDetails = await getVideoDetails(item.vimeo_id)
           return {
@@ -74,7 +72,10 @@ export async function getWatchHistory(
             video: videoDetails,
           }
         } catch (error) {
-          console.error(`Error fetching video details for ${item.vimeo_id}:`, error)
+          console.error(
+            `Error fetching video details for ${item.vimeo_id}:`,
+            error
+          )
           return item
         }
       })

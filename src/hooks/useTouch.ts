@@ -4,7 +4,10 @@ interface UseTouchOptions {
   onTap?: () => void
   onDoubleTap?: () => void
   onLongPress?: () => void
-  onSwipe?: (direction: 'left' | 'right' | 'up' | 'down', distance: number) => void
+  onSwipe?: (
+    direction: 'left' | 'right' | 'up' | 'down',
+    distance: number
+  ) => void
   longPressDelay?: number
   doubleTapDelay?: number
   swipeThreshold?: number
@@ -64,7 +67,10 @@ export function useTouch({
       const deltaTime = Date.now() - touchStart.current.time
 
       // Handle swipe
-      if (Math.abs(deltaX) > swipeThreshold || Math.abs(deltaY) > swipeThreshold) {
+      if (
+        Math.abs(deltaX) > swipeThreshold ||
+        Math.abs(deltaY) > swipeThreshold
+      ) {
         const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY)
         if (isHorizontal) {
           onSwipe?.(deltaX > 0 ? 'right' : 'left', Math.abs(deltaX))
@@ -88,7 +94,14 @@ export function useTouch({
 
       touchStart.current = null
     },
-    [doubleTapDelay, isLongPressing, onDoubleTap, onSwipe, onTap, swipeThreshold]
+    [
+      doubleTapDelay,
+      isLongPressing,
+      onDoubleTap,
+      onSwipe,
+      onTap,
+      swipeThreshold,
+    ]
   )
 
   const handleTouchMove = useCallback((event: React.TouchEvent) => {

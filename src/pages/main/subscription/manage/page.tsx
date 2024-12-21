@@ -1,10 +1,7 @@
- import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
-
-import {
-  subscriptionService,
-} from '@/lib/services/subscription'
+import { subscriptionService } from '@/lib/services/subscription'
 import { createClient } from '@/lib/supabase/client'
 import type { UserSubscription } from '@/types/subscription'
 
@@ -91,7 +88,7 @@ export default function ManageSubscription() {
       )
       setMessage('Subscription reactivated successfully')
     } catch (error) {
-        console.error('Error reactivating subscription:', error)
+      console.error('Error reactivating subscription:', error)
       setError('Failed to reactivate subscription')
     } finally {
       setActionLoading(false)

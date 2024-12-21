@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/database.types'
 
-
 type UserProfile = Database['public']['Tables']['users']['Row']
 
 interface ActivityMetrics {

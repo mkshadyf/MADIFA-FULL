@@ -1,8 +1,7 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-
 
 interface ContentStats {
   totalViews: number

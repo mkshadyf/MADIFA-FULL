@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { createVideoPlayer, destroyVideoPlayer } from '@/lib/services/video-player'
+import {
+  createVideoPlayer,
+  destroyVideoPlayer,
+} from '@/lib/services/video-player'
 import type { VideoQuality } from '@/types/video'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { Button } from '@/components/ui/button'
@@ -8,7 +11,6 @@ import { DEFAULT_QUALITIES } from '@/types/video'
 import VideoControls from './VideoControls'
 import BufferingIndicator from './BufferingIndicator'
 import { VideoPlayerProps } from '@/types/video'
-
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   url,
@@ -26,7 +28,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onPause,
   onEnd,
   onTimeUpdate,
-  
+
   onQualityChange,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -37,7 +39,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [duration, setDuration] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentQuality, setCurrentQuality] = useState<VideoQuality>(quality)
-  const [availableQualities, setAvailableQualities] = useState<VideoQuality[]>([...DEFAULT_QUALITIES])
+  const [availableQualities, setAvailableQualities] = useState<VideoQuality[]>([
+    ...DEFAULT_QUALITIES,
+  ])
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isPiPActive, setIsPiPActive] = useState(false)
   const [hoverTime, setHoverTime] = useState<number | null>(null)
@@ -95,7 +99,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       onEnd?.()
     }
 
-    videoRef.current.addEventListener('error', () => handleError(new Error('Video playback error')))
+    videoRef.current.addEventListener('error', () =>
+      handleError(new Error('Video playback error'))
+    )
     videoRef.current.addEventListener('loadedmetadata', handleReady)
     videoRef.current.addEventListener('timeupdate', handleTimeUpdate)
     videoRef.current.addEventListener('durationchange', handleDurationChange)
@@ -105,10 +111,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     return () => {
       if (videoRef.current) {
-        videoRef.current.removeEventListener('error', () => handleError(new Error('Video playback error')))
+        videoRef.current.removeEventListener('error', () =>
+          handleError(new Error('Video playback error'))
+        )
         videoRef.current.removeEventListener('loadedmetadata', handleReady)
         videoRef.current.removeEventListener('timeupdate', handleTimeUpdate)
-        videoRef.current.removeEventListener('durationchange', handleDurationChange)
+        videoRef.current.removeEventListener(
+          'durationchange',
+          handleDurationChange
+        )
         videoRef.current.removeEventListener('play', handlePlay)
         videoRef.current.removeEventListener('pause', handlePause)
         videoRef.current.removeEventListener('ended', handleEnded)
@@ -155,10 +166,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <div className="flex h-full w-full items-center justify-center bg-black">
         <div className="text-center text-white">
           <p className="mb-4">Failed to load video</p>
-          <Button
-            onClick={() => window.location.reload()}
-            variant="primary"
-          >
+          <Button onClick={() => window.location.reload()} variant="primary">
             Retry
           </Button>
         </div>
@@ -231,7 +239,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
               }
             }}
             onSeek={handleSeek}
-            onProgressHover={(e) => {
+            onProgressHover={e => {
               const rect = e.currentTarget.getBoundingClientRect()
               const position = (e.clientX - rect.left) / rect.width
               setHoverTime(position * duration)

@@ -1,5 +1,8 @@
-
-import type { VideoPlayerConfig, VideoPlayerInstance, VideoQuality } from '@/types/video'
+import type {
+  VideoPlayerConfig,
+  VideoPlayerInstance,
+  VideoQuality,
+} from '@/types/video'
 import Hls from 'hls.js'
 
 export function createVideoPlayer(
@@ -41,15 +44,29 @@ export function createVideoPlayer(
 
     instance.hls.on(Hls.Events.ERROR, (event: Event, data: Hls.errorData) => {
       if (data.fatal) {
-        instance.events.onError(new Error(`HLS Error: ${data.type} - ${data.details}`))
+        instance.events.onError(
+          new Error(`HLS Error: ${data.type} - ${data.details}`)
+        )
       }
     })
 
-    instance.hls.on(Hls.Events.LEVEL_SWITCHED, (_event: Event, data: Hls.levelSwitchedData) => {
-      const qualities: VideoQuality[] = ['auto', '240p', '360p', '480p', '720p', '1080p', '2K', '4K']
-      const quality = qualities[data.level + 1] || 'auto'
-      instance.events.onQualityChange(quality)
-    })
+    instance.hls.on(
+      Hls.Events.LEVEL_SWITCHED,
+      (_event: Event, data: Hls.levelSwitchedData) => {
+        const qualities: VideoQuality[] = [
+          'auto',
+          '240p',
+          '360p',
+          '480p',
+          '720p',
+          '1080p',
+          '2K',
+          '4K',
+        ]
+        const quality = qualities[data.level + 1] || 'auto'
+        instance.events.onQualityChange(quality)
+      }
+    )
   }
 
   return instance
@@ -73,16 +90,29 @@ export function loadSource(instance: VideoPlayerInstance, url: string) {
   }
 }
 
-export function setQuality(instance: VideoPlayerInstance, quality: VideoQuality) {
+export function setQuality(
+  instance: VideoPlayerInstance,
+  quality: VideoQuality
+) {
   if (!instance.hls) return
 
   const levels = instance.hls.levels
   if (!levels.length) return
 
-  const qualityLevels: VideoQuality[] = ['auto', '240p', '360p', '480p', '720p', '1080p', '2K', '4K']
+  const qualityLevels: VideoQuality[] = [
+    'auto',
+    '240p',
+    '360p',
+    '480p',
+    '720p',
+    '1080p',
+    '2K',
+    '4K',
+  ]
   const levelIndex = qualityLevels.indexOf(quality) - 1 // -1 for auto
 
-  if (levelIndex === -2) { // auto
+  if (levelIndex === -2) {
+    // auto
     instance.hls.currentLevel = -1
   } else if (levelIndex >= 0 && levelIndex < levels.length) {
     instance.hls.currentLevel = levelIndex

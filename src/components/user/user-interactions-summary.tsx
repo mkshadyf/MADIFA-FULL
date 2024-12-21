@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { useNavigate } from 'react-router-dom'
@@ -16,7 +16,7 @@ export default function UserInteractionsSummary() {
   const [watchlist, setWatchlist] = useState<Content[]>([])
   const [ratings, setRatings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const loadInteractions = async () => {

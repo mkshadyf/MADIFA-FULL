@@ -1,10 +1,8 @@
- import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { getCategories } from '@/lib/services/categories'
 import type { Category } from '@/types/content'
-
- 
 
 export default function CategoryBrowser() {
   const [categories, setCategories] = useState<Category[]>([])

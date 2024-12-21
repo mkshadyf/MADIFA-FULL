@@ -1,5 +1,5 @@
-import React from "react"
- import {
+import React from 'react'
+import {
   CategoryScale,
   Chart as ChartJS,
   ChartOptions,
@@ -12,20 +12,32 @@ import React from "react"
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 
- import { useQueueAnalytics } from '@/hooks/useQueueAnalytics'
+import { useQueueAnalytics } from '@/hooks/useQueueAnalytics'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 interface QueueAnalyticsChartProps {
   className?: string
 }
 
-export default function QueueAnalyticsChart ({ className = '' }: QueueAnalyticsChartProps) {
+export default function QueueAnalyticsChart({
+  className = '',
+}: QueueAnalyticsChartProps) {
   const { history, isLoading } = useQueueAnalytics()
 
   if (isLoading || !history) {
     return (
-      <div className={`${className} flex h-64 items-center justify-center rounded-lg bg-gray-900`}>
+      <div
+        className={`${className} flex h-64 items-center justify-center rounded-lg bg-gray-900`}
+      >
         <span className="text-gray-400">Loading analytics...</span>
       </div>
     )

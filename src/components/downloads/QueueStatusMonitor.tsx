@@ -24,19 +24,29 @@ export default function QueueStatusMonitor() {
 
   useEffect(() => {
     // Filter queue items by status
-    const activeDownloads = queueItems.filter(item => item.status === 'downloading')
+    const activeDownloads = queueItems.filter(
+      item => item.status === 'downloading'
+    )
     const pausedDownloads = queueItems.filter(item => item.status === 'paused')
     const failedDownloads = queueItems.filter(item => item.status === 'error')
     // Calculate average speed from active downloads
-    const totalSpeed = activeDownloads.reduce<number>((sum, item) => sum + (item.content?.fileSize || 0), 0)
-    const averageSpeed = activeDownloads.length ? totalSpeed / activeDownloads.length : 0
+    const totalSpeed = activeDownloads.reduce<number>(
+      (sum, item) => sum + (item.content?.fileSize || 0),
+      0
+    )
+    const averageSpeed = activeDownloads.length
+      ? totalSpeed / activeDownloads.length
+      : 0
 
-    // Calculate estimated time remaining 
+    // Calculate estimated time remaining
     const remainingBytes = queueItems.reduce<number>((sum, item) => {
-      const remaining = (item.content?.size || 0) * (1 - (item.progress || 0) / 100)
+      const remaining =
+        (item.content?.size || 0) * (1 - (item.progress || 0) / 100)
       return sum + remaining
     }, 0)
-    const estimatedTimeRemaining = averageSpeed ? remainingBytes / averageSpeed : 0
+    const estimatedTimeRemaining = averageSpeed
+      ? remainingBytes / averageSpeed
+      : 0
 
     setStats({
       activeDownloads: activeDownloads.length,
@@ -54,19 +64,27 @@ export default function QueueStatusMonitor() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="text-sm text-gray-400">Active Downloads</p>
-          <p className="text-2xl font-semibold text-white">{stats.activeDownloads}</p>
+          <p className="text-2xl font-semibold text-white">
+            {stats.activeDownloads}
+          </p>
         </div>
         <div>
           <p className="text-sm text-gray-400">Paused</p>
-          <p className="text-2xl font-semibold text-white">{stats.pausedDownloads}</p>
+          <p className="text-2xl font-semibold text-white">
+            {stats.pausedDownloads}
+          </p>
         </div>
         <div>
           <p className="text-sm text-gray-400">Failed</p>
-          <p className="text-2xl font-semibold text-red-500">{stats.failedDownloads}</p>
+          <p className="text-2xl font-semibold text-red-500">
+            {stats.failedDownloads}
+          </p>
         </div>
         <div>
           <p className="text-sm text-gray-400">Average Speed</p>
-          <p className="text-2xl font-semibold text-white">{formatBytes(stats.averageSpeed)}/s</p>
+          <p className="text-2xl font-semibold text-white">
+            {formatBytes(stats.averageSpeed)}/s
+          </p>
         </div>
       </div>
 

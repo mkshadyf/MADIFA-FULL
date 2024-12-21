@@ -1,11 +1,10 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { authService } from '@/lib/services/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
-
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')

@@ -59,3 +59,23 @@ export interface UserProfile {
   subscription_tier: 'free' | 'premium' | 'premium_plus'
   created_at: string
 }
+
+// Core type definitions
+export interface BaseError extends Error {
+  status: number;
+  code: string;
+  details?: unknown;
+}
+
+export interface ApiResponse<T = unknown> {
+  data: T;
+  error: null | BaseError;
+}
+
+// Re-export types explicitly to avoid ambiguity
+export type { VideoQuality as AppVideoQuality } from './auth'
+export * from './content'
+export * from './subscription'
+export * from './user'
+export type { VideoQuality as VimeoVideoQuality } from './vimeo'
+

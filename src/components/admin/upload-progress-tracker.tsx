@@ -1,8 +1,7 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-
 
 interface UploadStatus {
   id: string
@@ -13,7 +12,7 @@ interface UploadStatus {
   created_at: string
 }
 
-export default function UploadProgressTracker () {
+export default function UploadProgressTracker() {
   const [uploads, setUploads] = useState<UploadStatus[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -54,7 +53,9 @@ export default function UploadProgressTracker () {
           } else if (payload.eventType === 'UPDATE') {
             setUploads(prev =>
               prev.map(upload =>
-                upload.id === payload.new.id ? { ...upload, ...payload.new } : upload
+                upload.id === payload.new.id
+                  ? { ...upload, ...payload.new }
+                  : upload
               )
             )
           }
@@ -95,7 +96,8 @@ export default function UploadProgressTracker () {
               <div>
                 <h3 className="font-medium text-white">{upload.filename}</h3>
                 <p className={`text-sm ${getStatusColor(upload.status)}`}>
-                  {upload.status.charAt(0).toUpperCase() + upload.status.slice(1)}
+                  {upload.status.charAt(0).toUpperCase() +
+                    upload.status.slice(1)}
                 </p>
               </div>
               <span className="text-sm text-gray-400">
@@ -112,7 +114,9 @@ export default function UploadProgressTracker () {
               />
             </div>
 
-            {upload.error ? <p className="mt-2 text-sm text-red-400">{upload.error}</p> : null}
+            {upload.error ? (
+              <p className="mt-2 text-sm text-red-400">{upload.error}</p>
+            ) : null}
 
             <div className="flex items-center justify-between text-sm text-gray-400">
               <span>{Math.round(upload.progress)}%</span>

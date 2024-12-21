@@ -36,7 +36,10 @@ export interface Database {
           subscription_tier: 'free' | 'premium' | 'premium_plus'
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['users']['Row'], 'id' | 'created_at'>
+        Insert: Omit<
+          Database['public']['Tables']['users']['Row'],
+          'id' | 'created_at'
+        >
         Update: Partial<Database['public']['Tables']['users']['Row']>
       }
       content: {
@@ -62,7 +65,10 @@ export interface Database {
             quality?: string
           }
         }
-        Insert: Omit<Database['public']['Tables']['content']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Insert: Omit<
+          Database['public']['Tables']['content']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
         Update: Partial<Database['public']['Tables']['content']['Row']>
       }
       videos: {
@@ -81,7 +87,10 @@ export interface Database {
           fps: number
           metadata: Record<string, any>
         }
-        Insert: Omit<Database['public']['Tables']['videos']['Row'], 'id' | 'created_at'>
+        Insert: Omit<
+          Database['public']['Tables']['videos']['Row'],
+          'id' | 'created_at'
+        >
         Update: Partial<Database['public']['Tables']['videos']['Row']>
       }
       subscriptions: {
@@ -98,7 +107,10 @@ export interface Database {
           payment_method_id?: string
           payment_failure_count?: number
         }
-        Insert: Omit<Database['public']['Tables']['subscriptions']['Row'], 'id' | 'created_at'>
+        Insert: Omit<
+          Database['public']['Tables']['subscriptions']['Row'],
+          'id' | 'created_at'
+        >
         Update: Partial<Database['public']['Tables']['subscriptions']['Row']>
       }
       user_preferences: {
@@ -114,7 +126,10 @@ export interface Database {
           storage_quota: number
           storage_used: number
         }
-        Insert: Omit<Database['public']['Tables']['user_preferences']['Row'], 'id' | 'created_at'>
+        Insert: Omit<
+          Database['public']['Tables']['user_preferences']['Row'],
+          'id' | 'created_at'
+        >
         Update: Partial<Database['public']['Tables']['user_preferences']['Row']>
       }
       download_queue: {
@@ -129,7 +144,10 @@ export interface Database {
           error?: string
           priority: number
         }
-        Insert: Omit<Database['public']['Tables']['download_queue']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Insert: Omit<
+          Database['public']['Tables']['download_queue']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
         Update: Partial<Database['public']['Tables']['download_queue']['Row']>
       }
     }

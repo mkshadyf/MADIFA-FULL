@@ -38,7 +38,8 @@ export default function QueuePriorityVisualization({
       setPriorityGroups({
         high: itemsWithPriority.filter(item => item.calculatedPriority >= 0.7),
         medium: itemsWithPriority.filter(
-          item => item.calculatedPriority >= 0.4 && item.calculatedPriority < 0.7
+          item =>
+            item.calculatedPriority >= 0.4 && item.calculatedPriority < 0.7
         ),
         low: itemsWithPriority.filter(item => item.calculatedPriority < 0.4),
       })
@@ -61,30 +62,46 @@ export default function QueuePriorityVisualization({
   }
 
   const getTotalSize = (items: QueueItem[]): number => {
-    return items.reduce((total: number, item: QueueItem) => total + (item.content.size || 0), 0)
+    return items.reduce(
+      (total: number, item: QueueItem) => total + (item.content.size || 0),
+      0
+    )
   }
 
   return (
     <div className={`${className} rounded-lg bg-gray-900 p-4`}>
-      <h3 className="mb-4 text-lg font-semibold text-white">Queue Priority Distribution</h3>
+      <h3 className="mb-4 text-lg font-semibold text-white">
+        Queue Priority Distribution
+      </h3>
 
       <div className="space-y-4">
         {(['high', 'medium', 'low'] as const).map(priority => (
-          <div key={priority} className={`rounded-lg border p-4 ${getPriorityColor(priority)}`}>
+          <div
+            key={priority}
+            className={`rounded-lg border p-4 ${getPriorityColor(priority)}`}
+          >
             <div className="mb-2 flex items-center justify-between">
-              <span className="font-medium capitalize text-white">{priority} Priority</span>
-              <span className="text-sm text-gray-400">{priorityGroups[priority].length} items</span>
+              <span className="font-medium capitalize text-white">
+                {priority} Priority
+              </span>
+              <span className="text-sm text-gray-400">
+                {priorityGroups[priority].length} items
+              </span>
             </div>
 
             {priorityGroups[priority].length > 0 && (
               <>
                 <div className="mb-2 text-sm text-gray-400">
-                  Total Size: {formatBytes(getTotalSize(priorityGroups[priority]))}
+                  Total Size:{' '}
+                  {formatBytes(getTotalSize(priorityGroups[priority]))}
                 </div>
 
                 <div className="max-h-32 space-y-2 overflow-y-auto">
                   {priorityGroups[priority].map(item => (
-                    <div key={item.id} className="flex items-center justify-between text-sm">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between text-sm"
+                    >
                       <span className="mr-4 flex-1 truncate text-gray-300">
                         {item.content.title}
                       </span>

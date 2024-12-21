@@ -1,13 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 
-
 export type VideoQuality = 'hd' | 'sd' | 'mobile'
 
 export async function getPlaybackUrl(
   videoId: string,
   quality?: VideoQuality
 ): Promise<string> {
-
   // Since VimeoVideo doesn't have files property, we'll need to handle this differently
   // For now returning the direct video URL
   return `https://player.vimeo.com/video/${videoId}`

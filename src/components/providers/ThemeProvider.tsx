@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { createContext, useContext, useEffect, useState } from 'react'
 
 type Theme = 'light' | 'dark' | 'system'
@@ -23,7 +23,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (savedTheme) {
       setTheme(savedTheme)
       if (savedTheme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+          .matches
           ? 'dark'
           : 'light'
         root.setAttribute('data-theme', systemTheme)
@@ -41,7 +42,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setTheme(newTheme)
 
       if (newTheme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+          .matches
           ? 'dark'
           : 'light'
         root.setAttribute('data-theme', systemTheme)

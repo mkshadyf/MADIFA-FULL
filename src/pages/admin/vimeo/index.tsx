@@ -1,11 +1,11 @@
- import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { VimeoVideo } from '@/types/vimeo'
 import { vimeoService } from '@/lib/services/vimeo'
 import { toast } from '@/components/ui/toast'
 import { BatchUploader } from '@/components/admin/BatchUploader'
 import { VideoCard } from '@/components/admin/VideoCard'
- 
+
 export default function VimeoManagement() {
   const [videos, setVideos] = useState<VimeoVideo[]>([])
   const [loading, setLoading] = useState(true)

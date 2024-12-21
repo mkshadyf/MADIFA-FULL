@@ -1,10 +1,9 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import type { Tables } from '@/types/supabase'
 import { createClient } from '@/lib/supabase/client'
-
 
 type Category = Tables['categories']['Row']
 

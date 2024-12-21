@@ -1,9 +1,9 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
 
- interface SyncJob {
+interface SyncJob {
   id: string
   user_id: string
   subscription_id: string

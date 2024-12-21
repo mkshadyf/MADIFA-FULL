@@ -1,15 +1,17 @@
- import { useState } from 'react'
+import { useState } from 'react'
 import { Vimeo } from '@vimeo/vimeo'
 
 import type { VimeoVideo } from '@/types/vimeo'
-
 
 interface MetadataEditorProps {
   video: VimeoVideo
   onUpdate: () => void
 }
 
-export default function VimeoMetadataEditor({ video, onUpdate }: MetadataEditorProps) {
+export default function VimeoMetadataEditor({
+  video,
+  onUpdate,
+}: MetadataEditorProps) {
   const [title, setTitle] = useState(video.name)
   const [description, setDescription] = useState(video.description)
   const [saving, setSaving] = useState(false)
@@ -52,7 +54,10 @@ export default function VimeoMetadataEditor({ video, onUpdate }: MetadataEditorP
       <h3 className="mb-4 text-lg font-semibold">Edit Video Details</h3>
       <div className="space-y-4">
         <div>
-          <label htmlFor="video-title" className="mb-1 block text-sm font-medium text-gray-300">
+          <label
+            htmlFor="video-title"
+            className="mb-1 block text-sm font-medium text-gray-300"
+          >
             Title
           </label>
           <input
@@ -66,7 +71,10 @@ export default function VimeoMetadataEditor({ video, onUpdate }: MetadataEditorP
           />
         </div>
         <div>
-          <label htmlFor="video-description" className="mb-1 block text-sm font-medium text-gray-300">
+          <label
+            htmlFor="video-description"
+            className="mb-1 block text-sm font-medium text-gray-300"
+          >
             Description
           </label>
           <textarea
@@ -89,7 +97,7 @@ export default function VimeoMetadataEditor({ video, onUpdate }: MetadataEditorP
               : 'bg-indigo-600 hover:bg-indigo-700'
           } transition-colors`}
           role="button"
-         >
+        >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>

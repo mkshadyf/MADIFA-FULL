@@ -1,4 +1,4 @@
- import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useActivityTracking } from '@/hooks/useActivityTracking'
@@ -22,7 +22,7 @@ export default function SearchInterface() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
   const debouncedQuery = useDebounce(query, 300)
   const { trackSearch } = useActivityTracking()
 

@@ -6,7 +6,6 @@ import { useStorageQuota } from '@/hooks/useStorageQuota'
 
 import { IconButton } from '../ui/button'
 
-
 interface QueueCleanupManagerProps {
   className?: string
   onCleanup?: () => void
@@ -73,7 +72,7 @@ export default function QueueCleanupManager({
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Queue Cleanup</h3>
         <IconButton
-          label="Clean queue"   
+          label="Clean queue"
           icon="trash"
           onClick={handleCleanup}
           disabled={isProcessing || stats.count === 0}

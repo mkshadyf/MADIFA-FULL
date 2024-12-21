@@ -5,7 +5,6 @@ import { vimeoService } from '@/lib/services/vimeo'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 
-
 interface ThumbnailManagerProps {
   videoId: string
   currentThumbnail?: string

@@ -11,7 +11,7 @@ class ContentSyncService {
   private syncInProgress = false
   private lastSyncTime: Date | null = null
 
-  private constructor() { }
+  private constructor() {}
 
   static getInstance(): ContentSyncService {
     if (!ContentSyncService.instance) {

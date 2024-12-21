@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react'
-  
+
 import { adService } from '@/lib/services/ads'
 import { usePerformance } from '@/hooks/usePerformance'
 
@@ -24,7 +24,13 @@ export default function AdUnit({
       await measureOperation('loadAd', async () => {
         await adService.showAd({
           unitId: slot || import.meta.env.VITE_APPLOVIN_INTERSTITIAL_ID,
-          format: format === 'auto' || format === 'fluid' || format === 'rectangle' || format === 'vertical' ? 'banner' : 'interstitial'
+          format:
+            format === 'auto' ||
+            format === 'fluid' ||
+            format === 'rectangle' ||
+            format === 'vertical'
+              ? 'banner'
+              : 'interstitial',
         })
       })
     }

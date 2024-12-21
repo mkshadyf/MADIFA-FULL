@@ -1,8 +1,7 @@
-import React from "react"
+import React from 'react'
 import { type FC } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
- 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 interface SettingsPageProps {
@@ -11,7 +10,6 @@ interface SettingsPageProps {
 
 const SettingsPage: FC<SettingsPageProps> = () => {
   const { isLoading } = useAuth()
-
 
   if (isLoading) {
     return <LoadingSpinner />

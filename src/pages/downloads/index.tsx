@@ -7,7 +7,6 @@ import { formatBytes } from '@/lib/utils/format'
 import { useToast } from '@/hooks/useToast'
 import { IconButton } from '@/components/ui/button'
 
-
 export default function DownloadsPage() {
   const [downloads, setDownloads] = useState<Content[]>([])
   const [storageInfo, setStorageInfo] = useState<{

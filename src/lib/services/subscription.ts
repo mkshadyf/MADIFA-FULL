@@ -60,7 +60,6 @@ export class SubscriptionService {
       }
 
       return subscription.status || 'inactive'
-
     } catch (error) {
       throw createAPIError(
         500,
@@ -159,12 +158,12 @@ export class SubscriptionService {
     try {
       const updates = cancelImmediately
         ? {
-          status: 'cancelled' as SubscriptionStatus,
-          cancelled_at: new Date().toISOString(),
-        }
+            status: 'cancelled' as SubscriptionStatus,
+            cancelled_at: new Date().toISOString(),
+          }
         : {
-          cancel_at_period_end: true,
-        }
+            cancel_at_period_end: true,
+          }
 
       const { error } = await supabase
         .from('subscriptions')
@@ -261,4 +260,3 @@ export class SubscriptionService {
   }
 }
 export const subscriptionService = new SubscriptionService()
-

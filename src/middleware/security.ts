@@ -4,7 +4,6 @@ import helmet from 'helmet'
 import hpp from 'hpp'
 import xss from 'xss-clean'
 
-
 // Rate limiting
 export const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

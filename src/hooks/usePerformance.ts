@@ -31,7 +31,9 @@ export function usePerformance(componentName: string) {
         const start = performance.now()
         const result = await operation()
         const end = performance.now()
-        console.log(`${componentName}.${name} took ${(end - start).toFixed(2)}ms`)
+        console.log(
+          `${componentName}.${name} took ${(end - start).toFixed(2)}ms`
+        )
         return result
       }
       return operation()

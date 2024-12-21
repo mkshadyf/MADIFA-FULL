@@ -18,7 +18,9 @@ export default function ContentCategoryManager({
   onCategorySelect,
 }: ContentCategoryManagerProps) {
   const { data: contents } = useContent()
-  const [categoryStats, setCategoryStats] = useState<Record<string, CategoryStats>>({})
+  const [categoryStats, setCategoryStats] = useState<
+    Record<string, CategoryStats>
+  >({})
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [isExpanded, setIsExpanded] = useState<Record<string, boolean>>({})
 
@@ -40,7 +42,7 @@ export default function ContentCategoryManager({
       if (typeof content.size === 'number') {
         stats[category].totalSize += content.size
       }
-      
+
       if (typeof content.duration === 'number') {
         stats[category].averageDuration =
           (stats[category].averageDuration * (stats[category].count - 1) +
@@ -54,8 +56,11 @@ export default function ContentCategoryManager({
 
   const getTotalStorageUsage = (): number => {
     if (!contents) return 0
-    return contents.reduce((total: number, content: Content) => 
-      total + (typeof content.size === 'number' ? content.size : 0), 0)
+    return contents.reduce(
+      (total: number, content: Content) =>
+        total + (typeof content.size === 'number' ? content.size : 0),
+      0
+    )
   }
 
   const handleCategoryClick = (category: string) => {

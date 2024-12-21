@@ -17,14 +17,17 @@ interface Content {
   category: string
 }
 
-export default function BrowsePage () {
+export default function BrowsePage() {
   const supabase = createClient()
   const [selectedCategory, setSelectedCategory] = React.useState<string>('all')
 
   const { data: content = [], isLoading } = useQuery<Content[]>({
     queryKey: ['browse-content', selectedCategory],
     queryFn: async () => {
-      let query = supabase.from('content').select('*').order('created_at', { ascending: false })
+      let query = supabase
+        .from('content')
+        .select('*')
+        .order('created_at', { ascending: false })
 
       if (selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory)
@@ -42,7 +45,8 @@ export default function BrowsePage () {
     { id: 'music', name: 'Music' },
   ]
 
-  const { content: filteredContent, loading: filterLoading } = useFilteredContent()
+  const { content: filteredContent, loading: filterLoading } =
+    useFilteredContent()
 
   const displayContent = selectedCategory === 'all' ? content : filteredContent
 
@@ -83,7 +87,11 @@ export default function BrowsePage () {
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {displayContent.map(item => (
-              <Link key={item.id} to={`/watch/${item.id}`} className="content-card group">
+              <Link
+                key={item.id}
+                to={`/watch/${item.id}`}
+                className="content-card group"
+              >
                 <div className="relative aspect-video overflow-hidden rounded-lg">
                   <img
                     src={item.thumbnail_url}
@@ -91,8 +99,12 @@ export default function BrowsePage () {
                     className="h-full w-full object-cover"
                   />
                   <div className="content-card-overlay flex flex-col justify-end p-4">
-                    <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                    <p className="line-clamp-2 text-sm text-gray-300">{item.description}</p>
+                    <h3 className="text-lg font-bold text-white">
+                      {item.title}
+                    </h3>
+                    <p className="line-clamp-2 text-sm text-gray-300">
+                      {item.description}
+                    </p>
                   </div>
                 </div>
               </Link>

@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
@@ -7,7 +7,6 @@ import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { VideoPlayer } from '@/components/video/VideoPlayer'
-
 
 interface VideoData {
   id: string
@@ -79,7 +78,11 @@ export default function WatchPage() {
             </div>
           ) : video ? (
             <div className="space-y-4">
-              <VideoPlayer url={video.url} thumbnail={video.thumbnail} title={video.title} />
+              <VideoPlayer
+                url={video.url}
+                thumbnail={video.thumbnail}
+                title={video.title}
+              />
               <h1 className="text-2xl font-bold">{video.title}</h1>
               <p className="text-gray-600">{video.description}</p>
             </div>

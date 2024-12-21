@@ -1,4 +1,4 @@
- import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { VimeoVideo } from '@/types/vimeo'
 
@@ -66,9 +66,7 @@ export default function VimeoAnalytics() {
                 </div>
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Impressions</p>
-                  <p className="text-2xl font-bold">
-                    {video.stats.plays}
-                  </p>
+                  <p className="text-2xl font-bold">{video.stats.plays}</p>
                 </div>
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Watch Time (hrs)</p>

@@ -1,1 +1,1 @@
- export { default } from '@/components/auth/Onboarding'
+export { default } from '@/components/auth/Onboarding'

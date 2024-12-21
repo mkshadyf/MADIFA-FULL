@@ -23,14 +23,20 @@ function mapCustomerToData(customer: Stripe.Customer): CustomerData {
     metadata: customer.metadata || {},
     created: customer.created,
     subscriptions: [],
-    default_payment_method: typeof customer.default_source === 'string' ? customer.default_source : null,
+    default_payment_method:
+      typeof customer.default_source === 'string'
+        ? customer.default_source
+        : null,
     invoice_settings: {
-      default_payment_method: customer.invoice_settings?.default_payment_method || null,
+      default_payment_method:
+        customer.invoice_settings?.default_payment_method || null,
     },
   }
 }
 
-function mapSubscriptionToData(subscription: Stripe.Subscription): SubscriptionData {
+function mapSubscriptionToData(
+  subscription: Stripe.Subscription
+): SubscriptionData {
   return {
     id: subscription.id,
     customer: subscription.customer as string,
@@ -58,7 +64,9 @@ function mapSubscriptionToData(subscription: Stripe.Subscription): SubscriptionD
   }
 }
 
-function mapInvoiceToData(invoice: Stripe.Invoice | Stripe.UpcomingInvoice): InvoiceData {
+function mapInvoiceToData(
+  invoice: Stripe.Invoice | Stripe.UpcomingInvoice
+): InvoiceData {
   return {
     id: 'id' in invoice ? invoice.id : 'upcoming',
     customer: invoice.customer as string,
@@ -271,9 +279,12 @@ export async function listPaymentMethods(
   customerId: string
 ): Promise<PaymentMethodData[]> {
   try {
-    const paymentMethods = await stripe.customers.listPaymentMethods(customerId, {
-      type: 'card',
-    })
+    const paymentMethods = await stripe.customers.listPaymentMethods(
+      customerId,
+      {
+        type: 'card',
+      }
+    )
     return paymentMethods.data as PaymentMethodData[]
   } catch (error) {
     throw handleStripeError(error as any)

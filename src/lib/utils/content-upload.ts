@@ -4,7 +4,10 @@ interface UploadOptions {
   onProgress?: (progress: UploadProgress) => void
 }
 
-export async function uploadContent(file: File, options?: UploadOptions): Promise<string> {
+export async function uploadContent(
+  file: File,
+  options?: UploadOptions
+): Promise<string> {
   // Upload implementation
   const formData = new FormData()
   formData.append('file', file)
@@ -12,11 +15,11 @@ export async function uploadContent(file: File, options?: UploadOptions): Promis
   const xhr = new XMLHttpRequest()
 
   return new Promise((resolve, reject) => {
-    xhr.upload.onprogress = (event) => {
+    xhr.upload.onprogress = event => {
       options?.onProgress?.({
         loaded: event.loaded,
         total: event.total,
-        percent: (event.loaded / event.total) * 100
+        percent: (event.loaded / event.total) * 100,
       })
     }
 

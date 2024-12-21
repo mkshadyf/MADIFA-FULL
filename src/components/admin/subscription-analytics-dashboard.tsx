@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 
 import type { PlanId } from '@/lib/config/subscription-plans'

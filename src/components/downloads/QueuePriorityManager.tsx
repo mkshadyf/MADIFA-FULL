@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { formatBytes } from '@/lib/utils/format'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
@@ -25,9 +25,9 @@ export default function QueuePriorityManager({
   const { queueItems } = useDownloadQueue()
   const { calculatePriority, optimizeQueue } = useQueuePriority()
   const [isProcessing, setIsProcessing] = useState(false)
-  const [priorityMode, setPriorityMode] = useState<'size' | 'expiration' | 'popularity' | 'custom'>(
-    'size'
-  )
+  const [priorityMode, setPriorityMode] = useState<
+    'size' | 'expiration' | 'popularity' | 'custom'
+  >('size')
 
   const handlePriorityChange = async () => {
     if (isProcessing) return
@@ -44,7 +44,9 @@ export default function QueuePriorityManager({
       const sortedItems = [...itemsWithPriority]
       switch (priorityMode) {
         case 'size':
-          sortedItems.sort((a, b) => (a.content.fileSize || 0) - (b.content.fileSize || 0))
+          sortedItems.sort(
+            (a, b) => (a.content.fileSize || 0) - (b.content.fileSize || 0)
+          )
           break
         case 'expiration':
           sortedItems.sort((a, b) => {
@@ -54,7 +56,9 @@ export default function QueuePriorityManager({
           })
           break
         case 'popularity':
-          sortedItems.sort((a, b) => (b.calculatedPriority || 0) - (a.calculatedPriority || 0))
+          sortedItems.sort(
+            (a, b) => (b.calculatedPriority || 0) - (a.calculatedPriority || 0)
+          )
           break
         case 'custom':
           // Keep current order but update priorities
@@ -86,11 +90,15 @@ export default function QueuePriorityManager({
 
       <div className="space-y-4">
         <div>
-          <label className="mb-2 block text-sm text-gray-400">Priority Mode</label>
+          <label className="mb-2 block text-sm text-gray-400">
+            Priority Mode
+          </label>
           <select
             aria-label="Priority Mode"
             value={priorityMode}
-            onChange={e => setPriorityMode(e.target.value as typeof priorityMode)}
+            onChange={e =>
+              setPriorityMode(e.target.value as typeof priorityMode)
+            }
             className="w-full rounded-lg border border-gray-700 bg-gray-800 p-2 text-white"
           >
             <option value="size">By Size (Smallest First)</option>
@@ -104,20 +112,32 @@ export default function QueuePriorityManager({
           <p>Total Items: {queueItems.length}</p>
           <p>
             Total Size:{' '}
-            {formatBytes(queueItems.reduce((total, item) => total + (item.content.fileSize || 0), 0))}
+            {formatBytes(
+              queueItems.reduce(
+                (total, item) => total + (item.content.fileSize || 0),
+                0
+              )
+            )}
           </p>
         </div>
 
         {queueItems.length > 0 && (
           <div className="mt-4 border-t border-gray-800 pt-4">
-            <h4 className="mb-2 text-sm font-medium text-gray-300">Current Queue Order</h4>
+            <h4 className="mb-2 text-sm font-medium text-gray-300">
+              Current Queue Order
+            </h4>
             <div className="max-h-48 space-y-2 overflow-y-auto">
               {queueItems.map((item, index) => (
-                <div key={item.id} className="flex items-center justify-between text-sm">
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between text-sm"
+                >
                   <span className="text-gray-400">
                     {index + 1}. {item.content.title}
                   </span>
-                  <span className="text-gray-500">{formatBytes(item.content.fileSize || 0)}</span>
+                  <span className="text-gray-500">
+                    {formatBytes(item.content.fileSize || 0)}
+                  </span>
                 </div>
               ))}
             </div>

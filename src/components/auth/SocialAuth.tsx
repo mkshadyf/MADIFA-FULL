@@ -1,4 +1,3 @@
- 
 import type { JSX } from 'react'
 import { handleError } from '@/lib/utils/error-handler'
 
@@ -10,13 +9,13 @@ type ErrorContext = {
 
 function createErrorContext(
   component: string,
-  method: string, 
+  method: string,
   action: string
 ): ErrorContext {
   return {
     component,
     method,
-    action
+    action,
   }
 }
 

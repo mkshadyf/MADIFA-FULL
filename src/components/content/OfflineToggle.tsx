@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useOfflineContent } from '@/hooks/useOfflineContent'
 
 interface OfflineToggleProps {
@@ -9,7 +9,7 @@ export default function OfflineToggle({ contentId }: OfflineToggleProps) {
   const {
     isAvailableOffline,
     isProcessing,
-    downloadForOffline, 
+    downloadForOffline,
     removeFromOffline,
   } = useOfflineContent(contentId)
 

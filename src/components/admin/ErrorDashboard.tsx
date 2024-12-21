@@ -1,4 +1,4 @@
- import { useState } from 'react'
+import { useState } from 'react'
 import {
   Bar,
   BarChart,
@@ -10,7 +10,7 @@ import {
   YAxis,
 } from 'recharts'
 
- import { useDataFetch } from '@/hooks/useDataFetch'
+import { useDataFetch } from '@/hooks/useDataFetch'
 interface ErrorReport {
   id: string
   code: string
@@ -24,10 +24,15 @@ interface ErrorStats {
   [key: string]: number
 }
 
-async function getErrorReports(dateRange: { startDate: string; endDate: string }): Promise<ErrorReport[]> {
+async function getErrorReports(dateRange: {
+  startDate: string
+  endDate: string
+}): Promise<ErrorReport[]> {
   try {
     // Fetch error reports from your backend/database
-    const response = await fetch(`/api/error-reports?start=${dateRange.startDate}&end=${dateRange.endDate}`)
+    const response = await fetch(
+      `/api/error-reports?start=${dateRange.startDate}&end=${dateRange.endDate}`
+    )
     if (!response.ok) {
       throw new Error('Failed to fetch error reports')
     }
@@ -38,10 +43,15 @@ async function getErrorReports(dateRange: { startDate: string; endDate: string }
   }
 }
 
-async function getErrorStats(dateRange: { startDate: string; endDate: string }): Promise<ErrorStats> {
+async function getErrorStats(dateRange: {
+  startDate: string
+  endDate: string
+}): Promise<ErrorStats> {
   try {
     // Fetch error statistics from your backend/database
-    const response = await fetch(`/api/error-stats?start=${dateRange.startDate}&end=${dateRange.endDate}`)
+    const response = await fetch(
+      `/api/error-stats?start=${dateRange.startDate}&end=${dateRange.endDate}`
+    )
     if (!response.ok) {
       throw new Error('Failed to fetch error statistics')
     }
@@ -63,7 +73,9 @@ export function ErrorDashboard() {
     () => getErrorReports(dateRange)
   )
 
-  const { data: errorStats } = useDataFetch(['error-stats', dateRange], () => getErrorStats(dateRange))
+  const { data: errorStats } = useDataFetch(['error-stats', dateRange], () =>
+    getErrorStats(dateRange)
+  )
 
   const chartData = errorStats
     ? Object.entries(errorStats).map(([type, count]) => ({

@@ -7,17 +7,19 @@ import { Button } from '@/components/ui/button'
 import { VideoPlayer } from '../video/VideoPlayer'
 import { SecurityManager } from './SecurityManager'
 
-
 interface VideoCardProps {
   video: VimeoVideo
   onDelete: (videoId: string) => Promise<void>
-  onSecurityUpdate: (videoId: string, security: {
-    view: 'disable' | 'nobody' | 'unlisted' | 'anybody'
-    embed: 'private' | 'public' 
-    comments: 'nobody' | 'all'
-    download: boolean
-    add: boolean
-  }) => Promise<void>
+  onSecurityUpdate: (
+    videoId: string,
+    security: {
+      view: 'disable' | 'nobody' | 'unlisted' | 'anybody'
+      embed: 'private' | 'public'
+      comments: 'nobody' | 'all'
+      download: boolean
+      add: boolean
+    }
+  ) => Promise<void>
   onThumbnailUpdate: (thumbnailUrl: string) => Promise<void>
 }
 
@@ -46,7 +48,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
   const handleSecurityUpdate = async (security: {
     view: 'disable' | 'nobody' | 'unlisted' | 'anybody'
     embed: 'private' | 'public'
-    comments: 'nobody' | 'all' 
+    comments: 'nobody' | 'all'
     download: boolean
     add: boolean
   }) => {
@@ -93,35 +95,54 @@ export const VideoCard: React.FC<VideoCardProps> = ({
             Manage Security
           </Button>
           <Button
-            onClick={() => handleThumbnailUpdate(video.pictures?.base_link || '')}
+            onClick={() =>
+              handleThumbnailUpdate(video.pictures?.base_link || '')
+            }
             variant="secondary"
             size="sm"
             isLoading={isUpdatingThumbnail}
           >
             Update Thumbnail
           </Button>
-          <Button onClick={handleDelete} variant="outline" size="sm" isLoading={isDeleting}>
+          <Button
+            onClick={handleDelete}
+            variant="outline"
+            size="sm"
+            isLoading={isDeleting}
+          >
             Delete
           </Button>
         </div>
       </div>
 
-      <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-50">
+      <Dialog
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        className="relative z-50"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <div className="flex min-h-full items-center justify-center">
             <Dialog.Panel className="mx-auto max-w-sm rounded-lg bg-white p-6">
-              <Dialog.Title className="text-lg font-medium">Security Settings</Dialog.Title>
+              <Dialog.Title className="text-lg font-medium">
+                Security Settings
+              </Dialog.Title>
               <SecurityManager
                 videoId={video.uri.split('/').pop()!}
                 currentSecurity={{
-                  view: video.privacy.view === 'password' ? 'nobody' : 
-                    video.privacy.view === 'anybody' ? 'anybody' :
-                    video.privacy.view === 'unlisted' ? 'unlisted' : 'disable',
-                  embed: video.privacy.embed === 'public' ? 'public' : 'private',
+                  view:
+                    video.privacy.view === 'password'
+                      ? 'nobody'
+                      : video.privacy.view === 'anybody'
+                        ? 'anybody'
+                        : video.privacy.view === 'unlisted'
+                          ? 'unlisted'
+                          : 'disable',
+                  embed:
+                    video.privacy.embed === 'public' ? 'public' : 'private',
                   comments: video.privacy.view === 'anybody' ? 'all' : 'nobody',
                   download: Boolean(video.privacy.embed),
-                  add: Boolean(video.privacy) // to fix
+                  add: Boolean(video.privacy), // to fix
                 }}
                 onUpdate={handleSecurityUpdate}
                 loading={isUpdatingSecurity}

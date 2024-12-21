@@ -16,7 +16,7 @@ export default function ContentFilter({
   const [filters, setFilters] = useState({
     category: '',
     minDuration: '',
-    maxDuration: '', 
+    maxDuration: '',
     releaseYear: '',
     searchTerm: '',
   })
@@ -69,7 +69,9 @@ export default function ContentFilter({
         content.title
           .toLowerCase()
           .includes(filters.searchTerm.toLowerCase()) ||
-        content.description?.toLowerCase().includes(filters.searchTerm.toLowerCase())
+        content.description
+          ?.toLowerCase()
+          .includes(filters.searchTerm.toLowerCase())
 
       return matchesCategory && matchesYear && matchesDuration && matchesSearch
     })

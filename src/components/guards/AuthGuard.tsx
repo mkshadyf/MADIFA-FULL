@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import type { UserProfile } from '@/types/auth'
@@ -13,8 +13,8 @@ export function hasRequiredPermissions(
 ): boolean {
   const roleHierarchy: Record<UserRole, number> = {
     admin: 3,
-    user: 2, 
-    guest: 1
+    user: 2,
+    guest: 1,
   }
 
   const userRoleLevel = roleHierarchy[userProfile.role as UserRole] || 0
@@ -47,7 +47,10 @@ export function AuthGuard({
     )
   }
 
-  const hasPermission = checkUserPermissions(userProfile as UserProfile, allowedRoles)
+  const hasPermission = checkUserPermissions(
+    userProfile as UserProfile,
+    allowedRoles
+  )
   if (!hasPermission) {
     return <Navigate to="/unauthorized" replace />
   }

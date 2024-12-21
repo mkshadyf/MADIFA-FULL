@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useRef } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import Player from '@vimeo/player'
@@ -12,7 +12,7 @@ interface VimeoPlayerProps {
   requiresSubscription?: boolean
 }
 
-export default function VimeoPlayer ({
+export default function VimeoPlayer({
   videoId,
   startTime = 0,
   requiresSubscription = true,
@@ -27,7 +27,9 @@ export default function VimeoPlayer ({
 
       // Check subscription if required
       if (requiresSubscription && user) {
-        const subscription = await subscriptionService.getCurrentSubscription(user.id)
+        const subscription = await subscriptionService.getCurrentSubscription(
+          user.id
+        )
         if (subscription?.status !== 'active') {
           playerRef.current.innerHTML = `
             <div class="flex h-full w-full flex-col items-center justify-center bg-gray-900 p-4 text-center">

@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom'
 import { createClient } from '@/lib/supabase/client'
 import type { Category } from '@/types/content'
 
-import { usePathname } from "next/navigation"
+import { usePathname } from 'next/navigation'
 export default function CategoryNavigation() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
   const pathname = usePathname()
   const supabase = createClient()
 

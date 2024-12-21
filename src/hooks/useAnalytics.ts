@@ -8,16 +8,21 @@ interface UseAnalyticsProps {
   onError?: (error: Error) => void
 }
 
-export function useAnalytics({ player, videoId, onError }: UseAnalyticsProps = {}) {
+export function useAnalytics({
+  player,
+  videoId,
+  onError,
+}: UseAnalyticsProps = {}) {
   // Video-specific analytics
-  const videoAnalytics = videoId && player ? useVideoAnalytics(player, videoId) : null
+  const videoAnalytics =
+    videoId && player ? useVideoAnalytics(player, videoId) : null
 
   // General activity tracking
   const activityTracking = useActivityTracking({
-    onError: (error) => {
+    onError: error => {
       console.error('Analytics error:', error)
       onError?.(error)
-    }
+    },
   })
 
   return {

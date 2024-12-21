@@ -39,7 +39,7 @@ export default function QueueSummary({
         <h3 className="text-lg font-semibold text-white">Queue Summary</h3>
         {onClearQueue ? (
           <IconButton
-            label='Clear'
+            label="Clear"
             icon="trash"
             onClick={onClearQueue}
             className="text-gray-400 hover:text-red-500"

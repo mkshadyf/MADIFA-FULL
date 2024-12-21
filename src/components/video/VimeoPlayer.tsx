@@ -1,7 +1,6 @@
-import React from "react"
+import React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Player from '@vimeo/player'
-
 
 import { useVideoPlayer } from '@/hooks/useVideoPlayer'
 import { useVideoAnalytics } from '@/hooks/useVideoAnalytics'
@@ -11,7 +10,12 @@ import { Button } from '@/components/ui/button'
 
 import BufferingIndicator from './BufferingIndicator'
 import type { VideoQuality } from '@/types/video'
-import type { VimeoPlayer, VimeoPlayerOptions, VimeoTimeUpdateEvent, VimeoProgressEvent } from '@/types/vimeo'
+import type {
+  VimeoPlayer,
+  VimeoPlayerOptions,
+  VimeoTimeUpdateEvent,
+  VimeoProgressEvent,
+} from '@/types/vimeo'
 
 interface VimeoPlayerProps {
   videoId: string
@@ -73,7 +77,11 @@ export function VimeoPlayer({
     handleQualityChange: handleQualityChangeInternal,
   } = useVideoPlayer(player)
 
-  const { hasAccess, isLoading: isCheckingSubscription, error: subscriptionError } = useVideoSubscription(requiresSubscription)
+  const {
+    hasAccess,
+    isLoading: isCheckingSubscription,
+    error: subscriptionError,
+  } = useVideoSubscription(requiresSubscription)
 
   useEffect(() => {
     if (subscriptionError) {
@@ -121,7 +129,7 @@ export function VimeoPlayer({
     const handlePlayerError = (error: Error) => {
       console.error('Video player error:', error)
       setHasError(true)
-        setIsLoading(false)
+      setIsLoading(false)
       onError?.(error)
     }
 
@@ -234,8 +242,13 @@ export function VimeoPlayer({
     return (
       <div className="flex h-full w-full flex-col items-center justify-center bg-black p-4 text-center">
         <h2 className="mb-4 text-2xl font-bold text-white">Premium Content</h2>
-        <p className="mb-6 text-gray-300">This content requires an active subscription.</p>
-        <a href="/subscription" className="rounded-md bg-primary px-6 py-2 text-white hover:bg-primary/90">
+        <p className="mb-6 text-gray-300">
+          This content requires an active subscription.
+        </p>
+        <a
+          href="/subscription"
+          className="rounded-md bg-primary px-6 py-2 text-white hover:bg-primary/90"
+        >
           Subscribe Now
         </a>
       </div>
@@ -254,8 +267,8 @@ export function VimeoPlayer({
               }
             }}
             variant="primary"
-            >
-              Retry
+          >
+            Retry
           </Button>
         </div>
       </div>

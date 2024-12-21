@@ -1,9 +1,8 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 
 import { createClient } from '@/lib/supabase/client'
-
 
 interface SearchStats {
   totalSearches: number
@@ -33,8 +32,9 @@ export default function SearchAnalytics() {
           .gte('created_at', startDate.toISOString())
 
         const totalSearches = totals?.length || 0
-        const averageResults = totals 
-          ? totals.reduce((acc, curr) => acc + curr.results_count, 0) / totalSearches 
+        const averageResults = totals
+          ? totals.reduce((acc, curr) => acc + curr.results_count, 0) /
+            totalSearches
           : 0
 
         // Get popular queries
@@ -42,7 +42,7 @@ export default function SearchAnalytics() {
           .from('search_analytics')
           .select('query, count(*)')
           .gte('created_at', startDate.toISOString())
-           .order('count', { ascending: false })
+          .order('count', { ascending: false })
           .limit(10)
 
         // Get searches by day
@@ -50,7 +50,7 @@ export default function SearchAnalytics() {
           .from('search_analytics')
           .select('created_at, count(*)')
           .gte('created_at', startDate.toISOString())
-           .order('created_at')
+          .order('created_at')
 
         // Get queries with no results
         const { data: noResultQueries } = await supabase
@@ -58,7 +58,7 @@ export default function SearchAnalytics() {
           .select('query, count(*)')
           .eq('results_count', 0)
           .gte('created_at', startDate.toISOString())
-          
+
           .order('count', { ascending: false })
           .limit(10)
 
@@ -78,7 +78,7 @@ export default function SearchAnalytics() {
           noResultQueries:
             noResultQueries?.map(q => ({
               query: q[0], // Access first column (query)
-              count: parseInt(q[1]), // Access second column (count) 
+              count: parseInt(q[1]), // Access second column (count)
             })) || [],
         })
       } catch (error) {

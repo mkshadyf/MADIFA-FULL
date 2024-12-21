@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -7,7 +7,6 @@ import type { Database } from '@/lib/database.types'
 import ContentCard from '@/components/ui/content-card'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import Navbar from '@/components/ui/navbar'
-
 
 type Content = Database['public']['Tables']['content']['Row']
 
@@ -36,7 +35,7 @@ export default function SearchPage() {
         if (error) throw error
         setResults(data || [])
       } catch (error) {
-          console.error('Error searching content:', error)
+        console.error('Error searching content:', error)
       } finally {
         setLoading(false)
       }

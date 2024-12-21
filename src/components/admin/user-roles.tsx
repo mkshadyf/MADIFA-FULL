@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/database.types'
 
-
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 interface RoleAssignment {
@@ -16,7 +15,9 @@ interface RoleAssignment {
 
 export default function UserRoles() {
   const [users, setUsers] = useState<UserProfile[]>([])
-  const [roleAssignments, setRoleAssignments] = useState<Record<string, RoleAssignment>>({})
+  const [roleAssignments, setRoleAssignments] = useState<
+    Record<string, RoleAssignment>
+  >({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +36,9 @@ export default function UserRoles() {
         if (userError) throw userError
 
         // Get role assignments
-        const { data: roleData, error: roleError } = await supabase.from('user_roles').select('*')
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('*')
 
         if (roleError) throw roleError
 
@@ -61,7 +64,10 @@ export default function UserRoles() {
     void fetchUsers()
   }, [])
 
-  const handleRoleChange = async (userId: string, newRole: 'admin' | 'moderator' | 'user') => {
+  const handleRoleChange = async (
+    userId: string,
+    newRole: 'admin' | 'moderator' | 'user'
+  ) => {
     setSaving(true)
     setError(null)
     setSuccess(null)
@@ -148,7 +154,9 @@ export default function UserRoles() {
             {users.map(user => (
               <tr key={user.id}>
                 <td className="whitespace-nowrap px-6 py-4">
-                  <div className="text-sm font-medium text-white">{user.full_name}</div>
+                  <div className="text-sm font-medium text-white">
+                    {user.full_name}
+                  </div>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
                   <div className="text-sm text-gray-300">{user.email}</div>
@@ -173,7 +181,9 @@ export default function UserRoles() {
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
                   {roleAssignments[user.id]?.assigned_at
-                    ? new Date(roleAssignments[user.id].assigned_at).toLocaleString()
+                    ? new Date(
+                        roleAssignments[user.id].assigned_at
+                      ).toLocaleString()
                     : 'Never'}
                 </td>
               </tr>

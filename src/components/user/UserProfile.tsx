@@ -1,7 +1,7 @@
 import { useAuth } from '@/providers/AuthProvider'
 import { useQuery } from '@tanstack/react-query'
 import type { Database } from '@/lib/database.types'
- 
+
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 export default function UserProfile() {
@@ -10,7 +10,7 @@ export default function UserProfile() {
   const { data: profile } = useQuery<UserProfile>(
     ['profile', user?.id],
     async () => {
-      if (!user?.id) return null;
+      if (!user?.id) return null
       const response = await fetch(`/api/user/profile/${user.id}`)
       if (!response.ok) throw new Error('Failed to fetch profile')
       return await response.json()

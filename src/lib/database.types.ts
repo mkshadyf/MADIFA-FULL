@@ -51,12 +51,23 @@ export interface Database {
     Tables: {
       users: {
         Row: User
-        Insert: Omit<User, 'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'>
-        Update: Partial<Omit<User, 'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'>>
+        Insert: Omit<
+          User,
+          'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'
+        >
+        Update: Partial<
+          Omit<
+            User,
+            'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'
+          >
+        >
       }
       content: {
         Row: Content
-        Insert: Omit<Content, 'id' | 'created_at' | 'updated_at' | 'views' | 'rating'>
+        Insert: Omit<
+          Content,
+          'id' | 'created_at' | 'updated_at' | 'views' | 'rating'
+        >
         Update: Partial<Omit<Content, 'id' | 'created_at' | 'updated_at'>>
       }
       content_metadata: {
@@ -68,8 +79,16 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['content_metadata']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Database['public']['Tables']['content_metadata']['Row'], 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['content_metadata']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['content_metadata']['Row'],
+            'id' | 'created_at' | 'updated_at'
+          >
+        >
       }
       playlists: {
         Row: Playlist
@@ -95,8 +114,16 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['subscriptions']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Database['public']['Tables']['subscriptions']['Row'], 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['subscriptions']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['subscriptions']['Row'],
+            'id' | 'created_at' | 'updated_at'
+          >
+        >
       }
       downloads: {
         Row: {
@@ -109,8 +136,16 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['downloads']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Database['public']['Tables']['downloads']['Row'], 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['downloads']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['downloads']['Row'],
+            'id' | 'created_at' | 'updated_at'
+          >
+        >
       }
       favorites: {
         Row: {
@@ -119,8 +154,16 @@ export interface Database {
           content_id: string
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['favorites']['Row'], 'id' | 'created_at'>
-        Update: Partial<Omit<Database['public']['Tables']['favorites']['Row'], 'id' | 'created_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['favorites']['Row'],
+          'id' | 'created_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['favorites']['Row'],
+            'id' | 'created_at'
+          >
+        >
       }
       ratings: {
         Row: {
@@ -131,8 +174,16 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['ratings']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Database['public']['Tables']['ratings']['Row'], 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['ratings']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['ratings']['Row'],
+            'id' | 'created_at' | 'updated_at'
+          >
+        >
       }
       comments: {
         Row: {
@@ -143,8 +194,16 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['comments']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Database['public']['Tables']['comments']['Row'], 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['comments']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['comments']['Row'],
+            'id' | 'created_at' | 'updated_at'
+          >
+        >
       }
       history: {
         Row: {
@@ -155,8 +214,16 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['history']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Database['public']['Tables']['history']['Row'], 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['history']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['history']['Row'],
+            'id' | 'created_at' | 'updated_at'
+          >
+        >
       }
       notifications: {
         Row: {
@@ -168,8 +235,16 @@ export interface Database {
           read: boolean
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>
-        Update: Partial<Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['notifications']['Row'],
+          'id' | 'created_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['notifications']['Row'],
+            'id' | 'created_at'
+          >
+        >
       }
       admin_stats: {
         Row: {
@@ -182,8 +257,16 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['admin_stats']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Database['public']['Tables']['admin_stats']['Row'], 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<
+          Database['public']['Tables']['admin_stats']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<
+          Omit<
+            Database['public']['Tables']['admin_stats']['Row'],
+            'id' | 'created_at' | 'updated_at'
+          >
+        >
       }
     }
   }

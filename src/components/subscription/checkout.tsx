@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 
@@ -11,7 +11,12 @@ interface CheckoutProps {
   onError: (error: string) => void
 }
 
-export default function Checkout({ planId, price, onSuccess, onError }: CheckoutProps) {
+export default function Checkout({
+  planId,
+  price,
+  onSuccess,
+  onError,
+}: CheckoutProps) {
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
   const supabase = createClient()
@@ -69,7 +74,9 @@ export default function Checkout({ planId, price, onSuccess, onError }: Checkout
       >
         {loading ? 'Processing...' : `Pay R${price}`}
       </button>
-      <p className="mt-2 text-center text-sm text-gray-400">Secure payment powered by PayFast</p>
+      <p className="mt-2 text-center text-sm text-gray-400">
+        Secure payment powered by PayFast
+      </p>
     </div>
   )
 }

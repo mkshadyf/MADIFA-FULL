@@ -6,7 +6,6 @@ import { useContent } from '@/hooks/useContent'
 import { useToast } from '@/hooks/useToast'
 import { IconButton } from '@/components/ui/button'
 
-
 interface ContentBatchOperationsProps {
   className?: string
   onBatchComplete?: () => void

@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useQueueStore } from '@/stores/queueStore'
 import type { QueueItem } from '@/stores/queueStore'
@@ -45,9 +45,9 @@ export default function QueueErrorRecovery() {
       )
       await retryDownload(itemId)
       setErroredItems(prev => prev.filter(item => item.id !== itemId))
-      toast.showToast("Download restarted successfully", "success")
+      toast.showToast('Download restarted successfully', 'success')
     } catch (error) {
-      toast.showToast('Failed to restart download', "error")
+      toast.showToast('Failed to restart download', 'error')
       console.error('Error retrying download:', error)
 
       // Update retry count and last retry time
@@ -71,9 +71,9 @@ export default function QueueErrorRecovery() {
     try {
       await removeFromQueue(itemId)
       setErroredItems(prev => prev.filter(item => item.id !== itemId))
-        toast.showToast('Item removed from queue', "success")
+      toast.showToast('Item removed from queue', 'success')
     } catch (error) {
-      toast.showToast('Failed to remove item', "error")
+      toast.showToast('Failed to remove item', 'error')
     }
   }
 

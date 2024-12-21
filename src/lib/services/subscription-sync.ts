@@ -15,8 +15,10 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
 
   try {
     // Get full subscription details
-    const subscription = await subscriptionService.getCurrentSubscription(userId)
-    const subscriptionStatus = await subscriptionService.getSubscriptionStatus(userId)
+    const subscription =
+      await subscriptionService.getCurrentSubscription(userId)
+    const subscriptionStatus =
+      await subscriptionService.getSubscriptionStatus(userId)
     const isActive = subscriptionStatus === 'active'
 
     // Get all published content IDs
@@ -26,7 +28,12 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
       .eq('is_published', true)
 
     if (contentError) {
-      throw createAPIError(500, 'Failed to fetch content', 'CONTENT_FETCH_ERROR', contentError)
+      throw createAPIError(
+        500,
+        'Failed to fetch content',
+        'CONTENT_FETCH_ERROR',
+        contentError
+      )
     }
 
     if (!content?.length) return
@@ -38,7 +45,12 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
         isActive
       )
     } catch (error) {
-      throw createAPIError(500, 'Failed to update video privacy', 'PRIVACY_UPDATE_ERROR', error)
+      throw createAPIError(
+        500,
+        'Failed to update video privacy',
+        'PRIVACY_UPDATE_ERROR',
+        error
+      )
     }
 
     // Prepare sync log entry
@@ -46,7 +58,7 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
       user_id: userId,
       subscription_id: subscription?.id,
       status: isActive ? 'granted' : 'revoked',
-      synced_at: new Date().toISOString()
+      synced_at: new Date().toISOString(),
     }
 
     // Log sync
@@ -55,9 +67,13 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
       .insert(logEntry)
 
     if (logError) {
-      throw createAPIError(500, 'Failed to log sync', 'SYNC_LOG_ERROR', logError)
+      throw createAPIError(
+        500,
+        'Failed to log sync',
+        'SYNC_LOG_ERROR',
+        logError
+      )
     }
-
   } catch (error) {
     console.error('Error syncing subscription access:', error)
     throw createAPIError(

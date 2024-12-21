@@ -7,17 +7,25 @@ interface AuthCardProps {
   subtitle?: React.ReactNode
 }
 
-export function AuthCard ({ children, title, subtitle }: AuthCardProps) {
+export function AuthCard({ children, title, subtitle }: AuthCardProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-900 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div>
-          <Link to="/" className="flex justify-center" aria-label="Go to homepage">
+          <Link
+            to="/"
+            className="flex justify-center"
+            aria-label="Go to homepage"
+          >
             <img className="h-12 w-auto" src="/logo.svg" alt="Madifa" />
           </Link>
-          <h1 className="mt-6 text-center text-3xl font-bold tracking-tight text-white">{title}</h1>
+          <h1 className="mt-6 text-center text-3xl font-bold tracking-tight text-white">
+            {title}
+          </h1>
           {subtitle ? (
-            <div className="mt-2 text-center text-sm text-gray-400">{subtitle}</div>
+            <div className="mt-2 text-center text-sm text-gray-400">
+              {subtitle}
+            </div>
           ) : null}
         </div>
         {children}
@@ -31,7 +39,7 @@ interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-export function AuthInput ({ label, error, id, ...props }: AuthInputProps) {
+export function AuthInput({ label, error, id, ...props }: AuthInputProps) {
   return (
     <div>
       <label htmlFor={id} className="sr-only">
@@ -64,7 +72,11 @@ export function AuthInput ({ label, error, id, ...props }: AuthInputProps) {
         ) : null}
       </div>
       {error ? (
-        <p className="mt-2 text-sm text-red-500" id={`${id}-error`} role="alert">
+        <p
+          className="mt-2 text-sm text-red-500"
+          id={`${id}-error`}
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
@@ -72,12 +84,13 @@ export function AuthInput ({ label, error, id, ...props }: AuthInputProps) {
   )
 }
 
-interface AuthButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface AuthButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean
   loadingText?: string
 }
 
-export function AuthButton ({
+export function AuthButton({
   children,
   isLoading,
   loadingText = 'Processing...',

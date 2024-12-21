@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
 import { motion } from 'framer-motion'
@@ -8,7 +8,6 @@ import type { OnboardingState } from '@/lib/services/onboarding'
 import { subscriptionService } from '@/lib/services/subscription'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
-
 
 interface PaymentStepProps {
   onNext: (data: Partial<OnboardingState>) => Promise<void>
@@ -42,7 +41,11 @@ interface PaymentData {
   signature?: string
 }
 
-export default function PaymentStep({ onNext, onBack, data }: PaymentStepProps) {
+export default function PaymentStep({
+  onNext,
+  onBack,
+  data,
+}: PaymentStepProps) {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -159,8 +162,12 @@ export default function PaymentStep({ onNext, onBack, data }: PaymentStepProps) 
       className="space-y-8"
     >
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-white">Complete Your Purchase</h2>
-        <p className="mt-2 text-gray-400">You're just one step away from premium content</p>
+        <h2 className="text-3xl font-bold text-white">
+          Complete Your Purchase
+        </h2>
+        <p className="mt-2 text-gray-400">
+          You're just one step away from premium content
+        </p>
       </div>
 
       <div className="mx-auto max-w-md rounded-xl border border-gray-700 bg-gray-800/50 p-6">
@@ -185,7 +192,11 @@ export default function PaymentStep({ onNext, onBack, data }: PaymentStepProps) 
         <Button variant="secondary" onClick={onBack} disabled={isProcessing}>
           Back
         </Button>
-        <Button variant="primary" onClick={handlePayment} isLoading={isProcessing}>
+        <Button
+          variant="primary"
+          onClick={handlePayment}
+          isLoading={isProcessing}
+        >
           Complete Payment
         </Button>
       </div>

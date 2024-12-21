@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -9,7 +9,7 @@ export default function UpdatePasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-   const navigate = useNavigate()
+  const navigate = useNavigate()
   const supabase = createClient()
 
   const handleUpdatePassword = async (e: React.FormEvent) => {

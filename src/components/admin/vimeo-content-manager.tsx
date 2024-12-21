@@ -1,8 +1,7 @@
- import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { VimeoVideo } from '@/types/vimeo'
 import { getVideosFromFolder, updateVideoPrivacy } from '@/lib/services/vimeo'
-
 
 interface Props {
   onVideoSelect?: (video: VimeoVideo) => void
@@ -54,7 +53,7 @@ export default function VimeoContentManager({
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      { }
+      {}
       {videos.map(video => (
         <div
           key={video.uri}

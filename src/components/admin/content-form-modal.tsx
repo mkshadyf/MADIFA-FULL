@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/types/content'
@@ -77,12 +77,14 @@ export default function ContentFormModal({
         video_url: videoUrl,
         status: 'processing',
         updated_at: new Date().toISOString(),
-        ...(content ? {} : { 
-          created_at: new Date().toISOString(),
-          views: 0,
-          duration: 0,
-          size: videoFile?.size || 0,
-        }),
+        ...(content
+          ? {}
+          : {
+              created_at: new Date().toISOString(),
+              views: 0,
+              duration: 0,
+              size: videoFile?.size || 0,
+            }),
       }
 
       if (content?.id) {

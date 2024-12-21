@@ -1,9 +1,9 @@
-import React from "react"
+import React from 'react'
 import type { ErrorInfo } from 'react'
 import React, { Component } from 'react'
 
 import { errorMonitoring } from '@/lib/services/error-monitoring'
-  
+
 interface Props {
   children: React.ReactNode
   userId?: string

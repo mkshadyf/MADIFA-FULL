@@ -32,7 +32,9 @@ export default function SearchSuggestionsList({
       try {
         const results = await searchContent(debouncedQuery)
         if (Array.isArray(results)) {
-          setSuggestions(results.map((result: { title: string }) => result.title))
+          setSuggestions(
+            results.map((result: { title: string }) => result.title)
+          )
         } else {
           setSuggestions([])
         }

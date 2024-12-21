@@ -1,8 +1,7 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-
 
 interface SyncMetrics {
   totalJobs: number
@@ -13,7 +12,7 @@ interface SyncMetrics {
   retryRate: number
 }
 
-export default function SubscriptionSyncDashboard () {
+export default function SubscriptionSyncDashboard() {
   const [metrics, setMetrics] = useState<SyncMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
@@ -54,7 +53,9 @@ export default function SubscriptionSyncDashboard () {
   }
 
   const calculateAverageProcessingTime = (jobs: any[]): number => {
-    const completedJobs = jobs.filter(j => j.status === 'completed' && j.processed_at)
+    const completedJobs = jobs.filter(
+      j => j.status === 'completed' && j.processed_at
+    )
     if (!completedJobs.length) return 0
 
     const totalTime = completedJobs.reduce((acc, job) => {
@@ -77,10 +78,26 @@ export default function SubscriptionSyncDashboard () {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <MetricCard title="Total Jobs" value={metrics.totalJobs} className="bg-gray-800" />
-        <MetricCard title="Pending" value={metrics.pendingJobs} className="bg-yellow-800" />
-        <MetricCard title="Failed" value={metrics.failedJobs} className="bg-red-800" />
-        <MetricCard title="Completed" value={metrics.completedJobs} className="bg-green-800" />
+        <MetricCard
+          title="Total Jobs"
+          value={metrics.totalJobs}
+          className="bg-gray-800"
+        />
+        <MetricCard
+          title="Pending"
+          value={metrics.pendingJobs}
+          className="bg-yellow-800"
+        />
+        <MetricCard
+          title="Failed"
+          value={metrics.failedJobs}
+          className="bg-red-800"
+        />
+        <MetricCard
+          title="Completed"
+          value={metrics.completedJobs}
+          className="bg-green-800"
+        />
         <MetricCard
           title="Avg. Processing Time"
           value={`${metrics.averageProcessingTime.toFixed(2)}s`}
@@ -96,7 +113,7 @@ export default function SubscriptionSyncDashboard () {
   )
 }
 
-function MetricCard ({
+function MetricCard({
   title,
   value,
   className,

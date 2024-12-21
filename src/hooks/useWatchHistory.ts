@@ -47,18 +47,22 @@ export function useWatchHistory(limit = 20): UseWatchHistoryResult {
     if (!user) return
 
     try {
-      await watchHistoryService.updateWatchProgress(user.id, contentId, progress)
+      await watchHistoryService.updateWatchProgress(
+        user.id,
+        contentId,
+        progress
+      )
 
       // Update local state
       setHistory(prev =>
         prev.map(item =>
           item.vimeo_id === contentId
             ? {
-              ...item,
-              progress,
-              last_watched: new Date().toISOString(),
-              completed: progress >= 0.95,
-            }
+                ...item,
+                progress,
+                last_watched: new Date().toISOString(),
+                completed: progress >= 0.95,
+              }
             : item
         )
       )

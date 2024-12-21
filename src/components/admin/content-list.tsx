@@ -129,7 +129,11 @@ export default function ContentList({ content, onRefresh }: ContentListProps) {
 
       {showForm ? (
         <ContentFormModal
-          content={selectedContent as unknown as import('@/types/content').Content | undefined}
+          content={
+            selectedContent as unknown as
+              | import('@/types/content').Content
+              | undefined
+          }
           onClose={() => {
             setShowForm(false)
             setSelectedContent(null)

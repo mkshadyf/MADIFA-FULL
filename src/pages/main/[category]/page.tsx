@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -7,7 +7,6 @@ import { getCategoryContent } from '@/lib/services/categories'
 import type { Content } from '@/lib/supabase/types'
 import CategoryNavigation from '@/components/ui/category-navigation'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-
 
 export default function CategoryPage(): JSX.Element {
   const [content, setContent] = useState<Content[]>([])

@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useEffect, useRef } from 'react'
 import {
   CategoryScale,
@@ -16,11 +16,18 @@ import { Line } from 'react-chartjs-2'
 import { createClient } from '@/lib/supabase/client'
 import type { ActivityData } from '@/types/activity'
 
-
 // Register ChartJS components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
-export default function UserActivityChart () {
+export default function UserActivityChart() {
   const chartRef = useRef<HTMLCanvasElement>(null)
   const supabase = createClient()
 
@@ -38,30 +45,33 @@ export default function UserActivityChart () {
         if (error) throw error
 
         // Process data into daily counts
-        const activityByDate = data.reduce((acc: Record<string, ActivityData>, item) => {
-          const date = new Date(item.created_at).toLocaleDateString()
-          if (!acc[date]) {
-            acc[date] = {
-              date,
-              views: 0,
-              searches: 0,
-              interactions: 0,
+        const activityByDate = data.reduce(
+          (acc: Record<string, ActivityData>, item) => {
+            const date = new Date(item.created_at).toLocaleDateString()
+            if (!acc[date]) {
+              acc[date] = {
+                date,
+                views: 0,
+                searches: 0,
+                interactions: 0,
+              }
             }
-          }
 
-          switch (item.action) {
-            case 'view':
-              acc[date].views++
-              break
-            case 'search':
-              acc[date].searches++
-              break
-            default:
-              acc[date].interactions++
-          }
+            switch (item.action) {
+              case 'view':
+                acc[date].views++
+                break
+              case 'search':
+                acc[date].searches++
+                break
+              default:
+                acc[date].interactions++
+            }
 
-          return acc
-        }, {})
+            return acc
+          },
+          {}
+        )
 
         const sortedData = Object.values(activityByDate).sort(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()

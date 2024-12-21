@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { useState } from 'react'
 
 import VimeoContentManager from '@/components/admin/vimeo-content-manager'

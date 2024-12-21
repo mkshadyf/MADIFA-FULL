@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { Selection } from 'd3-selection'
 import type { Feature, FeatureCollection } from 'geojson'
@@ -112,7 +112,16 @@ describe('WorldMap', () => {
       .mockResolvedValueOnce(createMockResponse(mockGeoJSON))
     global.fetch = fetchMock
 
-    render(<WorldMap width={mockProps.width} height={mockProps.height} data={[{ id: 'TST', value: 100 }]} onCountryClick={mockProps.onCountryClick} colorScale={mockProps.colorScale} tooltipContent={mockProps.tooltipContent} />)
+    render(
+      <WorldMap
+        width={mockProps.width}
+        height={mockProps.height}
+        data={[{ id: 'TST', value: 100 }]}
+        onCountryClick={mockProps.onCountryClick}
+        colorScale={mockProps.colorScale}
+        tooltipContent={mockProps.tooltipContent}
+      />
+    )
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -129,7 +138,16 @@ describe('WorldMap', () => {
     const fetchMock = vi.fn().mockRejectedValueOnce(error)
     global.fetch = fetchMock
 
-    render(<WorldMap width={mockProps.width} height={mockProps.height} data={[{ id: 'TST', value: 100 }]} onCountryClick={mockProps.onCountryClick} colorScale={mockProps.colorScale} tooltipContent={mockProps.tooltipContent} />)
+    render(
+      <WorldMap
+        width={mockProps.width}
+        height={mockProps.height}
+        data={[{ id: 'TST', value: 100 }]}
+        onCountryClick={mockProps.onCountryClick}
+        colorScale={mockProps.colorScale}
+        tooltipContent={mockProps.tooltipContent}
+      />
+    )
 
     await waitFor(() => {
       expect(screen.getByText(/error loading map data/i)).toBeInTheDocument()
@@ -142,7 +160,16 @@ describe('WorldMap', () => {
       .mockResolvedValueOnce(createMockResponse(mockGeoJSON))
     global.fetch = fetchMock
 
-    render(<WorldMap width={mockProps.width} height={mockProps.height} data={[{ id: 'TST', value: 100 }]} onCountryClick={mockProps.onCountryClick} colorScale={mockProps.colorScale} tooltipContent={mockProps.tooltipContent} />)
+    render(
+      <WorldMap
+        width={mockProps.width}
+        height={mockProps.height}
+        data={[{ id: 'TST', value: 100 }]}
+        onCountryClick={mockProps.onCountryClick}
+        colorScale={mockProps.colorScale}
+        tooltipContent={mockProps.tooltipContent}
+      />
+    )
 
     await waitFor(() => {
       const path = screen.getByTestId('country-TST')
@@ -156,7 +183,16 @@ describe('WorldMap', () => {
       .mockResolvedValueOnce(createMockResponse(mockGeoJSON))
     global.fetch = fetchMock
 
-    render(<WorldMap width={mockProps.width} height={mockProps.height} data={[{ id: 'TST', value: 100 }]} onCountryClick={mockProps.onCountryClick} colorScale={mockProps.colorScale} tooltipContent={mockProps.tooltipContent} />)
+    render(
+      <WorldMap
+        width={mockProps.width}
+        height={mockProps.height}
+        data={[{ id: 'TST', value: 100 }]}
+        onCountryClick={mockProps.onCountryClick}
+        colorScale={mockProps.colorScale}
+        tooltipContent={mockProps.tooltipContent}
+      />
+    )
 
     await waitFor(() => {
       const path = screen.getByTestId('country-TST')
@@ -171,7 +207,16 @@ describe('WorldMap', () => {
       .mockResolvedValueOnce(createMockResponse(mockGeoJSON))
     global.fetch = fetchMock
 
-    render(<WorldMap width={mockProps.width} height={mockProps.height} data={[{ id: 'TST', value: 100 }]} onCountryClick={mockProps.onCountryClick} colorScale={mockProps.colorScale} tooltipContent={mockProps.tooltipContent} />)
+    render(
+      <WorldMap
+        width={mockProps.width}
+        height={mockProps.height}
+        data={[{ id: 'TST', value: 100 }]}
+        onCountryClick={mockProps.onCountryClick}
+        colorScale={mockProps.colorScale}
+        tooltipContent={mockProps.tooltipContent}
+      />
+    )
 
     await waitFor(() => {
       const path = screen.getByTestId('country-TST')
@@ -193,7 +238,16 @@ describe('WorldMap', () => {
     )
     global.fetch = fetchMock
 
-    render(<WorldMap width={mockProps.width} height={mockProps.height} data={[{ id: 'TST', value: 100 }]} onCountryClick={mockProps.onCountryClick} colorScale={mockProps.colorScale} tooltipContent={mockProps.tooltipContent} />)
+    render(
+      <WorldMap
+        width={mockProps.width}
+        height={mockProps.height}
+        data={[{ id: 'TST', value: 100 }]}
+        onCountryClick={mockProps.onCountryClick}
+        colorScale={mockProps.colorScale}
+        tooltipContent={mockProps.tooltipContent}
+      />
+    )
 
     await waitFor(() => {
       expect(

@@ -8,7 +8,9 @@ interface UseVideoSubscriptionResult {
   error: Error | null
 }
 
-export function useVideoSubscription(requiresSubscription = true): UseVideoSubscriptionResult {
+export function useVideoSubscription(
+  requiresSubscription = true
+): UseVideoSubscriptionResult {
   const { user } = useAuth()
   const [hasAccess, setHasAccess] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -23,10 +25,14 @@ export function useVideoSubscription(requiresSubscription = true): UseVideoSubsc
       }
 
       try {
-        const subscription = await subscriptionService.getCurrentSubscription(user.id)
+        const subscription = await subscriptionService.getCurrentSubscription(
+          user.id
+        )
         setHasAccess(subscription?.status === 'active')
       } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to check subscription'))
+        setError(
+          err instanceof Error ? err : new Error('Failed to check subscription')
+        )
       } finally {
         setIsLoading(false)
       }
@@ -40,4 +46,4 @@ export function useVideoSubscription(requiresSubscription = true): UseVideoSubsc
     isLoading,
     error,
   }
-} 
+}

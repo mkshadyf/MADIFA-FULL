@@ -1,4 +1,4 @@
- import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSwipeable } from 'react-swipeable'
 
 import { useDeviceDetection } from '@/hooks/useDeviceDetection'
