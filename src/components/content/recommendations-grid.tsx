@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 
 import { useRecommendations } from '@/hooks/useRecommendations'
-import { Content } from '@/types/content'
+import type { Content } from '@/types/content'
 
 interface RecommendationsGridProps {
   contentId?: string

@@ -1,18 +1,22 @@
-export interface APIError extends Error {
-  status: number
-  code: string
-  cause?: unknown
-}
+import type { ApiError, ErrorContext } from '@/types'
 
-export function createAPIError(
-  status: number,
+export const createAPIError = (
   message: string,
   code: string,
-  cause?: unknown
-): APIError {
-  const error = new Error(message) as APIError
-  error.status = status
-  error.code = code
-  error.cause = cause
-  return error
+  context?: ErrorContext
+): ApiError => {
+  return {
+    name: 'ApiError',
+    code,
+    message,
+    status: 500,
+    details: context?.details
+  }
+}
+
+export const createErrorContext = (service: string, operation: string, details?: unknown): ErrorContext => {
+  return {
+    operation: `${service}.${operation}`,
+    details: details ? { details } : undefined
+  }
 }

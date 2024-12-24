@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { OnboardingStep, OnboardingContent } from './OnboardingContent'
+import type { OnboardingStep } from './OnboardingContent'
+import { OnboardingContent } from './OnboardingContent'
 import { OnboardingProgress } from './OnboardingProgress'
 import { OnboardingLayout } from './OnboardingLayout'
 import { useOnboarding } from '../hooks/useOnboarding'

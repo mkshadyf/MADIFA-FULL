@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import type { VimeoVideo } from '@/types/vimeo'
+import type { VimeoVideo, VimeoPrivacy } from '@/types/vimeo'
 import { getVideosFromFolder, updateVideoPrivacy } from '@/lib/services/vimeo'
 
 interface Props {
@@ -35,7 +35,13 @@ export default function VimeoContentManager({
 
   const toggleVideoPrivacy = async (videoId: string, makePublic: boolean) => {
     try {
-      await updateVideoPrivacy(videoId, makePublic)
+      const privacy: VimeoPrivacy = {
+        view: makePublic ? 'anybody' : 'nobody',
+        embed: makePublic ? 'public' : 'private',
+        comments: 'anybody',
+        download: false
+      }
+      await updateVideoPrivacy(videoId, privacy)
       await loadVideos() // Refresh the list
       onSuccess?.()
     } catch (error) {

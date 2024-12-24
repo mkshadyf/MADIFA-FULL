@@ -28,7 +28,7 @@ export function ThumbnailManager({
       try {
         const file = acceptedFiles[0]
         const thumbnailUrl = await vimeoService.uploadThumbnail(videoId, file)
-        onThumbnailUpdate(thumbnailUrl)
+        onThumbnailUpdate(thumbnailUrl.uri)
         toast.success('Thumbnail updated successfully')
       } catch (error) {
         toast.error('Failed to upload thumbnail')
@@ -55,7 +55,7 @@ export function ThumbnailManager({
         videoId,
         selectedTime
       )
-      onThumbnailUpdate(thumbnailUrl)
+      onThumbnailUpdate(thumbnailUrl.uri)
       toast.success('Thumbnail generated successfully')
     } catch (error) {
       toast.error('Failed to generate thumbnail')

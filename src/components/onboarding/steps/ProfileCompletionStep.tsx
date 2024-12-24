@@ -268,7 +268,7 @@ export default function ProfileCompletionStep({
         <Button
           variant="primary"
           onClick={handleSubmit}
-          loading={isSubmitting}
+          isLoading={isSubmitting}
           disabled={!form.fullName || !form.displayName}
         >
           Complete Setup

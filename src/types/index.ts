@@ -1,81 +1,47 @@
-export * from './analytics'
-export * from './auth'
-export * from './vimeo'
+// Export specific types from each module
+export type {
+  AuthContextValue, AuthResponse, Provider, Session
+} from './auth'
 
-export interface Content {
-  id: string
-  title: string
-  description?: string
-  category?: string
-  tags?: string[]
-  release_year?: number
-  expiration_date?: string
-  availability_window?: {
-    start: string
-    end: string
-  }
-  is_public: boolean
-  custom_fields?: Record<string, any>
-  size?: number
-  fileSize?: number
-  duration?: number // Added duration field
-  thumbnail_url?: string | null // Added thumbnail_url field
-  status?: 'ready' | 'processing' // Added status field
-  created_at?: string // Added created_at field
-  updated_at?: string // Added updated_at field
-  error?: string // Added error field
-}
+export type {
+  Category,
+  CategoryMetadata,
+  CategoryStats,
+  CategoryTree, Content, ContentFilters, ContentMetadata, ContentSeries, ContentStats, ContentStatus, ContentTag, UserContentInteraction
+} from './content'
 
-export interface ContentMetadata {
-  title: string
-  description?: string
-  category?: string
-  tags?: string[]
-  custom_fields?: Record<string, any>
-}
+export type {
+  ApiError, AppError, AuthError, BaseError, DatabaseError, NetworkError, PermissionError,
+  QuotaError,
+  RateLimitError, StorageError, TimeoutError, ValidationError, VimeoError
+} from './error'
 
-export interface Playlist {
-  id: string
-  name: string
-  description?: string
-  contents: Content[]
-}
+export type {
+  PaymentError, PaymentIntent, PaymentMethod, PaymentResult, PaymentStatus
+} from './payment'
 
-export interface Series {
-  id: string
-  title: string
-  description?: string
-  episodes: Content[]
-  season_number?: number
-}
+export type {
+  BillingHistory, BillingPeriod, Invoice, PaymentMethodType, Subscription, SubscriptionPlan, SubscriptionStatus, SubscriptionTier, SubscriptionTierType, UserSubscription
+} from './subscription'
 
-export interface UserProfile {
-  id: string
-  user_id: string
-  email: string
-  full_name: string
-  role: string
-  subscription_status: 'active' | 'inactive' | 'cancelled'
-  subscription_tier: 'free' | 'premium' | 'premium_plus'
-  created_at: string
-}
+export type {
+  FileOptions, QueueStatus, UploadProgress, UploadQueue, UploadResult, UploadStatus, UploadTask
+} from './upload'
 
-// Core type definitions
-export interface BaseError extends Error {
-  status: number;
-  code: string;
-  details?: unknown;
-}
+export type {
+  Permission, Role, User, UserPermission, UserProfile, UserRole
+} from './user'
 
-export interface ApiResponse<T = unknown> {
-  data: T;
-  error: null | BaseError;
-}
+export type {
+  VideoQuality, VimeoChapter, VimeoFolder, VimeoPlayer, VimeoProgress, VimeoQualityChangeEvent, VimeoStats, VimeoThumbnail, VimeoUploadOptions, VimeoVideo
+} from './vimeo'
 
-// Re-export types explicitly to avoid ambiguity
-export type { VideoQuality as AppVideoQuality } from './auth'
-export * from './content'
-export * from './subscription'
-export * from './user'
-export type { VideoQuality as VimeoVideoQuality } from './vimeo'
+export type {
+  ApiClientOptions, ApiContext, ApiRequestConfig, ApiRequestOptions, ApiResponse,
+  ErrorContext
+} from './api'
+
+export type {
+  ToastState
+} from './toast'
 

@@ -2,7 +2,7 @@ import React from 'react'
 import { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/supabase/types'
+import type { Content } from '@/lib/database.types'
 import { uploadContent } from '@/lib/utils/content-upload'
 
 export default function ContentUpload() {

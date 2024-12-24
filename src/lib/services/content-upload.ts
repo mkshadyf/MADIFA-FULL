@@ -3,6 +3,9 @@ import type { FileOptions, UploadProgress } from '@/types/upload'
 
 interface UploadOptions extends FileOptions {
   onProgress?: (progress: UploadProgress) => void
+  cacheControl?: string
+  contentType?: string
+  upsert?: boolean
 }
 
 export async function uploadContent(
@@ -11,7 +14,7 @@ export async function uploadContent(
   options?: UploadOptions
 ): Promise<string> {
   const supabase = createClient()
-  let loaded = 0
+  const loaded = 0
 
   try {
     const { data, error } = await supabase.storage
@@ -19,19 +22,18 @@ export async function uploadContent(
       .upload(`${path}/${crypto.randomUUID()}`, file, {
         cacheControl: options?.cacheControl || '3600',
         contentType: options?.contentType || file.type,
-        upsert: options?.upsert || false,
-        onUploadProgress: progress => {
-          if (options?.onProgress) {
-            loaded += progress.loaded
-            options.onProgress({
-              loaded,
-              total: file.size,
-            })
-          }
-        },
+        upsert: options?.upsert || false
       })
 
     if (error) throw error
+
+    if (options?.onProgress) {
+      options.onProgress({
+        loaded: file.size,
+        total: file.size,
+        percent: 100
+      })
+    }
 
     const {
       data: { publicUrl },

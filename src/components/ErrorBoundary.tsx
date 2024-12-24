@@ -1,5 +1,5 @@
 import React from 'react'
-import { AppError, handleError } from '@/lib/utils/error-handler'
+import { AppError, handleError, createErrorContext, ErrorCodes } from '@/lib/utils/error-handler'
 
 interface Props {
   children: React.ReactNode
@@ -12,6 +12,20 @@ interface State {
   error: AppError | null
 }
 
+const createAppErrorFromUnknown = (error: unknown): AppError => {
+  if (error instanceof AppError) {
+    return error
+  }
+  if (error instanceof Error) {
+    return new AppError(error.message, ErrorCodes.UNKNOWN_ERROR, { originalError: error })
+  }
+  return new AppError(
+    typeof error === 'string' ? error : 'An unexpected error occurred',
+    ErrorCodes.UNKNOWN_ERROR,
+    { originalError: error }
+  )
+}
+
 export class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
@@ -19,13 +33,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   public static getDerivedStateFromError(error: unknown): State {
-    const appError = AppError.fromUnknown(error)
+    const appError = createAppErrorFromUnknown(error)
     return { hasError: true, error: appError }
   }
 
   public componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    const appError = AppError.fromUnknown(error)
-    handleError(appError, 'ErrorBoundary')
+    const appError = createAppErrorFromUnknown(error)
+    handleError(appError, createErrorContext('ErrorBoundary', 'componentDidCatch', { errorInfo }))
 
     if (this.props.onError) {
       this.props.onError(appError, errorInfo)

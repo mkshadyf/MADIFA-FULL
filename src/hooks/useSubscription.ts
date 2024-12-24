@@ -1,77 +1,57 @@
-import type { InvalidateQueryFilters } from '@tanstack/react-query'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-
-import { subscriptionService } from '@/lib/services/subscription'
-
-import { useAuth } from './useAuth'
+import type { SubscriptionService } from '@/lib/services/subscription'
+import type { PaymentMethod, Subscription } from '@/types'
+import { useCallback } from 'react'
 import { useToast } from './useToast'
 
-export function useSubscription() {
-  const { user } = useAuth()
-  const queryClient = useQueryClient()
+export function useSubscription(subscriptionService: SubscriptionService) {
   const toast = useToast()
 
-  const { data: subscription, isLoading } = useQuery({
-    queryKey: ['subscription', user?.id],
-    queryFn: () =>
-      user ? subscriptionService.getCurrentSubscription(user.id) : null,
-    enabled: !!user,
-  })
+  const createSubscription = useCallback(async (userId: string, planId: string, paymentMethod: PaymentMethod) => {
+    try {
+      const subscription = await subscriptionService.createSubscription(userId, planId, paymentMethod)
+      toast.success('Subscription created successfully')
+      return subscription
+    } catch (error) {
+      toast.error('Failed to create subscription')
+      throw error
+    }
+  }, [subscriptionService, toast])
 
-  const { data: plans } = useQuery({
-    queryKey: ['subscription-plans'],
-    queryFn: () => subscriptionService.getPlans(),
-  })
-
-  const { mutate: subscribe } = useMutation({
-    mutationFn: (planId: string) =>
-      subscriptionService.createSubscription(user!.id, planId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['subscription', user?.id],
-      } as InvalidateQueryFilters)
+  const updateSubscription = useCallback(async (userId: string, subscription: Partial<Subscription>) => {
+    try {
+      const updated = await subscriptionService.updateSubscription(userId, subscription)
       toast.success('Subscription updated successfully')
-    },
-    onError: error => {
+      return updated
+    } catch (error) {
       toast.error('Failed to update subscription')
-      console.error('Subscription error:', error)
-    },
-  })
+      throw error
+    }
+  }, [subscriptionService, toast])
 
-  const { mutate: cancel } = useMutation({
-    mutationFn: () => subscriptionService.cancelSubscription(user!.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['subscription', user?.id],
-      } as InvalidateQueryFilters)
-      toast.success('Subscription cancelled')
-    },
-    onError: error => {
+  const cancelSubscription = useCallback(async (userId: string) => {
+    try {
+      await subscriptionService.cancelSubscription(userId)
+      toast.success('Subscription cancelled successfully')
+    } catch (error) {
       toast.error('Failed to cancel subscription')
-      console.error('Cancellation error:', error)
-    },
-  })
-
-  const { mutate: reactivate } = useMutation({
-    mutationFn: () => subscriptionService.reactivateSubscription(user!.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['subscription', user?.id],
-      } as InvalidateQueryFilters)
-      toast.success('Subscription reactivated')
-    },
-    onError: error => {
-      toast.error('Failed to reactivate subscription')
-      console.error('Reactivation error:', error)
-    },
-  })
+      throw error
+    }
+  }, [subscriptionService, toast])
 
   return {
-    subscription,
-    plans,
-    isLoading,
-    subscribe,
-    cancel,
-    reactivate,
+    createSubscription,
+    updateSubscription,
+    cancelSubscription,
+    getPlans: subscriptionService.getPlans,
+    getCurrentSubscription: subscriptionService.getCurrentSubscription,
+    getSubscriptionStatus: subscriptionService.getSubscriptionStatus,
+    getUsage: subscriptionService.getUsage,
+    getSubscriptionTiers: subscriptionService.getSubscriptionTiers,
+    getInvoices: subscriptionService.getInvoices,
+    downloadInvoice: subscriptionService.downloadInvoice,
+    getPaymentMethods: subscriptionService.getPaymentMethods,
+    setDefaultPaymentMethod: subscriptionService.setDefaultPaymentMethod,
+    deletePaymentMethod: subscriptionService.deletePaymentMethod,
+    checkAccess: subscriptionService.checkAccess
   }
 }

@@ -103,7 +103,7 @@ export default function UserSearch({ onSelect }: UserSearchProps) {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-medium text-white">{user.full_name}</h3>
-                    <p className="text-sm text-gray-400">{user.email}</p>
+                    <p className="text-sm text-gray-400">{user.user_id}</p>
                   </div>
                   <div className="text-right">
                     <span

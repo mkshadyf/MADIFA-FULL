@@ -1,71 +1,55 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-
-import { vimeoService } from '@/lib/services/vimeo'
-import type { VimeoError } from '@/types/vimeo'
-
+import type { VimeoService, VimeoVideo } from '@/types/vimeo'
+import { useCallback } from 'react'
 import { useToast } from './useToast'
 
-export function useVimeoContent(videoId?: string) {
-  const { showToast } = useToast()
-  const queryClient = useQueryClient()
+export function useVimeoContent(vimeoService: VimeoService) {
+  const toast = useToast()
 
-  const videoQuery = useQuery({
-    queryKey: ['vimeo', videoId] as const,
-    queryFn: () => vimeoService.getVideo(videoId!),
-    enabled: !!videoId,
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  })
-
-  const uploadMutation = useMutation<
-    string,
-    VimeoError,
-    {
-      file: File
-      metadata: { name: string; description: string; folder_uri?: string }
+  const getVideo = useCallback(async (videoId: string): Promise<VimeoVideo | null> => {
+    try {
+      return await vimeoService.getVideo(videoId)
+    } catch (error) {
+      toast.error('Failed to fetch video details')
+      return null
     }
-  >({
-    mutationFn: data => vimeoService.uploadVideo(data.file, data.metadata),
-    onSuccess: () => {
-      showToast('Video uploaded successfully', 'success')
-      queryClient.invalidateQueries({ queryKey: ['vimeo'] })
-    },
-    onError: (error: VimeoError) => {
-      showToast(error.message || 'Failed to upload video', 'error')
-    },
-  })
+  }, [vimeoService, toast])
 
-  const deleteMutation = useMutation<void, VimeoError, string>({
-    mutationFn: vimeoService.deleteVideo,
-    onSuccess: () => {
-      showToast('Video deleted successfully', 'success')
-      queryClient.invalidateQueries({ queryKey: ['vimeo'] })
-    },
-    onError: (error: VimeoError) => {
-      showToast(error.message || 'Failed to delete video', 'error')
-    },
-  })
+  const deleteVideo = useCallback(async (videoId: string): Promise<boolean> => {
+    try {
+      await vimeoService.deleteVideo(videoId)
+      toast.success('Video deleted successfully')
+      return true
+    } catch (error) {
+      toast.error('Failed to delete video')
+      return false
+    }
+  }, [vimeoService, toast])
 
-  const folderMutation = useMutation<string, VimeoError, string>({
-    mutationFn: vimeoService.createFolder,
-    onSuccess: () => {
-      showToast('Folder created successfully', 'success')
-      queryClient.invalidateQueries({ queryKey: ['vimeo', 'folders'] })
-    },
-    onError: (error: VimeoError) => {
-      showToast(error.message || 'Failed to create folder', 'error')
-    },
-  })
+  const getVideos = useCallback(async (options?: { page?: number; per_page?: number }): Promise<VimeoVideo[]> => {
+    try {
+      return await vimeoService.getVideos(options)
+    } catch (error) {
+      toast.error('Failed to fetch videos')
+      return []
+    }
+  }, [vimeoService, toast])
 
   return {
-    video: videoQuery.data,
-    isLoading: videoQuery.isLoading,
-    error: videoQuery.error,
-    uploadVideo: uploadMutation.mutateAsync,
-    deleteVideo: deleteMutation.mutateAsync,
-    createFolder: folderMutation.mutateAsync,
-    isUploading: uploadMutation.isPending,
-    isDeleting: deleteMutation.isPending,
-    isCreatingFolder: folderMutation.isPending,
+    getVideo,
+    deleteVideo,
+    getVideos,
+    uploadVideo: vimeoService.uploadVideo,
+    createFolder: vimeoService.createFolder,
+    updateVideoMetadata: vimeoService.updateVideoMetadata,
+    updateVideoPrivacy: vimeoService.updateVideoPrivacy,
+    getVideoDetails: vimeoService.getVideoDetails,
+    uploadThumbnail: vimeoService.uploadThumbnail,
+    generateThumbnail: vimeoService.generateThumbnail,
+    updateVideo: vimeoService.updateVideo,
+    createShowcase: vimeoService.createShowcase,
+    addToShowcase: vimeoService.addToShowcase,
+    getVideosByFolder: vimeoService.getVideosByFolder,
+    getAllVideos: vimeoService.getAllVideos,
+    getFolders: vimeoService.getFolders
   }
 }

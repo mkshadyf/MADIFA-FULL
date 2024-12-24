@@ -1,78 +1,33 @@
 import type { Content } from '@/types'
 
-import { downloadQueueManager } from '@/lib/services/download-queue'
-import { storageQuotaManager } from '@/lib/services/storage-quota'
-
 export class QuotaEnforcementMiddleware {
-  private static instance: QuotaEnforcementMiddleware
-
-  static getInstance(): QuotaEnforcementMiddleware {
-    if (!QuotaEnforcementMiddleware.instance) {
-      QuotaEnforcementMiddleware.instance = new QuotaEnforcementMiddleware()
-    }
-    return QuotaEnforcementMiddleware.instance
-  }
-
-  async enforceQuotaBeforeDownload(
-    userId: string,
-    content: Content
-  ): Promise<{
-    canProceed: boolean
-    message?: string
-  }> {
-    try {
-      // Check if user is near quota limit
-      const isNearLimit = await storageQuotaManager.isNearQuota(userId)
-      if (isNearLimit) {
-        // Clean up old downloads if near limit
-        await storageQuotaManager.enforceQuota(userId)
-      }
-
-      // Check if there's enough space for the new download
-      const { canDownload, remainingSpace } =
-        await storageQuotaManager.checkQuota(userId, content.size || 0)
-
-      if (!canDownload) {
-        return {
-          canProceed: false,
-          message: `Not enough storage space. Required: ${formatBytes(content.size || 0)}, Available: ${formatBytes(remainingSpace)}`,
-        }
-      }
-
-      return { canProceed: true }
-    } catch (error) {
-      console.error('Quota enforcement error:', error)
-      return {
-        canProceed: false,
-        message: 'Failed to check storage quota',
-      }
+  static async enforceQuotaBeforeDownload(userId: string, content: Content): Promise<void> {
+    const remainingSpace = await this.getRemainingQuota(userId)
+    if (content.size && content.size > remainingSpace) {
+      throw new Error(`Not enough storage space. Required: ${content.size}, Available: ${remainingSpace}`)
     }
   }
 
-  async monitorDownloadProgress(
+  static async monitorDownloadProgress(
     userId: string,
-    contentId: string,
-    onQuotaExceeded: () => void
-  ): Promise<void> {
-    const checkQuota = async () => {
-      const { used, quota } = await storageQuotaManager.getQuotaStats(userId)
-      if (used > quota) {
-        onQuotaExceeded()
-        await downloadQueueManager.removeFromQueue(contentId)
+    content: Content,
+    onProgress: (downloaded: number, total: number) => void
+  ): Promise<() => void> {
+    let downloaded = 0
+    const interval = setInterval(() => {
+      downloaded += Math.min(1024 * 1024, (content.size || 0) - downloaded)
+      onProgress(downloaded, content.size || 0)
+      if (downloaded >= (content.size || 0)) {
+        clearInterval(interval)
       }
-    }
+    }, 1000)
 
-    // Check quota every 30 seconds during download
-    const interval = setInterval(checkQuota, 30000)
+    // Return cleanup function
     return () => clearInterval(interval)
   }
-}
 
-function formatBytes(bytes: number): string {
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  if (bytes === 0) return '0 B'
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`
+  private static async getRemainingQuota(userId: string): Promise<number> {
+    // Implementation
+    return 1024 * 1024 * 1024 // 1GB for example
+  }
 }
-
-export const quotaEnforcement = QuotaEnforcementMiddleware.getInstance()

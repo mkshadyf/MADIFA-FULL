@@ -1,51 +1,76 @@
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type {
+  User as SupabaseUser
+} from '@supabase/supabase-js';
+import type { Permission, UserProfile } from './user';
 
-export interface User extends Omit<SupabaseUser, 'app_metadata' | 'user_metadata'> {
-  email_verified: boolean
-  full_name: string
-  subscription_status: 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid' | null
-  subscription_tier: 'free' | 'basic' | 'premium' | 'pro' | null
-  sendEmailVerification: () => Promise<void>
+export type Provider = 'google' | 'github' | 'facebook' | 'twitter';
+
+export interface User extends Omit<SupabaseUser, 'user_metadata'> {
+  user_metadata?: {
+    full_name?: string
+    subscription_status?: string
+    subscription_tier?: string
+  }
+  email_verified?: boolean
+  full_name?: string
+  subscription_status?: string
+  subscription_tier?: string
 }
 
-export interface AuthResponse {
-  user: User | null
-  session: Session | null
-  error: Error | null
-}
+export type AuthChangeEvent = 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED' | 'USER_DELETED' | 'PASSWORD_RECOVERY' | 'TOKEN_REFRESHED';
 
 export interface Session {
   access_token: string
   refresh_token: string
   expires_in: number
-  expires_at: number
-  provider_token?: string
-  provider_refresh_token?: string
-  user: User
+  token_type: string
+  user: User | null
 }
 
-export interface AuthError extends Error {
+export interface AuthError {
+  name: string
+  message: string
   status: number
-  code: string
 }
 
-export type Provider = 'google' | 'facebook' | 'twitter' | 'github' | 'apple'
+export interface AuthResponse {
+  session: Session | null
+  user: User | null
+  error?: AuthError | null
+}
 
-export type VideoQuality = 'auto' | '1080p' | '720p' | '480p' | '360p'
-
-export interface AuthState {
+export interface AuthContextValue {
   user: User | null
   session: Session | null
+  isLoading: boolean
   loading: boolean
   error: Error | null
-}
-
-export interface AuthContextType extends AuthState {
+  isAuthenticated: boolean
+  userProfile: User | null
+  profile: User | null
   signIn: (email: string, password: string) => Promise<AuthResponse>
   signUp: (email: string, password: string) => Promise<AuthResponse>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
   sendVerificationEmail: () => Promise<void>
-  refreshSession: () => Promise<Session>
+  signInWithProvider: (provider: Provider) => Promise<AuthResponse>
+  updateProfile: (profile: Partial<UserProfile>) => Promise<void>
+}
+
+export interface SignInCredentials {
+  email: string
+  password: string
+}
+
+export interface SignUpCredentials extends SignInCredentials {
+  full_name: string
+}
+
+export type { Permission, UserProfile, UserRole } from './user';
+
+export function hasRequiredPermissions(userPermissions: Permission[], requiredPermissions: string[]): boolean {
+  return requiredPermissions.every(required =>
+    userPermissions.some(permission => permission.name === required)
+  )
 }

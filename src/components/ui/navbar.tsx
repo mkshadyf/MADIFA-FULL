@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React, { Fragment, useState } from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
@@ -8,6 +8,7 @@ export default function Navbar() {
   const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const isActive = (path: string) => location.pathname === path
 
@@ -80,12 +81,15 @@ export default function Navbar() {
                 <button
                   onClick={() => navigate('/search')}
                   className="rounded-full p-2 text-gray-400 hover:bg-gray-800 hover:text-white"
+                  aria-label="Search"
+                  title="Search"
                 >
                   <svg
                     className="h-5 w-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -96,9 +100,51 @@ export default function Navbar() {
                   </svg>
                 </button>
 
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(!isMobileMenuOpen)
+                    const button = document.getElementById('mobile-menu-button')
+                    if (button) {
+                      button.setAttribute('aria-expanded', (!isMobileMenuOpen).toString())
+                    }
+                  }}
+                  id="mobile-menu-button"
+                  className="md:hidden rounded-full p-2 text-gray-400 hover:bg-gray-800 hover:text-white"
+                  aria-label="Toggle mobile menu"
+                  title="Toggle mobile menu"
+                  aria-expanded="false"
+                  aria-controls="mobile-menu"
+                  aria-haspopup="true"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    {isMobileMenuOpen ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    )}
+                  </svg>
+                </button>
+
                 {/* User Menu */}
                 <Menu as="div" className="relative">
-                  <Menu.Button className="flex items-center space-x-2 text-gray-300 hover:text-white">
+                  <Menu.Button className="flex items-center space-x-2 text-gray-300 hover:text-white" aria-label="User menu" title="Open user menu">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
                       <span className="text-sm font-medium text-white">
                         {profile?.full_name?.[0] ||
@@ -170,6 +216,42 @@ export default function Navbar() {
             )}
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <Transition
+          show={isMobileMenuOpen}
+          enter="transition ease-out duration-100"
+          enterFrom="transform opacity-0 scale-95"
+          enterTo="transform opacity-100 scale-100"
+          leave="transition ease-in duration-75"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
+          as={Fragment}
+        >
+          <div
+            id="mobile-menu"
+            className="md:hidden absolute top-16 left-0 right-0 bg-gray-900 border-b border-gray-800"
+            role="navigation"
+            aria-label="Mobile navigation"
+          >
+            <div className="space-y-1 px-4 py-3">
+              {mainNavItems.map(item => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`${
+                    isActive(item.path)
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  } block rounded-md px-3 py-2 text-base font-medium`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </Transition>
       </div>
     </nav>
   )

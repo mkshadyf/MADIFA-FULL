@@ -58,20 +58,20 @@ export default function VimeoAnalytics() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Plays</p>
-                  <p className="text-2xl font-bold">{video.stats.plays}</p>
+                  <p className="text-2xl font-bold">{video.stats?.plays || 0}</p>
                 </div>
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Finishes</p>
-                  <p className="text-2xl font-bold">{video.stats.finishes}</p>
+                  <p className="text-2xl font-bold">{video.stats?.finishes || 0}</p>
                 </div>
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Impressions</p>
-                  <p className="text-2xl font-bold">{video.stats.plays}</p>
+                  <p className="text-2xl font-bold">{video.stats?.loads || 0}</p>
                 </div>
                 <div className="rounded-lg bg-gray-700 p-4">
                   <p className="text-sm text-gray-400">Watch Time (hrs)</p>
                   <p className="text-2xl font-bold">
-                    {Math.round(video.stats.finishes / 3600)}
+                    {Math.round((video.stats?.finishes || 0) / 3600)}
                   </p>
                 </div>
               </div>

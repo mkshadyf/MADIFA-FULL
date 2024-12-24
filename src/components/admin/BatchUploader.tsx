@@ -109,8 +109,16 @@ export const BatchUploader: FC<BatchUploaderProps> = ({
 
           const uri = await vimeoService?.uploadVideo(
             file,
-            file.name,
-            `Uploaded via batch uploader`
+            {
+              name: file.name,
+              description: `Uploaded via batch uploader`,
+              privacy: {
+                view: 'anybody',
+                embed: 'public',
+                comments: 'anybody',
+                download: false
+              }
+            }
           )
 
           const videoId = uri?.uri.split('/').pop()

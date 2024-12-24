@@ -1,47 +1,40 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { cn } from '@/lib/utils'
 
 import { useAuth } from '@/hooks/useAuth'
 
-export default function MobileNav() {
-  const { profile } = useAuth()
-  const location = useLocation()
+interface NavItem {
+  name: string
+  path: string
+  icon: string
+}
 
-  const navItems = [
-    { name: 'Home', path: '/', icon: 'home' },
-    { name: 'Browse', path: '/browse', icon: 'browse' },
-    { name: 'Search', path: '/search', icon: 'search' },
-    { name: 'Favorites', path: '/favorites', icon: 'heart' },
-    { name: 'Profile', path: '/profile', icon: 'user' },
-    profile?.role === 'admin' && {
-      name: 'Admin',
-      path: '/admin/dashboard',
-      icon: 'settings',
-    },
-  ].filter(Boolean)
+interface MobileNavProps {
+  items: NavItem[]
+  currentPath: string
+}
 
-  const isActive = (path: string) => location.pathname === path
+export function MobileNav({ items, currentPath }: MobileNavProps) {
+  const filteredItems = items.filter(Boolean) as NavItem[]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t border-gray-800 bg-gray-900/95 backdrop-blur-sm md:hidden">
-      <div className="grid grid-cols-5 gap-1 p-2">
-        {navItems.map(item => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`flex flex-col items-center justify-center rounded-lg p-2 ${
-              isActive(item.path)
-                ? 'bg-indigo-500/10 text-indigo-500'
-                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-            }`}
-          >
-            <span className="material-icons-outlined mb-1 text-xl">
-              {item.icon}
-            </span>
-            <span className="text-xs">{item.name}</span>
-          </Link>
-        ))}
-      </div>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t bg-background">
+      {filteredItems.map((item) => (
+        <Link
+          key={item.path}
+          to={item.path}
+          className={cn(
+            'flex flex-col items-center justify-center px-4',
+            currentPath === item.path
+              ? 'text-primary'
+              : 'text-muted-foreground hover:text-primary'
+          )}
+        >
+          <i className={cn('text-xl', item.icon)} />
+          <span className="mt-1 text-xs">{item.name}</span>
+        </Link>
+      ))}
     </nav>
   )
 }

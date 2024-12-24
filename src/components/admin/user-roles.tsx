@@ -159,7 +159,7 @@ export default function UserRoles() {
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
-                  <div className="text-sm text-gray-300">{user.email}</div>
+                  <div className="text-sm text-gray-300">{user.user_id}</div>
                 </td>
                 <td className="whitespace-nowrap px-6 py-4">
                   <select

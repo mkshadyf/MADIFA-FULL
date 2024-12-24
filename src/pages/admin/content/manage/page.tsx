@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchMetrics } from '../manage/page'
+import fetchMetrics from '../manage/page'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/database.types'
 import ContentCategories from '@/components/admin/content-categories'
@@ -180,12 +180,15 @@ export default function ContentManagement() {
         <h2 className="mb-4 text-xl font-bold text-white">Content List</h2>
         <ContentList
           content={metrics?.popularContent || []}
-          onRefresh={() => {
+          onRefresh={async () => {
             setLoading(true)
-            void fetchMetrics().catch((error: any) => {
+            try {
+              await fetchMetrics()
+            } catch (error) {
               console.error('Error refreshing metrics:', error)
+            } finally {
               setLoading(false)
-            })
+            }
           }}
         />
       </div>

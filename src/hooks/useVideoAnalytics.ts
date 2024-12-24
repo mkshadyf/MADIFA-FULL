@@ -208,7 +208,7 @@ export function useVideoAnalytics(player: VimeoPlayer | null, videoId: string) {
     player.on('play', handlePlay)
     player.on('pause', handlePause)
     player.on('seeked', handleSeeked)
-    player.on('qualitychange', handleQualityChange)
+    player.on('qualitychange' as any, handleQualityChange) // Type assertion to handle Vimeo event
     player.on('error', handleError)
 
     // Cleanup
@@ -216,7 +216,7 @@ export function useVideoAnalytics(player: VimeoPlayer | null, videoId: string) {
       player.off('play', handlePlay)
       player.off('pause', handlePause)
       player.off('seeked', handleSeeked)
-      player.off('qualitychange', handleQualityChange)
+      player.off('qualitychange' as any, handleQualityChange) // Type assertion to handle Vimeo event
       player.off('error', handleError)
 
       if (progressIntervalRef.current) {

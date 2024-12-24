@@ -10,7 +10,7 @@ import { DEFAULT_QUALITIES } from '@/types/video'
 
 import VideoControls from './VideoControls'
 import BufferingIndicator from './BufferingIndicator'
-import { VideoPlayerProps } from '@/types/video'
+import type { VideoPlayerProps } from '@/types/video'
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   url,

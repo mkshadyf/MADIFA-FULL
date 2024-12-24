@@ -1,173 +1,115 @@
-import type { Express } from 'express'
-import type { RateLimitRequestHandler } from 'express-rate-limit'
-import rateLimit from 'express-rate-limit'
-import helmet from 'helmet'
+import { createErrorContext, handleApiError } from '@/lib/utils/error-handler'
+import type { ApiResponse } from '@/types'
 
-import { createAPIError } from '@/lib/utils/error-handler'
+interface FetchOptions extends RequestInit {
+  baseUrl?: string
+  query?: Record<string, string>
+  retries?: number
+  timeout?: number
+}
 
-// Import untyped modules
-const hpp = require('hpp')
-const xssClean = require('xss-clean')
+interface ApiClientOptions {
+  baseUrl: string
+  defaultHeaders?: HeadersInit
+  timeout?: number
+  retries?: number
+}
 
-// API request wrapper with rate limiting and security
-export const apiRequest = async <T>(
-  url: string,
-  options: RequestInit = {}
-): Promise<T> => {
-  try {
+export class ApiClient {
+  private baseUrl: string
+  private defaultHeaders: HeadersInit
+  private timeout: number
+  private retries: number
+
+  constructor(options: ApiClientOptions) {
+    this.baseUrl = options.baseUrl
+    this.defaultHeaders = options.defaultHeaders || {}
+    this.timeout = options.timeout || 30000
+    this.retries = options.retries || 3
+  }
+
+  private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+    const contentType = response.headers.get('content-type')
+    const isJson = contentType?.includes('application/json')
+
+    if (!response.ok) {
+      const error = isJson ? await response.json() : { message: response.statusText }
+      throw handleApiError(error, createErrorContext('api', 'handleResponse'))
+    }
+
+    if (!isJson) {
+      return { data: null } as ApiResponse<T>
+    }
+
+    const data = await response.json()
+    return { data } as ApiResponse<T>
+  }
+
+  private buildUrl(path: string, query?: Record<string, string>): string {
+    const url = new URL(path, this.baseUrl)
+    if (query) {
+      Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          url.searchParams.append(key, value.toString())
+        }
+      })
+    }
+    return url.toString()
+  }
+
+  async get<T>(path: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(path, options.query)
     const response = await fetch(url, {
       ...options,
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        ...this.defaultHeaders,
         ...options.headers,
       },
     })
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw createAPIError(
-        response.status,
-        error.message || 'API request failed',
-        error.code
-      )
-    }
-
-    return response.json()
-  } catch (error) {
-    throw createAPIError(500, 'API request failed', 'API_ERROR', error)
-  }
-}
-
-// API endpoints configuration
-export const API_ENDPOINTS = {
-  auth: {
-    login: '/api/auth/login',
-    register: '/api/auth/register',
-    logout: '/api/auth/logout',
-    refresh: '/api/auth/refresh',
-  },
-  user: {
-    profile: '/api/user/profile',
-    settings: '/api/user/settings',
-  },
-  videos: {
-    list: '/api/videos',
-    upload: '/api/videos/upload',
-    delete: (id: string) => `/api/videos/${id}`,
-    update: (id: string) => `/api/videos/${id}`,
-  },
-  analytics: {
-    overview: '/api/analytics/overview',
-    realtime: '/api/analytics/realtime',
-    reports: '/api/analytics/reports',
-  },
-}
-
-// API service class
-export class APIService {
-  private static instance: APIService
-  private rateLimiters: Map<string, RateLimitRequestHandler>
-
-  private constructor() {
-    this.rateLimiters = new Map()
-    this.setupRateLimiters()
+    return this.handleResponse<T>(response)
   }
 
-  static getInstance(): APIService {
-    if (!APIService.instance) {
-      APIService.instance = new APIService()
-    }
-    return APIService.instance
+  async post<T>(path: string, data?: unknown, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(path, options.query)
+    const response = await fetch(url, {
+      ...options,
+      method: 'POST',
+      headers: {
+        ...this.defaultHeaders,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    })
+    return this.handleResponse<T>(response)
   }
 
-  private setupRateLimiters() {
-    // Authentication rate limiters
-    this.rateLimiters.set(
-      'auth',
-      rateLimit({
-        windowMs: 15 * 60 * 1000,
-        max: 5,
-        message: 'Too many login attempts, please try again later',
-      })
-    )
-
-    // API rate limiters
-    this.rateLimiters.set(
-      'api',
-      rateLimit({
-        windowMs: 15 * 60 * 1000,
-        max: 100,
-      })
-    )
-
-    // Upload rate limiters
-    this.rateLimiters.set(
-      'upload',
-      rateLimit({
-        windowMs: 60 * 60 * 1000,
-        max: 10,
-        message: 'Upload limit reached, please try again later',
-      })
-    )
+  async put<T>(path: string, data?: unknown, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(path, options.query)
+    const response = await fetch(url, {
+      ...options,
+      method: 'PUT',
+      headers: {
+        ...this.defaultHeaders,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+    })
+    return this.handleResponse<T>(response)
   }
 
-  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    // Apply rate limiting based on endpoint
-    const limiter = this.getLimiter(endpoint)
-    if (limiter) {
-      await new Promise((resolve, reject) => {
-        limiter(
-          { ip: '127.0.0.1' } as any,
-          { json: reject } as any,
-          resolve as any
-        )
-      })
-    }
-
-    return apiRequest<T>(endpoint, options)
-  }
-
-  private getLimiter(endpoint: string) {
-    if (endpoint.includes('/auth/')) {
-      return this.rateLimiters.get('auth')
-    }
-    if (endpoint.includes('/upload')) {
-      return this.rateLimiters.get('upload')
-    }
-    return this.rateLimiters.get('api')
-  }
-}
-
-export const apiService = APIService.getInstance()
-
-// Configure Express middleware
-export function configureAPIMiddleware(app: Express): void {
-  // Rate limiting
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-
-  // Apply security middleware
-  app.use(helmet())
-  app.use(hpp())
-  app.use(xssClean())
-  app.use(limiter)
-
-  // Content Security Policy
-  app.use(
-    helmet.contentSecurityPolicy({
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'", 'https://api.vimeo.com'],
-        fontSrc: ["'self'", 'https:', 'data:'],
-        objectSrc: ["'none'"],
-        mediaSrc: ["'self'", 'https://player.vimeo.com'],
-        frameSrc: ["'self'", 'https://player.vimeo.com'],
+  async delete<T>(path: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+    const url = this.buildUrl(path, options.query)
+    const response = await fetch(url, {
+      ...options,
+      method: 'DELETE',
+      headers: {
+        ...this.defaultHeaders,
+        ...options.headers,
       },
     })
-  )
+    return this.handleResponse<T>(response)
+  }
 }

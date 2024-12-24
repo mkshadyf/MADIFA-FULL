@@ -42,6 +42,21 @@ export interface Database {
         >
         Update: Partial<Database['public']['Tables']['users']['Row']>
       }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          thumbnail_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<
+          Database['public']['Tables']['categories']['Row'],
+          'id' | 'created_at' | 'updated_at'
+        >
+        Update: Partial<Database['public']['Tables']['categories']['Row']>
+      }
       content: {
         Row: {
           id: string
@@ -190,3 +205,13 @@ export interface Database {
     }
   }
 }
+
+// Export type aliases for convenience
+export type Tables = Database['public']['Tables']
+export type Views = Database['public']['Views']
+export type Functions = Database['public']['Functions']
+export type Enums = Database['public']['Enums']
+
+// Re-export DatabaseDefinition Tables for backward compatibility
+export type { DatabaseDefinition as DatabaseSchema }
+export type DatabaseTables = DatabaseDefinition['public']['Tables']

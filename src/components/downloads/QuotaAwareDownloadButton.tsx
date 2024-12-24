@@ -1,20 +1,18 @@
 import React, { useState } from 'react'
 import type { Content } from '@/types'
-
-import { formatBytes } from '@/lib/utils/format'
-import { useAuth } from '@/hooks/useAuth'
-import { useDownloadQueue } from '@/hooks/useDownloadQueue'
+import type { QuotaCheckResult } from '@/types/quota'
 import { useQuotaEnforcement } from '@/hooks/useQuotaEnforcement'
-import { useStorageQuota } from '@/hooks/useStorageQuota'
+import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
-
 import { IconButton } from '../ui/button'
+import type { SubscriptionService } from '@/lib/services/subscription'
 
 interface QuotaAwareDownloadButtonProps {
   content: Content
   priority?: number
   className?: string
   onQuotaExceeded?: () => void
+  subscriptionService: SubscriptionService
 }
 
 export default function QuotaAwareDownloadButton({
@@ -22,35 +20,33 @@ export default function QuotaAwareDownloadButton({
   priority = 0,
   className = '',
   onQuotaExceeded,
+  subscriptionService,
 }: QuotaAwareDownloadButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const { addToQueue } = useDownloadQueue()
-  const { checkQuotaBeforeDownload } = useQuotaEnforcement()
-  const { quotaStats } = useStorageQuota()
+  const [quotaCheck, setQuotaCheck] = useState<QuotaCheckResult | null>(null)
+  const quotaEnforcement = useQuotaEnforcement(subscriptionService)
   const { user } = useAuth()
   const { showToast } = useToast()
 
   const handleDownload = async () => {
-    if (!user) {
+    if (!user?.id) {
       showToast('Please sign in to download content', 'error')
       return
     }
 
     try {
       setIsLoading(true)
-
-      // Check quota before starting download
-      const canDownload = await checkQuotaBeforeDownload(content)
-      if (!canDownload) {
+      const check = await quotaEnforcement.checkQuota(user.id, content.size)
+      setQuotaCheck(check)
+      
+      if (!check || !check.allowed) {
         onQuotaExceeded?.()
-        showToast(
-          `Storage quota exceeded (${formatBytes(quotaStats.used)}/${formatBytes(quotaStats.quota)})`,
-          'error'
-        )
+        showToast(check?.error || 'Storage quota exceeded', 'error')
         return
       }
 
-      await addToQueue(content, priority)
+      await quotaEnforcement.updateUsage(content.size)
+      showToast('Download started successfully', 'success')
     } catch (error) {
       console.error('Failed to start download:', error)
       showToast(
@@ -72,9 +68,9 @@ export default function QuotaAwareDownloadButton({
         className={`${className} ${isLoading ? 'animate-spin' : ''}`}
         aria-label="Download content"
       />
-      {quotaStats.isNearLimit ? (
+      {quotaCheck?.isNearLimit && (
         <div className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-yellow-500" />
-      ) : null}
+      )}
     </div>
   )
 }

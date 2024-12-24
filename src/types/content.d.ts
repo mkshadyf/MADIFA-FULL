@@ -9,6 +9,7 @@ export interface Content {
   created_at: string
   updated_at: string
   category: string
+  release_year: number
   tags: string[]
   privacy: {
     view: 'anybody' | 'disable' | 'unlisted'

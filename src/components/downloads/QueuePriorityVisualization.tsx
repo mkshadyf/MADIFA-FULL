@@ -3,13 +3,17 @@ import React from 'react'
 import { formatBytes } from '@/lib/utils/format'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
 import { useQueuePriority } from '@/hooks/useQueuePriority'
-import type { QueueItem } from '@/stores/queueStore'
+import type { QueueItem } from '@/types/queue'
+
+type PriorityLevel = 'high' | 'medium' | 'low'
+
+interface QueueItemWithPriority extends QueueItem {
+  calculatedPriority: number
+}
 
 interface QueuePriorityVisualizationProps {
   className?: string
 }
-
-type PriorityLevel = 'high' | 'medium' | 'low'
 
 export default function QueuePriorityVisualization({
   className = '',
@@ -17,9 +21,9 @@ export default function QueuePriorityVisualization({
   const { queueItems } = useDownloadQueue()
   const { calculatePriority } = useQueuePriority()
   const [priorityGroups, setPriorityGroups] = React.useState<{
-    high: QueueItem[]
-    medium: QueueItem[]
-    low: QueueItem[]
+    high: QueueItemWithPriority[]
+    medium: QueueItemWithPriority[]
+    low: QueueItemWithPriority[]
   }>({
     high: [],
     medium: [],
@@ -28,7 +32,7 @@ export default function QueuePriorityVisualization({
 
   React.useEffect(() => {
     const groupItems = async () => {
-      const itemsWithPriority = await Promise.all(
+      const itemsWithPriority: QueueItemWithPriority[] = await Promise.all(
         queueItems.map(async item => ({
           ...item,
           calculatedPriority: await calculatePriority(item.content),
@@ -61,9 +65,10 @@ export default function QueuePriorityVisualization({
     }
   }
 
-  const getTotalSize = (items: QueueItem[]): number => {
+  const getTotalSize = (items: QueueItemWithPriority[]): number => {
     return items.reduce(
-      (total: number, item: QueueItem) => total + (item.content.size || 0),
+      (total: number, item: QueueItemWithPriority) =>
+        total + (item.content.size || 0),
       0
     )
   }

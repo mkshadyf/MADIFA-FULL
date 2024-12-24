@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import type { Content } from '@/types'
-
-import { contentManager } from '@/lib/services/content-manager'
+import { ContentManager } from '@/lib/services/content-manager'
 import { useContent } from '@/hooks/useContent'
 import { useToast } from '@/hooks/useToast'
 import { IconButton } from '@/components/ui/button'
+import { vimeoService } from '@/lib/services/vimeo'
+import { useVimeoContent } from '@/hooks/useVimeoContent'
 
 interface ContentBatchOperationsProps {
   className?: string
@@ -15,7 +16,7 @@ export default function ContentBatchOperations({
   className = '',
   onBatchComplete,
 }: ContentBatchOperationsProps) {
-  const { data: contents } = useContent()
+  const { data: contents } = useContent() as { data: Content[] }
   const { showToast } = useToast()
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [operation, setOperation] = useState<
@@ -23,6 +24,9 @@ export default function ContentBatchOperations({
   >(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [newValue, setNewValue] = useState('')
+
+  const contentManager = new ContentManager({ vimeoService })
+  const vimeoContent = useVimeoContent(vimeoService)
 
   const handleSelect = (contentId: string) => {
     const newSelected = new Set(selectedItems)
@@ -39,8 +43,7 @@ export default function ContentBatchOperations({
 
     setIsProcessing(true)
     try {
-      const selectedContent =
-        contents?.filter((c: Content) => selectedItems.has(c.id)) || []
+      const selectedContent = contents?.filter((c: Content) => selectedItems.has(c.id)) || []
 
       switch (operation) {
         case 'tag':
@@ -69,27 +72,35 @@ export default function ContentBatchOperations({
 
   const handleTagOperation = async (selectedContent: Content[]) => {
     await Promise.all(
-      selectedContent.map(content =>
-        contentManager.updateMetadata(content.id, {
-          tags: [...(content.tags || []), newValue],
-        })
-      )
+      selectedContent.map(async content => {
+        const videoDetails = await vimeoContent.getVideoDetails(content.id)
+        if (videoDetails) {
+          return contentManager.updateMetadata(content.id, {
+            tags: [...(content.tags || []), newValue],
+          })
+        }
+      })
     )
   }
 
   const handleCategorizeOperation = async (selectedContent: Content[]) => {
     await Promise.all(
-      selectedContent.map(content =>
-        contentManager.updateMetadata(content.id, {
-          category: newValue,
-        })
-      )
+      selectedContent.map(async content => {
+        const videoDetails = await vimeoContent.getVideoDetails(content.id)
+        if (videoDetails) {
+          return contentManager.updateMetadata(content.id, {
+            category: newValue,
+          })
+        }
+      })
     )
   }
 
   const handleDeleteOperation = async (selectedContent: Content[]) => {
     await Promise.all(
-      selectedContent.map(content => contentManager.deleteContent(content.id))
+      selectedContent.map(async content => {
+        await vimeoContent.deleteVideo(content.id)
+      })
     )
   }
 

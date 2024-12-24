@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
-import { contentManager } from '@/lib/services/content-manager'
+import { ContentManager } from '@/lib/services/content-manager'
 import { useToast } from '@/hooks/useToast'
-import { Content } from '@/types/content'
+import type { Content } from '@/types/content'
 import { IconButton } from '../ui/button'
+import { vimeoService } from '@/lib/services/vimeo'
 
 interface ContentMetadataEditorProps {
   className?: string
@@ -31,10 +32,13 @@ export default function ContentMetadataEditor({
     customFields: {} as Record<string, string>,
   })
 
+  // Initialize ContentManager instance
+  const contentManager = new ContentManager({ vimeoService })
+
   useEffect(() => {
     const loadMetadata = async () => {
       try {
-        const content = await contentManager.getContent({ id: contentId })
+        const content = await contentManager.getContent(contentId)
         if (content) {
           setMetadata({
             title: content.title || '',

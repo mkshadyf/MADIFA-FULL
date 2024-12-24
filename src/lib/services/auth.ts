@@ -1,199 +1,131 @@
-import type {
-  Provider,
-  Session as SupabaseSession,
-  User,
-} from '@supabase/supabase-js'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase/client';
+import type { User } from '@/types/user';
+import type { Provider, Session, User as SupabaseUser } from '@supabase/supabase-js';
 
-import type { AuthResponse, Session } from '@/types/auth'
+export interface AuthService {
+  signInWithEmail(email: string, password: string): Promise<{ user: User | null; session: Session | null }>
+  signInWithProvider(provider: Provider): Promise<{ user: User | null; session: Session | null }>
+  signUp(email: string, password: string, fullName: string): Promise<{ user: User | null; session: Session | null }>
+  signOut(): Promise<void>
+  getSession(): Promise<{ user: User | null; session: Session | null }>
+  refreshSession(): Promise<{ user: User | null; session: Session | null }>
+  updateProfile(user: Partial<User>): Promise<{ user: User | null; error: Error | null }>
+}
 
-export class AuthService {
-  private supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  )
+export class AuthServiceImpl implements AuthService {
+  private supabase = supabase
 
-  async signInWithProvider(provider: Provider): Promise<AuthResponse> {
-    try {
-      const { data, error } = await this.supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: import.meta.env.VITE_AUTH_REDIRECT_URL,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      })
+  private mapUser(user: SupabaseUser | null): User | null {
+    if (!user) return null
+    return {
+      ...user,
+      email: user.email || '',
+      email_verified: user.email_confirmed_at !== null,
+      full_name: user.user_metadata?.full_name,
+      subscription_status: user.user_metadata?.subscription_status,
+      subscription_tier: user.user_metadata?.subscription_tier
+    }
+  }
 
-      if (error) throw error
+  private mapSession(session: Session | null): Session | null {
+    if (!session) return null
+    return session
+  }
 
-      return {
-        user: data.user,
-        profile: null, // Profile will be fetched separately
+  async signInWithEmail(email: string, password: string): Promise<{ user: User | null; session: Session | null }> {
+    const { data, error } = await this.supabase.auth.signInWithPassword({
+      email,
+      password
+    })
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      user: this.mapUser(data.user),
+      session: this.mapSession(data.session)
+    }
+  }
+
+  async signInWithProvider(provider: Provider): Promise<{ user: User | null; session: Session | null }> {
+    const { data, error } = await this.supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'email profile',
       }
-    } catch (error) {
-      console.error('Provider sign in error:', error)
+    })
+
+    if (error) {
       throw error
+    }
+
+    return {
+      user: null, // OAuth flow will redirect, so we return null
+      session: null
     }
   }
 
-  async signInWithEmail(
-    email: string,
-    password: string
-  ): Promise<AuthResponse> {
-    try {
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) throw error
-
-      return {
-        user: data.user,
-        profile: null, // Profile will be fetched separately
+  async signUp(email: string, password: string, fullName: string): Promise<{ user: User | null; session: Session | null }> {
+    const { data, error } = await this.supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          full_name: fullName,
+        }
       }
-    } catch (error) {
-      console.error('Email sign in error:', error)
+    })
+
+    if (error) {
       throw error
     }
-  }
 
-  async signUp(
-    email: string,
-    password: string,
-    fullName: string
-  ): Promise<AuthResponse> {
-    try {
-      const { data, error } = await this.supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: import.meta.env.VITE_AUTH_REDIRECT_URL,
-          data: {
-            fullName, // Store fullName in user metadata
-          },
-        },
-      })
-
-      if (error) throw error
-
-      return {
-        user: data.user,
-        profile: null,
-      }
-    } catch (error) {
-      console.error('Sign up error:', error)
-      throw error
-    }
-  }
-
-  async resetPassword(email: string): Promise<void> {
-    try {
-      const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: import.meta.env.VITE_PASSWORD_RESET_URL,
-      })
-
-      if (error) throw error
-    } catch (error) {
-      console.error('Password reset error:', error)
-      throw error
-    }
-  }
-
-  async updatePassword(password: string): Promise<void> {
-    try {
-      const { error } = await this.supabase.auth.updateUser({
-        password,
-      })
-
-      if (error) throw error
-    } catch (error) {
-      console.error('Password update error:', error)
-      throw error
+    return {
+      user: this.mapUser(data.user),
+      session: this.mapSession(data.session)
     }
   }
 
   async signOut(): Promise<void> {
-    try {
-      const { error } = await this.supabase.auth.signOut()
-      if (error) throw error
-    } catch (error) {
-      console.error('Sign out error:', error)
+    const { error } = await this.supabase.auth.signOut()
+    if (error) {
       throw error
     }
   }
 
-  async getSession(): Promise<Session | null> {
-    try {
-      const {
-        data: { session },
-        error,
-      } = await this.supabase.auth.getSession()
-
-      if (error) throw error
-
-      if (!session) return null
-
-      return {
-        id: session.id,
-        userId: session.user.id,
-        createdAt: session.created_at,
-        lastActive: new Date().toISOString(),
-        expiresAt: session.expires_at?.toString() || '',
-        deviceInfo: {
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          browser: navigator.appName,
-          os: navigator.platform,
-        },
-        ipAddress: '', // Will be set by the server
-      }
-    } catch (error) {
-      console.error('Get session error:', error)
+  async getSession(): Promise<{ user: User | null; session: Session | null }> {
+    const { data: { session }, error } = await this.supabase.auth.getSession()
+    if (error) {
       throw error
+    }
+    return {
+      user: session ? this.mapUser(session.user) : null,
+      session: this.mapSession(session)
     }
   }
 
-  async refreshSession(): Promise<Session | null> {
-    try {
-      const {
-        data: { session },
-        error,
-      } = await this.supabase.auth.refreshSession()
-
-      if (error) throw error
-
-      if (!session) return null
-
-      return {
-        id: session.id,
-        userId: session.user.id,
-        createdAt: session.created_at,
-        lastActive: new Date().toISOString(),
-        expiresAt: session.expires_at?.toString() || '',
-        deviceInfo: {
-          userAgent: navigator.userAgent,
-          platform: navigator.platform,
-          browser: navigator.appName,
-          os: navigator.platform,
-        },
-        ipAddress: '', // Will be set by the server
-      }
-    } catch (error) {
-      console.error('Refresh session error:', error)
+  async refreshSession(): Promise<{ user: User | null; session: Session | null }> {
+    const { data: { session }, error } = await this.supabase.auth.refreshSession()
+    if (error) {
       throw error
+    }
+    return {
+      user: session ? this.mapUser(session.user) : null,
+      session: this.mapSession(session)
     }
   }
 
-  onAuthStateChange(callback: (user: User | null) => void) {
-    return this.supabase.auth.onAuthStateChange(
-      (event: string, session: SupabaseSession | null) => {
-        callback(session?.user || null)
-      }
-    )
+  async updateProfile(user: Partial<User>): Promise<{ user: User | null; error: Error | null }> {
+    const { data, error } = await this.supabase.auth.updateUser(user)
+
+    return {
+      user: this.mapUser(data.user),
+      error: error ? { name: error.name, message: error.message } : null
+    }
   }
 }
 
-export const authService = new AuthService()
+export const authService = new AuthServiceImpl()

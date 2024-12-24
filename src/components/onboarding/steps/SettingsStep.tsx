@@ -26,10 +26,13 @@ export function SettingsStep({
             </p>
           </div>
           <button
+
             onClick={() =>
               onUpdate({ ...settings, notifications: !settings.notifications })
             }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            title="Toggle notifications"
+            aria-label="Toggle notifications"
+             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               settings.notifications ? 'bg-indigo-500' : 'bg-gray-700'
             }`}
           >

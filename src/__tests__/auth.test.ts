@@ -2,7 +2,7 @@ import type { Session, User } from '@supabase/supabase-js'
 import { createClient } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { AuthService } from '@/lib/services/auth'
+import { AuthServiceImpl } from '@/lib/services/auth'
 
 // Create mock auth error
 class MockAuthError extends Error {
@@ -33,8 +33,8 @@ vi.mock('@supabase/supabase-js', () => ({
   })),
 }))
 
-describe('AuthService', () => {
-  let authService: AuthService
+describe('AuthServiceImpl', () => {
+  let authService: AuthServiceImpl
   let mockSupabaseClient: ReturnType<typeof createClient>
   const mockUser: User = {
     id: 'user123',
@@ -81,7 +81,7 @@ describe('AuthService', () => {
       error: null,
     })
 
-    authService = new AuthService()
+    authService = new AuthServiceImpl()
     // @ts-ignore - Accessing private property for testing
     authService['supabase'] = mockSupabaseClient
   })

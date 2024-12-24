@@ -1,128 +1,158 @@
 import type { Content } from '@/types'
-import type { DBSchema, IDBPDatabase } from 'idb'
-import { openDB } from 'idb'
+import { EventEmitter } from 'events'
 
-import { createClient } from '@/lib/supabase/client'
+export interface DownloadProgress {
+  contentId: string
+  bytesLoaded: number
+  bytesTotal: number
+  percent: number
+}
 
-interface DownloadsDB extends DBSchema {
-  downloads: {
-    key: string
-    value: {
-      content: Content
-      videoBlob: Blob
-      thumbnailBlob: Blob
-      downloadedAt: number
+export interface DownloadError {
+  contentId: string
+  error: Error
+}
+
+export class DownloadsManager extends EventEmitter {
+  private downloads: Map<string, Content> = new Map()
+  private progress: Map<string, DownloadProgress> = new Map()
+  private queue: Map<string, Content> = new Map()
+  private storageUsage: number = 0
+  private storageQuota: number = 0
+
+  constructor() {
+    super()
+  }
+
+  // Queue management
+  addToQueue(content: Content) {
+    this.queue.set(content.id, content)
+    this.emit('queueUpdated', Array.from(this.queue.values()))
+  }
+
+  removeFromQueue(contentId: string) {
+    this.queue.delete(contentId)
+    this.emit('queueUpdated', Array.from(this.queue.values()))
+  }
+
+  pauseDownload(contentId: string) {
+    const content = this.queue.get(contentId)
+    if (content) {
+      this.emit('downloadPaused', content)
     }
+  }
+
+  resumeDownload(contentId: string) {
+    const content = this.queue.get(contentId)
+    if (content) {
+      this.emit('downloadResumed', content)
+    }
+  }
+
+  cancelDownload(contentId: string) {
+    this.removeFromQueue(contentId)
+    this.emit('downloadCancelled', contentId)
+  }
+
+  getDownloadProgress(contentId: string): number {
+    const progress = this.progress.get(contentId)
+    return progress ? progress.percent : 0
+  }
+
+  getQueueStatus(): { queued: Content[]; downloading: Content[]; completed: Content[] } {
+    const queued = Array.from(this.queue.values())
+    const downloading = queued.filter(content => this.progress.has(content.id))
+    const completed = Array.from(this.downloads.values())
+    return { queued, downloading, completed }
+  }
+
+  clearQueue() {
+    this.queue.clear()
+    this.emit('queueCleared')
+  }
+
+  getDownloadedFiles(): Content[] {
+    return Array.from(this.downloads.values())
+  }
+
+  getDownloadedContent(): Content[] {
+    return Array.from(this.downloads.values())
+  }
+
+  getStorageUsage(): { used: number; total: number } {
+    return {
+      used: this.storageUsage,
+      total: this.storageQuota
+    }
+  }
+
+  // Original methods
+  addDownload(content: Content) {
+    this.downloads.set(content.id, content)
+    this.emit('downloadAdded', content)
+  }
+
+  removeDownload(contentId: string) {
+    const content = this.downloads.get(contentId)
+    if (content) {
+      this.downloads.delete(contentId)
+      this.progress.delete(contentId)
+      this.emit('downloadRemoved', content)
+    }
+  }
+
+  updateProgress(contentId: string, bytesLoaded: number, bytesTotal: number) {
+    const progress: DownloadProgress = {
+      contentId,
+      bytesLoaded,
+      bytesTotal,
+      percent: (bytesLoaded / bytesTotal) * 100
+    }
+    this.progress.set(contentId, progress)
+    this.emit('progress', progress)
+  }
+
+  completeDownload(contentId: string) {
+    const content = this.downloads.get(contentId)
+    if (content) {
+      this.emit('complete', content)
+    }
+  }
+
+  errorDownload(contentId: string, error: Error) {
+    const downloadError: DownloadError = { contentId, error }
+    this.emit('error', downloadError)
+  }
+
+  getDownloads(): Content[] {
+    return Array.from(this.downloads.values())
+  }
+
+  getProgress(contentId: string): DownloadProgress | undefined {
+    return this.progress.get(contentId)
+  }
+
+  clearDownloads() {
+    this.downloads.clear()
+    this.progress.clear()
+    this.emit('cleared')
   }
 }
 
-class DownloadsManager {
-  private static instance: DownloadsManager
-  private db: IDBPDatabase<DownloadsDB> | null = null
-  private supabase = createClient()
+// Create and export singleton instance
+export const downloadsManager = new DownloadsManager()
 
-  static getInstance(): DownloadsManager {
-    if (!DownloadsManager.instance) {
-      DownloadsManager.instance = new DownloadsManager()
-    }
-    return DownloadsManager.instance
-  }
-
-  private async initDB() {
-    if (!this.db) {
-      this.db = await openDB<DownloadsDB>('madifa-downloads', 1, {
-        upgrade(db) {
-          db.createObjectStore('downloads')
-        },
-      })
-    }
-    return this.db
-  }
-
-  async downloadContent(contentId: string): Promise<void> {
-    const db = await this.initDB()
-
-    // Check if already downloaded
-    const existing = await db.get('downloads', contentId)
-    if (existing) return
-
-    // Get content metadata
-    const { data: content, error } = await this.supabase
-      .from('content')
-      .select('*')
-      .eq('id', contentId)
-      .single()
-
-    if (error || !content) throw new Error('Content not found')
-
-    // Download video and thumbnail
-    const [videoBlob, thumbnailBlob] = await Promise.all([
-      this.downloadVideo(content.video_url),
-      this.downloadThumbnail(content.thumbnail_url),
-    ])
-
-    // Store everything
-    await db.put(
-      'downloads',
-      {
-        content,
-        videoBlob,
-        thumbnailBlob,
-        downloadedAt: Date.now(),
-      },
-      contentId
-    )
-  }
-
-  async getDownloadedContent(): Promise<Content[]> {
-    const db = await this.initDB()
-    const downloads = await db.getAll('downloads')
-    return downloads.map(d => d.content)
-  }
-
-  async getDownloadedVideo(contentId: string): Promise<Blob | null> {
-    const db = await this.initDB()
-    const download = await db.get('downloads', contentId)
-    return download?.videoBlob || null
-  }
-
-  async removeDownload(contentId: string): Promise<void> {
-    const db = await this.initDB()
-    await db.delete('downloads', contentId)
-  }
-
-  async clearDownloads(): Promise<void> {
-    const db = await this.initDB()
-    await db.clear('downloads')
-  }
-
-  private async downloadVideo(url: string): Promise<Blob> {
-    const response = await fetch(url)
-    if (!response.ok) throw new Error('Failed to download video')
-    return response.blob()
-  }
-
-  private async downloadThumbnail(url: string): Promise<Blob> {
-    const response = await fetch(url)
-    if (!response.ok) throw new Error('Failed to download thumbnail')
-    return response.blob()
-  }
-
-  async getStorageUsage(): Promise<{
-    used: number
-    quota: number
-    percentage: number
-  }> {
-    if ('storage' in navigator && 'estimate' in navigator.storage) {
-      const { usage, quota } = await navigator.storage.estimate()
-      return {
-        used: usage || 0,
-        quota: quota || 0,
-        percentage: ((usage || 0) / (quota || 1)) * 100,
-      }
-    }
-    return { used: 0, quota: 0, percentage: 0 }
-  }
-}
-
-export const downloadsManager = DownloadsManager.getInstance()
+// Export individual functions for convenience
+export const {
+  addToQueue,
+  removeFromQueue,
+  pauseDownload,
+  resumeDownload,
+  cancelDownload,
+  getDownloadProgress,
+  getQueueStatus,
+  clearQueue,
+  getDownloadedFiles,
+  getDownloadedContent,
+  getStorageUsage
+} = downloadsManager

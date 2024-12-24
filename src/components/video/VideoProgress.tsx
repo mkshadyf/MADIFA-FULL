@@ -110,10 +110,7 @@ export default function VideoProgress({
         onMouseLeave={() => setShowTooltip(false)}
         role="slider"
         aria-label="Video progress"
-        aria-valuemin={0}
-        aria-valuemax={duration}
-        aria-valuenow={currentTime}
-        aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
+         aria-valuetext={`${formatTime(currentTime)} of ${formatTime(duration)}`}
         tabIndex={0}
       >
         <div className="h-1 cursor-pointer rounded-full bg-gray-700">

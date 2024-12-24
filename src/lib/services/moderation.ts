@@ -1,10 +1,10 @@
+import { supabase } from '@/lib/supabase/client'
+import { createAPIError, createErrorContext } from '@/lib/utils/error-handler'
 import type {
   ContentFlag,
   ModerationAction,
   ModerationRule,
 } from '@/types/moderation'
-import { createAPIError } from '@/lib/error'
-import { supabase } from '@/lib/supabase/client'
 
 export class ModerationService {
   async scanContent(content: {
@@ -37,10 +37,9 @@ export class ModerationService {
       return flags
     } catch (error) {
       throw createAPIError(
-        500,
         'Content moderation failed',
         'MODERATION_ERROR',
-        error
+        createErrorContext('moderation', 'scanContent', { videoId: content.videoId })
       )
     }
   }
@@ -56,10 +55,9 @@ export class ModerationService {
       return data
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to get moderation rules',
         'GET_RULES_ERROR',
-        error
+        createErrorContext('moderation', 'getModerationRules')
       )
     }
   }
@@ -80,10 +78,9 @@ export class ModerationService {
       return data
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to update moderation rule',
         'UPDATE_RULE_ERROR',
-        error
+        createErrorContext('moderation', 'updateModerationRule', { ruleId, updates })
       )
     }
   }
@@ -110,10 +107,9 @@ export class ModerationService {
       }
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to get moderation history',
         'GET_HISTORY_ERROR',
-        error
+        createErrorContext('moderation', 'getModerationHistory', { contentId })
       )
     }
   }
@@ -146,10 +142,9 @@ export class ModerationService {
       }
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to take moderation action',
         'MODERATION_ACTION_ERROR',
-        error
+        createErrorContext('moderation', 'takeModerationAction', { action })
       )
     }
   }
@@ -173,10 +168,9 @@ export class ModerationService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to submit appeal',
         'APPEAL_ERROR',
-        error
+        createErrorContext('moderation', 'appealModeration', { contentId, appeal })
       )
     }
   }
@@ -236,10 +230,9 @@ export class ModerationService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to store moderation results',
         'STORE_RESULTS_ERROR',
-        error
+        createErrorContext('moderation', 'storeModerationResults', { contentId, flagCount: flags.length })
       )
     }
   }
@@ -254,10 +247,9 @@ export class ModerationService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to remove content',
         'REMOVE_CONTENT_ERROR',
-        error
+        createErrorContext('moderation', 'removeContent', { contentId })
       )
     }
   }
@@ -275,10 +267,9 @@ export class ModerationService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to restrict content',
         'RESTRICT_CONTENT_ERROR',
-        error
+        createErrorContext('moderation', 'restrictContent', { contentId, restrictions })
       )
     }
   }
@@ -304,7 +295,11 @@ export class ModerationService {
 
       if (warningError) throw warningError
     } catch (error) {
-      throw createAPIError(500, 'Failed to warn user', 'WARN_USER_ERROR', error)
+      throw createAPIError(
+        'Failed to warn user',
+        'WARN_USER_ERROR',
+        createErrorContext('moderation', 'warnUser', { contentId, message })
+      )
     }
   }
 }

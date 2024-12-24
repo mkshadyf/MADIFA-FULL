@@ -1,22 +1,29 @@
-import { create } from 'zustand'
+import type { ToastState, ToastType } from '@/types/toast'
+import { useCallback } from 'react'
 
-type ToastType = 'success' | 'error' | 'info' | 'warning'
+export function useToast(): ToastState {
+  const showToast = useCallback((message: string, type: ToastType) => {
+    switch (type) {
+      case 'success':
+        console.log('✅', message)
+        break
+      case 'error':
+        console.error('❌', message)
+        break
+      case 'info':
+        console.info('ℹ️', message)
+        break
+      case 'warning':
+        console.warn('⚠️', message)
+        break
+    }
+  }, [])
 
-interface ToastState {
-  message: string | null
-  type: ToastType
-  showToast: (message: string, type: ToastType) => void
-  hideToast: () => void
+  return {
+    success: (message: string) => showToast(message, 'success'),
+    error: (message: string) => showToast(message, 'error'),
+    info: (message: string) => showToast(message, 'info'),
+    warning: (message: string) => showToast(message, 'warning'),
+    showToast
+  }
 }
-
-export const useToast = create<ToastState>(set => ({
-  message: null,
-  type: 'info',
-  showToast: (message: string, type: ToastType) => {
-    set({ message, type })
-    setTimeout(() => {
-      set({ message: null, type: 'info' })
-    }, 3000)
-  },
-  hideToast: () => set({ message: null, type: 'info' }),
-}))

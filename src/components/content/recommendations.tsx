@@ -35,7 +35,7 @@ export default function Recommendations() {
     return <div className="py-4 text-center text-red-500">{error.message}</div>
   }
 
-  if (!recommendations || recommendations === 0) {
+  if (!recommendations || recommendations.length === 0) {
     return (
       <div className="py-4 text-center text-gray-400">
         No recommendations available

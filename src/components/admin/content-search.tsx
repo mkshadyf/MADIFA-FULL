@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react'
-
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/database.types'
+import type { Content } from '@/types/content'
 
-type Content = Database['public']['Tables']['content']['Row'] & {
-  category: string
-  release_year: number
-}
 interface ContentSearchProps {
   onSelect?: (content: Content) => void
 }

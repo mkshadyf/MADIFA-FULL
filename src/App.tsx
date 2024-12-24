@@ -1,4 +1,4 @@
-import { Suspense, useEffect, type FC } from 'react'
+import { Suspense, useEffect } from 'react'
 import { AuthProvider } from '@/providers/AuthProvider'
 import { AppRoutes } from '@/routes'
 import { QueryClientProvider } from '@tanstack/react-query'
@@ -12,7 +12,7 @@ import { Toaster } from '@/components/ui/toast'
 import { AuthErrorBoundary } from '@/components/providers/AuthErrorBoundary'
 import ErrorBoundaryProvider from '@/components/providers/ErrorBoundaryProvider'
 
-const AuthenticatedContent: FC = () => {
+function AuthenticatedContent() {
   const { user, loading: isLoading } = useAuth()
 
   if (isLoading) {
@@ -39,7 +39,7 @@ const AuthenticatedContent: FC = () => {
   )
 }
 
-const App: FC = () => {
+export default function App() {
   useEffect(() => {
     void initSentry()
     void initPerformanceMonitoring()
@@ -57,5 +57,3 @@ const App: FC = () => {
     </RootErrorBoundary>
   )
 }
-
-export default App

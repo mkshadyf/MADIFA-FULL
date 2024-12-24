@@ -6,19 +6,16 @@ type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 export default function UserProfile() {
   const { user } = useAuth()
-
-  const { data: profile } = useQuery<UserProfile>(
-    ['profile', user?.id],
-    async () => {
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
       if (!user?.id) return null
       const response = await fetch(`/api/user/profile/${user.id}`)
       if (!response.ok) throw new Error('Failed to fetch profile')
-      return await response.json()
+      return (await response.json()) as UserProfile
     },
-    {
-      enabled: !!user?.id,
-    }
-  )
+    enabled: !!user?.id,
+  })
 
   return (
     <div className="mx-auto max-w-4xl p-6">

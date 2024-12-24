@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 import type { Content } from '@/types/content'
-import { contentManager } from '@/lib/services/content-manager'
+import { ContentManager } from '@/lib/services/content-manager'
 import { useContent } from '@/hooks/useContent'
 import { useToast } from '@/hooks/useToast'
 

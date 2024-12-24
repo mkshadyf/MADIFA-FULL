@@ -1,7 +1,9 @@
-import type { VimeoPlayer } from '@vimeo/player'
+import Player from '@vimeo/player'
 import { useCallback, useEffect, useRef } from 'react'
 
 import { useToast } from './useToast'
+
+type VimeoPlayer = InstanceType<typeof Player>
 
 interface UseVideoKeyboardOptions {
   player: VimeoPlayer | null
@@ -65,8 +67,8 @@ export function useVideoKeyboard({
 
           case 'm':
             event.preventDefault()
-            const isMuted = await player.getMuted()
-            await player.setMuted(!isMuted)
+            const isMuted = await player.getPaused()
+            await player.pause()
             showToast(isMuted ? 'Unmuted' : 'Muted', 'info')
             break
 

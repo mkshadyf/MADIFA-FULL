@@ -1,81 +1,53 @@
-import type { Content } from '@/types'
-import { useEffect, useRef } from 'react'
+import type { SubscriptionService } from '@/lib/services/subscription'
+import type { Content } from '@/types/content'
+import { useCallback } from 'react'
 
-import { QuotaEnforcementMiddleware } from '@/middleware/quota-enforcement'
-import { useAuth } from './useAuth'
-import { useToast } from './useToast'
+export interface QuotaCheckResult {
+  canProceed: boolean
+  message?: string
+}
 
-export function useQuotaEnforcement() {
-  const { user } = useAuth()
-  const { showToast } = useToast()
-  const monitorCleanupRef = useRef<() => void>()
+export interface QuotaEnforcement {
+  checkQuota: (userId: string, contentId: string) => Promise<QuotaCheckResult>
+  checkQuotaBeforeDownload: (content: Content) => Promise<boolean>
+  startQuotaMonitoring: () => void
+  stopQuotaMonitoring: () => void
+}
 
-  useEffect(() => {
-    return () => {
-      if (monitorCleanupRef.current) {
-        monitorCleanupRef.current()
+export function useQuotaEnforcement(subscriptionService: SubscriptionService): QuotaEnforcement {
+  const checkQuota = useCallback(async (userId: string, contentId: string): Promise<QuotaCheckResult> => {
+    try {
+      return await subscriptionService.checkAccess(userId, contentId)
+    } catch (error) {
+      return {
+        canProceed: false,
+        message: 'Failed to check quota. Please try again later.'
       }
     }
-  }, [])
+  }, [subscriptionService])
 
-  const checkQuotaBeforeDownload = async (content: Content) => {
-    if (!user) return false
-
+  const checkQuotaBeforeDownload = useCallback(async (content: Content): Promise<boolean> => {
     try {
-      const { canProceed, message } =
-        await QuotaEnforcementMiddleware.enforceQuotaBeforeDownload(
-          user.id,
-          content
-        )
-
-      if (!canProceed && message) {
-        showToast(message, 'error')
-      }
-
-      return canProceed
+      const result = await subscriptionService.checkQuotaBeforeDownload(content)
+      return result.canProceed
     } catch (error) {
-      console.error('Failed to check quota:', error)
-      showToast('Failed to check storage quota', 'error')
+      console.error('Failed to check quota before download:', error)
       return false
     }
-  }
+  }, [subscriptionService])
 
-  const startQuotaMonitoring = async (contentId: string) => {
-    if (!user) return
+  const startQuotaMonitoring = useCallback(() => {
+    subscriptionService.startQuotaMonitoring()
+  }, [subscriptionService])
 
-    try {
-      // Stop any existing monitoring
-      if (monitorCleanupRef.current) {
-        monitorCleanupRef.current()
-      }
-
-      // Start new monitoring
-      monitorCleanupRef.current =
-        await QuotaEnforcementMiddleware.monitorDownloadProgress(
-          user.id,
-          contentId,
-          () => {
-            showToast(
-              'Download stopped: Storage quota exceeded. Please free up space.',
-              'error'
-            )
-          }
-        )
-    } catch (error) {
-      console.error('Failed to start quota monitoring:', error)
-    }
-  }
-
-  const stopQuotaMonitoring = () => {
-    if (monitorCleanupRef.current) {
-      monitorCleanupRef.current()
-      monitorCleanupRef.current = undefined
-    }
-  }
+  const stopQuotaMonitoring = useCallback(() => {
+    subscriptionService.stopQuotaMonitoring()
+  }, [subscriptionService])
 
   return {
+    checkQuota,
     checkQuotaBeforeDownload,
     startQuotaMonitoring,
-    stopQuotaMonitoring,
+    stopQuotaMonitoring
   }
 }

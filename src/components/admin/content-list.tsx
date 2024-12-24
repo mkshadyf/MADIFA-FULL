@@ -1,14 +1,8 @@
 import { useState } from 'react'
-
 import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/database.types'
+import type { Content } from '@/types/content'
 
 import ContentFormModal from './content-form-modal'
-
-type Content = Database['public']['Tables']['content']['Row'] & {
-  category: string
-  release_year: number
-}
 
 interface ContentListProps {
   content: Content[]
@@ -129,11 +123,7 @@ export default function ContentList({ content, onRefresh }: ContentListProps) {
 
       {showForm ? (
         <ContentFormModal
-          content={
-            selectedContent as unknown as
-              | import('@/types/content').Content
-              | undefined
-          }
+          content={selectedContent || undefined}
           onClose={() => {
             setShowForm(false)
             setSelectedContent(null)

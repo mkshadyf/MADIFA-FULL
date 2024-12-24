@@ -14,45 +14,44 @@ const mapVimeoVideoToContent = (video: VimeoVideo): Content => ({
   duration: video.duration,
   size: video.size,
   category: video.categories?.[0]?.name || '',
+  tags: [],
   release_year: new Date(video.created_time).getFullYear(),
   status: video.status === 'available' ? 'ready' : 'processing',
   created_at: video.created_time,
   updated_at: video.modified_time,
-  error: video.status === 'error' ? video.error_message : undefined,
+  video_url: null
 })
 
-export function useContent(id?: string) {
-  return useQuery({
-    queryKey: ['content', id],
+export function useContent() {
+  const { data, error, isLoading } = useQuery<Content[]>({
+    queryKey: ['content'],
     queryFn: async () => {
-      if (!id) {
-        // Get all videos if no ID is provided
-        const videos = await vimeoService.getVideos()
-        return videos.map(mapVimeoVideoToContent)
+      const response = await fetch('/api/content')
+      if (!response.ok) {
+        throw new Error('Failed to fetch content')
       }
-
-      // Get single video if ID is provided
-      const video = await vimeoService.getVideoDetails(id)
-      return mapVimeoVideoToContent(video)
-    },
-    enabled: true,
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      const data = await response.json()
+      return Array.isArray(data) ? data : []
+    }
   })
+
+  return {
+    data: data || [],
+    error,
+    isLoading,
+  }
 }
 
 export function useSearch(query: string) {
-  return useQuery({
+  return useQuery<Content[]>({
     queryKey: ['search', query],
     queryFn: async () => {
       const videos = await vimeoService.getVideos({ query })
       return videos.map(mapVimeoVideoToContent)
     },
     enabled: !!query,
-    staleTime: 1 * 60 * 1000, // 1 minute
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     placeholderData: previousData => previousData,
   })
 }

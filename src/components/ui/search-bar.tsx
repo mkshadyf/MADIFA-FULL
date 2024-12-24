@@ -127,10 +127,9 @@ export function SearchBar() {
                       className="flex w-full items-center space-x-4 p-4 hover:bg-gray-800"
                     >
                       <div className="relative h-9 w-16 flex-shrink-0 overflow-hidden rounded">
-                        <Image
-                          src={item.thumbnail_url}
+                        <img
+                          src={item.thumbnail_url || undefined}
                           alt={item.title}
-                          fill
                           className="object-cover"
                         />
                       </div>

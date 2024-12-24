@@ -105,7 +105,7 @@ export default function PaymentMethodManager() {
                   Set Default
                 </Button>
               )}
-              <Button variant="danger" onClick={() => handleDelete(method.id)}>
+              <Button variant="ghost" onClick={() => handleDelete(method.id)}>
                 Remove
               </Button>
             </div>

@@ -4,6 +4,8 @@ import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js'
 
 import type { SubscriptionPlan } from '@/types/subscription'
 import { useSubscription } from '@/hooks/useSubscription'
+import { subscriptionService } from '@/lib/services/subscription'
+import { useAuth } from '@/providers/AuthProvider'
 
 interface PaymentFormProps {
   plan: SubscriptionPlan
@@ -18,7 +20,7 @@ export default function PaymentForm({
 }: PaymentFormProps) {
   const stripe = useStripe()
   const elements = useElements()
-  const { subscribe } = useSubscription()
+  const { createSubscription } = useSubscription(subscriptionService)
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -27,10 +29,65 @@ export default function PaymentForm({
 
     setLoading(true)
     try {
-      subscribe(plan.id)
-      onSuccess()
+      const paymentMethod = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardElement)!,
+      });
+
+      if (paymentMethod.error) {
+        throw new Error(paymentMethod.error.message);
+      }
+
+      // Type assertion to match expected PaymentMethod type
+      const payment = {
+        ...paymentMethod.paymentMethod,
+        type: paymentMethod.paymentMethod.type as 'card' | 'bank_account'
+      };
+
+      const { user } = useAuth();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const formattedPayment = {
+        id: payment.id,
+        type: payment.type,
+        card: payment.card ? {
+          brand: payment.card.brand,
+          last4: payment.card.last4,
+          exp_month: payment.card.exp_month,
+          exp_year: payment.card.exp_year
+        } : undefined,
+        billing_details: {
+          name: payment.billing_details.name || '',
+          email: payment.billing_details.email || '',
+          address: {
+            line1: payment.billing_details.address?.line1 || '',
+            line2: payment.billing_details.address?.line2,
+            city: payment.billing_details.address?.city || '',
+            state: payment.billing_details.address?.state || '',
+            postal_code: payment.billing_details.address?.postal_code || '',
+            country: payment.billing_details.address?.country || ''
+          }
+        }
+      };
+
+      // Ensure line2 is undefined instead of null to match PaymentMethod type
+      const sanitizedPayment = {
+        ...formattedPayment,
+        billing_details: {
+          ...formattedPayment.billing_details,
+          address: {
+            ...formattedPayment.billing_details.address,
+            line2: formattedPayment.billing_details.address.line2 || undefined
+          }
+        }
+      };
+
+      await createSubscription(user.id, plan.id, sanitizedPayment);
+      onSuccess();
     } catch (error) {
-      onError('Payment failed. Please try again.')
+      onError(error instanceof Error ? error.message : 'Payment failed. Please try again.')
     } finally {
       setLoading(false)
     }

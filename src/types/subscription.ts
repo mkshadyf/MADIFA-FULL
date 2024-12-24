@@ -1,12 +1,6 @@
 export type SubscriptionTierType = 'free' | 'basic' | 'premium' | 'premium_plus'
 
-export type SubscriptionStatus =
-  | 'active'
-  | 'cancelled'
-  | 'past_due'
-  | 'incomplete'
-  | 'trialing'
-  | 'inactive'
+export type SubscriptionStatus = 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid'
 
 export type PaymentMethodType = 'card' | 'paypal' | 'bank_transfer'
 
@@ -31,33 +25,41 @@ export interface SubscriptionTier {
 
 export interface PaymentMethod {
   id: string
-  type: PaymentMethodType
-  last4?: string
-  exp_month?: number
-  exp_year?: number
-  brand?: string
-  email?: string // For PayPal
-  bank_name?: string // For bank transfers
-  created_at: string
-  updated_at: string
+  type: 'card' | 'bank_account'
+  card?: {
+    brand: string
+    last4: string
+    exp_month: number
+    exp_year: number
+  }
+  bank_account?: {
+    bank_name: string
+    last4: string
+  }
+  billing_details: {
+    name: string
+    email: string
+    address: {
+      line1: string
+      line2?: string
+      city: string
+      state: string
+      postal_code: string
+      country: string
+    }
+  }
 }
 
 export interface Subscription {
   id: string
   user_id: string
-  tier_id: string
-  tier: SubscriptionTier
+  plan_id: string
   status: SubscriptionStatus
-  current_period_start: string
-  current_period_end: string
-  cancel_at_period_end: boolean
-  cancelled_at?: string
-  trial_end?: string
-  payment_id?: string
-  payment_method?: PaymentMethod
+  tier: string
+  start_date: string
+  end_date: string
   created_at: string
   updated_at: string
-  metadata?: Record<string, unknown>
 }
 
 export type UserSubscription = Subscription & {
@@ -66,6 +68,9 @@ export type UserSubscription = Subscription & {
     email: string
     full_name: string
   }
+  tier: string
+  billing_period: string
+  price: number
 }
 
 export interface BillingHistory {
@@ -84,9 +89,25 @@ export interface SubscriptionPlan {
   name: string
   description: string
   price: number
-  currency: string
-  interval: BillingPeriod
+  interval: 'month' | 'year'
   features: string[]
-  tier: SubscriptionTierType
-  metadata?: Record<string, unknown>
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  metadata?: {
+    stripePriceId: string
+  }
 }
+
+export interface Invoice {
+  id: string
+  subscription_id: string
+  amount: number
+  currency: string
+  status: PaymentStatus
+  created_at: string
+  paid_at: string | null
+  payment_method: PaymentMethod | null
+}
+
+export type PaymentStatus = 'paid' | 'unpaid' | 'failed'

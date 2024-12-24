@@ -6,6 +6,7 @@ import { useDownloadQueue } from '@/hooks/useDownloadQueue'
 import { useStorageQuota } from '@/hooks/useStorageQuota'
 
 import QuotaAwareDownloadButton from '../downloads/QuotaAwareDownloadButton'
+import { subscriptionService } from '@/lib/services/subscription'
 
 interface QuotaAwareContentGridProps {
   contents: Content[]
@@ -81,7 +82,8 @@ export default function QuotaAwareContentGrid({
                     {formatBytes(content.size || 0)}
                   </span>
 
-                  <QuotaAwareDownloadButton
+                   <QuotaAwareDownloadButton
+                    subscriptionService={subscriptionService}
                     content={content}
                     className={
                       isQueued(content.id)

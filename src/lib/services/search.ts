@@ -154,3 +154,20 @@ async function trackSearchAnalytics(
     console.error('Error tracking search analytics:', error)
   }
 }
+
+export async function getSearchSuggestions(query: string): Promise<string[]> {
+  if (!query || query.length < 2) {
+    return []
+  }
+
+  try {
+    const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch search suggestions')
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching search suggestions:', error)
+    return []
+  }
+}

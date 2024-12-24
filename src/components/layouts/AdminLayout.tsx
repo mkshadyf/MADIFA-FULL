@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { RoleGuard } from '@/components/guards/RoleGuard'
+import type { UserRole } from '@/types/auth'
 
 interface AdminLayoutProps {
   children?: React.ReactNode
@@ -33,7 +34,7 @@ export function AdminLayout({ children }: AdminLayoutProps): JSX.Element {
   }
 
   return (
-    <RoleGuard requiredRole="admin">
+    <RoleGuard requiredRole={UserRole.ADMIN}>
       <ErrorBoundary>
         <div className="flex min-h-screen">
           {/* Admin Sidebar */}

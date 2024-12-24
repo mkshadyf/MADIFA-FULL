@@ -1,127 +1,46 @@
-import type { Content } from '@/types'
-import { useEffect, useRef } from 'react'
+import { DownloadsManager } from '@/lib/services/downloads'
+import { EventEmitter } from 'events'
+import { useEffect } from 'react'
 
-import { downloadsManager } from '@/lib/services/downloads'
-import { createClient } from '@/lib/supabase/client'
-
-import { useAuth } from './useAuth'
-import { useToast } from './useToast'
-
-const supabase = createClient()
-
-interface DownloadRecord {
-  id: string
-  user_id: string
-  content_id: string
-  blob_url: string
-  size: number
-  downloaded_at: string
-  last_accessed: string
-  metadata: Record<string, any>
+interface DownloadEvent {
+  type: 'progress' | 'complete' | 'error'
+  data: any
 }
 
-export function useDownloadPersistence() {
-  const { user } = useAuth()
-  const { showToast } = useToast()
-  const syncTimeoutRef = useRef<NodeJS.Timeout>()
+class DownloadEventEmitter extends EventEmitter {
+  emit(type: string, data: any): boolean {
+    return super.emit(type, data)
+  }
 
+  on(type: string, listener: (data: any) => void): this {
+    return super.on(type, listener)
+  }
+
+  off(type: string, listener: (data: any) => void): this {
+    return super.off(type, listener)
+  }
+}
+
+export function useDownloadPersistence(downloadsManager: DownloadsManager & DownloadEventEmitter) {
   useEffect(() => {
-    if (!user) return
-
-    const loadDownloadsFromDB = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('downloads')
-          .select('*')
-          .eq('user_id', user.id)
-
-        if (error) throw error
-
-        // Restore downloads from database records
-        for (const record of data) {
-          try {
-            // Verify blob still exists
-            const response = await fetch(record.blob_url, { method: 'HEAD' })
-            if (!response.ok) {
-              // Blob is missing, remove record
-              await supabase.from('downloads').delete().eq('id', record.id)
-              continue
-            }
-
-            // Update last accessed time
-            await supabase
-              .from('downloads')
-              .update({ last_accessed: new Date().toISOString() })
-              .eq('id', record.id)
-          } catch (error) {
-            console.error(`Failed to verify download ${record.id}:`, error)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load downloads:', error)
-        showToast('Failed to load downloads', 'error')
-      }
+    const handleProgress = (data: any) => {
+      // Handle progress event
+      console.log('Download progress:', data)
     }
 
-    const handleDownloadComplete = async (
-      content: Content,
-      blobUrl: string
-    ) => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current)
-      }
-
-      syncTimeoutRef.current = setTimeout(async () => {
-        try {
-          const { error } = await supabase.from('downloads').upsert({
-            user_id: user.id,
-            content_id: content.id,
-            blob_url: blobUrl,
-            size: content.size || 0,
-            metadata: {
-              title: content.title,
-              thumbnail_url: content.thumbnail_url,
-            },
-          })
-
-          if (error) throw error
-        } catch (error) {
-          console.error('Failed to save download:', error)
-          showToast('Failed to save download', 'error')
-        }
-      }, 1000)
+    const handleComplete = (data: any) => {
+      // Handle complete event
+      console.log('Download complete:', data)
     }
 
-    const handleDownloadRemoved = async (contentId: string) => {
-      try {
-        const { error } = await supabase
-          .from('downloads')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('content_id', contentId)
-
-        if (error) throw error
-      } catch (error) {
-        console.error('Failed to remove download record:', error)
-        showToast('Failed to remove download record', 'error')
-      }
-    }
-
-    loadDownloadsFromDB()
-
-    // Subscribe to download events
-    downloadsManager.on('downloadComplete', handleDownloadComplete)
-    downloadsManager.on('downloadRemoved', handleDownloadRemoved)
+    downloadsManager.on('progress', handleProgress)
+    downloadsManager.on('complete', handleComplete)
 
     return () => {
-      downloadsManager.off('downloadComplete', handleDownloadComplete)
-      downloadsManager.off('downloadRemoved', handleDownloadRemoved)
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current)
-      }
+      downloadsManager.off('progress', handleProgress)
+      downloadsManager.off('complete', handleComplete)
     }
-  }, [user, showToast])
+  }, [downloadsManager])
 
-  // No need to return anything as this hook just handles persistence
   return null
 }

@@ -78,7 +78,7 @@ export default function Favorites() {
             className="overflow-hidden rounded-lg bg-gray-800"
           >
             <img
-              src={content.thumbnail_url}
+              src={content.thumbnail_url ?? undefined}
               alt={content.title}
               className="h-48 w-full object-cover"
             />

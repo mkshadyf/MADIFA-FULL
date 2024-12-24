@@ -1,23 +1,16 @@
-import { createAPIError } from '@/lib/error'
 import { supabase } from '@/lib/supabase/client'
-import type { UserRole } from '@/types/auth'
+import { createAPIError, createErrorContext } from '@/lib/utils/error-handler'
+import type { Permission } from '@/types/user'
 
-export interface Permission {
-  id: string
-  name: string
-  description: string
-  resource: string
-  action: 'read' | 'write' | 'delete' | 'manage' | '*'
-  scope: 'global' | 'user' | 'role'
-}
+export type { Permission }
 
 export interface RolePermission {
-  role: UserRole
+  role: string
   permissions: Permission[]
 }
 
 export class PermissionService {
-  async getRolePermissions(role: UserRole): Promise<Permission[]> {
+  async getRolePermissions(role: string): Promise<Permission[]> {
     try {
       const { data, error } = await supabase
         .from('role_permissions')
@@ -29,10 +22,9 @@ export class PermissionService {
       return data.permissions
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to get role permissions',
         'GET_PERMISSIONS_ERROR',
-        error
+        createErrorContext('permissions', 'getRolePermissions', { role, error })
       )
     }
   }
@@ -47,10 +39,9 @@ export class PermissionService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to update role permissions',
         'UPDATE_PERMISSIONS_ERROR',
-        error
+        createErrorContext('permissions', 'updateRolePermissions', { rolePermission, error })
       )
     }
   }
@@ -92,10 +83,9 @@ export class PermissionService {
       ).map(p => JSON.parse(p))
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to get user permissions',
         'GET_USER_PERMISSIONS_ERROR',
-        error
+        createErrorContext('permissions', 'getUserPermissions', { userId, error })
       )
     }
   }
@@ -113,10 +103,9 @@ export class PermissionService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to update user permissions',
         'UPDATE_USER_PERMISSIONS_ERROR',
-        error
+        createErrorContext('permissions', 'updateUserPermissions', { userId, permissions, error })
       )
     }
   }
@@ -131,10 +120,9 @@ export class PermissionService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to remove user permissions',
         'REMOVE_PERMISSIONS_ERROR',
-        error
+        createErrorContext('permissions', 'removeUserPermissions', { userId, error })
       )
     }
   }
@@ -150,10 +138,9 @@ export class PermissionService {
       return data
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to get available permissions',
         'GET_AVAILABLE_PERMISSIONS_ERROR',
-        error
+        createErrorContext('permissions', 'getAvailablePermissions', { error })
       )
     }
   }
@@ -178,10 +165,9 @@ export class PermissionService {
       return data
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to create permission',
         'CREATE_PERMISSION_ERROR',
-        error
+        createErrorContext('permissions', 'createPermission', { permission, error })
       )
     }
   }
@@ -196,13 +182,24 @@ export class PermissionService {
       if (error) throw error
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to delete permission',
         'DELETE_PERMISSION_ERROR',
-        error
+        createErrorContext('permissions', 'deletePermission', { permissionId, error })
       )
     }
   }
 }
 
 export const permissionService = new PermissionService()
+
+// Export individual functions for convenience
+export const {
+  getRolePermissions,
+  updateRolePermissions,
+  getUserPermissions,
+  updateUserPermissions,
+  removeUserPermissions,
+  getAvailablePermissions,
+  createPermission,
+  deletePermission
+} = permissionService

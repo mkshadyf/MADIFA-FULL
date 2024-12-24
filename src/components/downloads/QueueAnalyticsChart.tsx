@@ -2,7 +2,7 @@ import React from 'react'
 import {
   CategoryScale,
   Chart as ChartJS,
-  ChartOptions,
+  type ChartOptions,
   Legend,
   LinearScale,
   LineElement,

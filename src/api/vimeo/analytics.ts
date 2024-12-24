@@ -1,7 +1,5 @@
 import { Vimeo } from '@vimeo/vimeo'
 
-import type { VimeoResponse } from '@/types/vimeo'
-
 interface VimeoVideo {
   uri: string
   name: string
@@ -11,6 +9,11 @@ interface VimeoVideo {
     impressions: number
     time_watched: number
   }
+}
+
+interface VimeoResponse {
+  data: unknown[]
+  status: number
 }
 
 export async function GET(): Promise<Response> {
@@ -39,23 +42,22 @@ export async function GET(): Promise<Response> {
         },
         (error, result) => {
           if (error) reject(error)
-          else resolve(result)
+          else resolve(result as VimeoResponse)
         }
       )
     })
 
-    const videos = response.data as unknown as VimeoVideo[]
+    const videos = response.data as VimeoVideo[]
 
     return new Response(JSON.stringify(videos), {
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        'Cache-Control': 'public, max-age=300',
       },
     })
   } catch (error) {
     console.error('Error fetching Vimeo analytics:', error)
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to fetch analytics'
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch analytics'
 
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,

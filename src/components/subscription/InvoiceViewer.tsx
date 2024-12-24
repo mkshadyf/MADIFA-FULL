@@ -29,7 +29,7 @@ export default function InvoiceViewer() {
     try {
       setIsLoading(true)
       const data = await subscriptionService.getInvoices(user!.id)
-      setInvoices(data)
+      setInvoices(data as unknown as Invoice[])
     } catch (error) {
       console.error('Error loading invoices:', error)
       showToast('Failed to load invoices', 'error')

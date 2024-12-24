@@ -1,9 +1,6 @@
-import { type Database } from '@/lib/database.types'
-
+import type { Content } from '@/types/content'
 import DownloadProgress from '../downloads/DownloadProgress'
 import OfflineToggle from './OfflineToggle'
-
-type Content = Database['public']['Tables']['content']['Row']
 
 interface ContentViewProps {
   content: Content

@@ -1,11 +1,8 @@
-import { createAPIError } from '@/lib/error'
-import { supabase } from '@/lib/supabase/client'
-import type {
-  PaymentMethod,
-  Subscription,
-  SubscriptionStatus,
-  SubscriptionTier,
-} from '@/types/subscription'
+import { createAPIError, createErrorContext } from '@/lib/utils/error-handler'
+import type { Invoice, PaymentMethod, Subscription, SubscriptionPlan } from '@/types'
+import type { Content } from '@/types/content'
+
+export type SubscriptionStatus = 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid'
 
 export interface SubscriptionUsage {
   storage_used: number
@@ -13,250 +10,287 @@ export interface SubscriptionUsage {
   video_count: number
 }
 
-export class SubscriptionService {
+export interface SubscriptionService {
+  createSubscription: (userId: string, planId: string, paymentMethod: PaymentMethod) => Promise<Subscription>
+  updateSubscription: (userId: string, subscription: Partial<Subscription>) => Promise<Subscription>
+  cancelSubscription: (userId: string) => Promise<void>
+  reactivateSubscription: (userId: string) => Promise<void>
+  getSubscription: (userId: string) => Promise<Subscription | null>
+  getSubscriptionTier: (userId: string) => Promise<string | null>
+  getSubscriptionStatus: (userId: string) => Promise<SubscriptionStatus>
+  checkAccess: (userId: string, contentId: string) => Promise<{ canProceed: boolean; message?: string }>
+  checkQuotaBeforeDownload: (content: Content) => Promise<{ canProceed: boolean; message?: string }>
+  startQuotaMonitoring: () => void
+  stopQuotaMonitoring: () => void
+  subscribe: (userId: string, planId: string, paymentMethod: PaymentMethod) => Promise<Subscription>
+  getPlans: () => Promise<SubscriptionPlan[]>
+  getCurrentSubscription: (userId: string) => Promise<Subscription | null>
+  getSubscriptionTiers: () => Promise<SubscriptionPlan[]>
+  getInvoices: (userId: string) => Promise<Invoice[]>
+  downloadInvoice: (invoiceId: string) => Promise<Blob>
+  getPaymentMethods: (userId: string) => Promise<PaymentMethod[]>
+  setDefaultPaymentMethod: (userId: string, paymentMethodId: string) => Promise<void>
+  deletePaymentMethod: (userId: string, paymentMethodId: string) => Promise<void>
+  getUsage: (userId: string) => Promise<SubscriptionUsage>
+}
+
+export class SubscriptionServiceImpl implements SubscriptionService {
+  constructor() {
+    this.getSubscription = this.getCurrentSubscription
+    this.getSubscriptionTier = async (userId) => {
+      const subscription = await this.getCurrentSubscription(userId)
+      return subscription?.tier || null
+    }
+    this.checkQuotaBeforeDownload = async (content) => {
+      // Implementation
+      return { canProceed: true }
+    }
+    this.startQuotaMonitoring = () => {
+      // Implementation
+    }
+    this.stopQuotaMonitoring = () => {
+      // Implementation
+    }
+    this.subscribe = this.createSubscription
+  }
+
+  getSubscription: (userId: string) => Promise<Subscription | null>
+  getSubscriptionTier: (userId: string) => Promise<string | null>
+  checkQuotaBeforeDownload: (content: Content) => Promise<{ canProceed: boolean; message?: string }>
+  startQuotaMonitoring: () => void
+  stopQuotaMonitoring: () => void
+  subscribe: (userId: string, planId: string, paymentMethod: PaymentMethod) => Promise<Subscription>
+
+  async getPlans(): Promise<SubscriptionPlan[]> {
+    try {
+      // Implementation
+      throw new Error('Not implemented')
+    } catch (error) {
+      throw createAPIError(
+        'Failed to get subscription plans',
+        'GET_PLANS_ERROR',
+        createErrorContext('subscription', 'getPlans')
+      )
+    }
+  }
+
   async getCurrentSubscription(userId: string): Promise<Subscription | null> {
     try {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*, subscription_tier(*)')
-        .eq('user_id', userId)
-        .single()
-
-      if (error) throw error
-      return data
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
-        'Failed to get subscription',
+        'Failed to get current subscription',
         'GET_SUBSCRIPTION_ERROR',
-        error
-      )
-    }
-  }
-  //getSubscriptionStatus - This function determines the current status of a user's subscription
-  async getSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
-    try {
-      if (!userId) {
-        throw new Error('User ID is required')
-      }
-
-      const subscription = await this.getCurrentSubscription(userId)
-
-      // Handle edge cases with more detailed status
-      if (!subscription) {
-        return 'inactive'
-      }
-
-      // Validate subscription dates
-      const now = new Date()
-      const periodEnd = new Date(subscription.current_period_end)
-
-      if (subscription.status === 'active' && periodEnd < now) {
-        return 'expired' as SubscriptionStatus
-      }
-
-      if (subscription.cancel_at_period_end && periodEnd > now) {
-        return 'canceling' as SubscriptionStatus
-      }
-
-      return subscription.status || 'inactive'
-    } catch (error) {
-      throw createAPIError(
-        500,
-        'Failed to get subscription status',
-        'GET_SUBSCRIPTION_STATUS_ERROR',
-        error
+        createErrorContext('subscription', 'getCurrentSubscription', { userId })
       )
     }
   }
 
-  async getSubscriptionTiers(): Promise<SubscriptionTier[]> {
+  async getSubscriptionTiers(): Promise<SubscriptionPlan[]> {
     try {
-      const { data, error } = await supabase
-        .from('subscription_tiers')
-        .select('*')
-        .order('price')
-
-      if (error) throw error
-      return data
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to get subscription tiers',
-        'GET_TIERS_ERROR',
-        error
+        'GET_SUBSCRIPTION_TIERS_ERROR',
+        createErrorContext('subscription', 'getSubscriptionTiers')
       )
     }
   }
 
-  async createSubscription(
-    userId: string,
-    tierId: string,
-    paymentMethod: PaymentMethod
-  ): Promise<Subscription> {
+  async getInvoices(userId: string): Promise<Invoice[]> {
     try {
-      const paymentIntent = await this.createPaymentIntent(
-        tierId,
-        paymentMethod
-      )
-
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .insert({
-          user_id: userId,
-          tier_id: tierId,
-          payment_id: paymentIntent.id,
-          status: 'active' as SubscriptionStatus,
-          current_period_start: new Date().toISOString(),
-          current_period_end: this.calculatePeriodEnd(new Date()).toISOString(),
-          cancel_at_period_end: false,
-          payment_method: paymentMethod,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
-        'Failed to create subscription',
-        'CREATE_SUBSCRIPTION_ERROR',
-        error
+        'Failed to get invoices',
+        'GET_INVOICES_ERROR',
+        createErrorContext('subscription', 'getInvoices', { userId })
       )
     }
   }
 
-  async updateSubscription(
-    subscriptionId: string,
-    updates: Partial<Subscription>
-  ): Promise<Subscription> {
+  async downloadInvoice(invoiceId: string): Promise<Blob> {
     try {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .update(updates)
-        .eq('id', subscriptionId)
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
-        'Failed to update subscription',
-        'UPDATE_SUBSCRIPTION_ERROR',
-        error
+        'Failed to download invoice',
+        'DOWNLOAD_INVOICE_ERROR',
+        createErrorContext('subscription', 'downloadInvoice', { invoiceId })
       )
     }
   }
 
-  async cancelSubscription(
-    subscriptionId: string,
-    cancelImmediately: boolean = false
-  ): Promise<void> {
+  async getPaymentMethods(userId: string): Promise<PaymentMethod[]> {
     try {
-      const updates = cancelImmediately
-        ? {
-            status: 'cancelled' as SubscriptionStatus,
-            cancelled_at: new Date().toISOString(),
-          }
-        : {
-            cancel_at_period_end: true,
-          }
-
-      const { error } = await supabase
-        .from('subscriptions')
-        .update(updates)
-        .eq('id', subscriptionId)
-
-      if (error) throw error
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
-        'Failed to cancel subscription',
-        'CANCEL_SUBSCRIPTION_ERROR',
-        error
+        'Failed to get payment methods',
+        'GET_PAYMENT_METHODS_ERROR',
+        createErrorContext('subscription', 'getPaymentMethods', { userId })
       )
     }
   }
 
-  async reactivateSubscription(subscriptionId: string): Promise<void> {
+  async setDefaultPaymentMethod(userId: string, paymentMethodId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({
-          cancel_at_period_end: false,
-          status: 'active' as SubscriptionStatus,
-        })
-        .eq('id', subscriptionId)
-
-      if (error) throw error
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
-        'Failed to reactivate subscription',
-        'REACTIVATE_SUBSCRIPTION_ERROR',
-        error
+        'Failed to set default payment method',
+        'SET_DEFAULT_PAYMENT_METHOD_ERROR',
+        createErrorContext('subscription', 'setDefaultPaymentMethod', { userId, paymentMethodId })
       )
     }
   }
 
-  async getSubscriptionUsage(
-    subscriptionId: string
-  ): Promise<SubscriptionUsage> {
+  async deletePaymentMethod(userId: string, paymentMethodId: string): Promise<void> {
     try {
-      const { data, error } = await supabase
-        .from('subscription_usage')
-        .select('*')
-        .eq('subscription_id', subscriptionId)
-        .single()
+      // Check if payment method exists and belongs to user
+      const paymentMethods = await this.getPaymentMethods(userId)
+      const paymentMethod = paymentMethods.find(pm => pm.id === paymentMethodId)
 
-      if (error) throw error
-      return data
+      if (!paymentMethod) {
+        throw new Error('Payment method not found')
+      }
+
+      // Check if payment method is default using PaymentMethod type
+      const isDefault = paymentMethod.type === 'card' && paymentMethod.card
+      if (isDefault) {
+        throw new Error('Cannot delete default payment method')
+      }
+
+      // Implementation to delete payment method
+      throw new Error('Not implemented')
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Cannot delete default payment method') {
+        throw error
+      }
+      throw createAPIError(
+        'Failed to delete payment method',
+        'DELETE_PAYMENT_METHOD_ERROR',
+        createErrorContext('subscription', 'deletePaymentMethod', { userId, paymentMethodId })
+      )
+    }
+  }
+
+  async getUsage(userId: string): Promise<SubscriptionUsage> {
+    try {
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to get subscription usage',
         'GET_USAGE_ERROR',
-        error
+        createErrorContext('subscription', 'getUsage', { userId })
       )
     }
   }
 
-  async updatePaymentMethod(
-    subscriptionId: string,
-    paymentMethod: PaymentMethod
-  ): Promise<void> {
+  async createSubscription(userId: string, planId: string, paymentMethod: PaymentMethod): Promise<Subscription> {
     try {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({ payment_method: paymentMethod })
-        .eq('id', subscriptionId)
-
-      if (error) throw error
+      // Implementation
+      throw new Error('Not implemented')
     } catch (error) {
       throw createAPIError(
-        500,
-        'Failed to update payment method',
-        'UPDATE_PAYMENT_ERROR',
-        error
+        'Failed to create subscription',
+        'CREATE_SUBSCRIPTION_ERROR',
+        createErrorContext('subscription', 'createSubscription', { userId, planId })
       )
     }
   }
 
-  private async createPaymentIntent(
-    tierId: string,
-    paymentMethod: PaymentMethod
-  ): Promise<{ id: string }> {
-    // TODO: Implement Stripe payment intent creation
-    return { id: `mock_payment_intent_${Date.now()}` }
+  async updateSubscription(userId: string, subscription: Partial<Subscription>): Promise<Subscription> {
+    try {
+      // Implementation
+      throw new Error('Not implemented')
+    } catch (error) {
+      throw createAPIError(
+        'Failed to update subscription',
+        'UPDATE_SUBSCRIPTION_ERROR',
+        createErrorContext('subscription', 'updateSubscription', { userId, subscription })
+      )
+    }
   }
 
-  private calculatePeriodEnd(startDate: Date): Date {
-    const endDate = new Date(startDate)
-    endDate.setMonth(endDate.getMonth() + 1)
-    return endDate
+  async cancelSubscription(userId: string): Promise<void> {
+    try {
+      // Implementation
+      throw new Error('Not implemented')
+    } catch (error) {
+      throw createAPIError(
+        'Failed to cancel subscription',
+        'CANCEL_SUBSCRIPTION_ERROR',
+        createErrorContext('subscription', 'cancelSubscription', { userId })
+      )
+    }
+  }
+
+  async reactivateSubscription(userId: string): Promise<void> {
+    try {
+      // Implementation
+      throw new Error('Not implemented')
+    } catch (error) {
+      throw createAPIError(
+        'Failed to reactivate subscription',
+        'REACTIVATE_SUBSCRIPTION_ERROR',
+        createErrorContext('subscription', 'reactivateSubscription', { userId })
+      )
+    }
+  }
+
+  async getSubscriptionStatus(userId: string): Promise<Subscription['status']> {
+    try {
+      // Implementation
+      throw new Error('Not implemented')
+    } catch (error) {
+      throw createAPIError(
+        'Failed to get subscription status',
+        'GET_STATUS_ERROR',
+        createErrorContext('subscription', 'getSubscriptionStatus', { userId })
+      )
+    }
+  }
+
+  async checkAccess(userId: string, contentId: string): Promise<{ canProceed: boolean; message?: string }> {
+    try {
+      // Implementation
+      throw new Error('Not implemented')
+    } catch (error) {
+      throw createAPIError(
+        'Failed to check access',
+        'CHECK_ACCESS_ERROR',
+        createErrorContext('subscription', 'checkAccess', { userId, contentId })
+      )
+    }
   }
 }
-export const subscriptionService = new SubscriptionService()
+
+export const subscriptionService = new SubscriptionServiceImpl()
+
+// Export individual functions for convenience
+export const {
+  getPlans,
+  createSubscription,
+  updateSubscription,
+  cancelSubscription,
+  reactivateSubscription,
+  getSubscriptionStatus,
+  getUsage,
+  getCurrentSubscription,
+  getSubscriptionTiers,
+  getInvoices,
+  downloadInvoice,
+  getPaymentMethods,
+  setDefaultPaymentMethod,
+  deletePaymentMethod,
+  checkAccess
+} = subscriptionService

@@ -1,9 +1,6 @@
 import React from 'react'
 import { useState } from 'react'
-
-import type { Database } from '@/lib/database.types'
-
-type UserProfile = Database['public']['Tables']['user_profiles']['Row']
+import type { UserProfile } from '@/types/user'
 
 interface UserDetailsModalProps {
   user: UserProfile

@@ -3,6 +3,21 @@ import { useEffect, useState } from 'react'
 import { authService } from '@/lib/services/auth'
 import type { User } from '@/types/auth'
 
+interface AuthService {
+  getSession: () => Promise<Session | null>
+  signIn: (email: string, password: string) => Promise<AuthResponse>
+  signUp: (email: string, password: string) => Promise<AuthResponse>
+  signOut: () => Promise<void>
+  onAuthStateChange: (callback: (event: AuthChangeEvent, session: Session | null) => void) => () => void
+}
+
+interface Session {
+  user: User | null
+  access_token: string | null
+  refresh_token: string | null
+  expires_at: number | null
+}
+
 export function useSession() {
   const [session, setSession] = useState<{
     user: User | null

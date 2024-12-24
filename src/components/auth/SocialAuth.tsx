@@ -93,9 +93,12 @@ export function SocialAuth({
       }
       onSuccess?.()
     } catch (error) {
-      handleError(error, context.toString()) // Convert ErrorContext to string
+      const handledError = handleError(error, {
+        operation: 'SocialAuth.handleSocialAuth',
+        details: 'authenticating with social provider'
+      })
       onError?.(
-        error instanceof Error ? error : new Error('Authentication failed')
+        handledError instanceof Error ? handledError : new Error('Authentication failed')
       )
     }
   }

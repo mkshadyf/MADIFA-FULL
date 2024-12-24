@@ -1,23 +1,20 @@
-declare global {
-  namespace NodeJS {
-    interface ProcessEnv {
-      NEXT_PUBLIC_SUPABASE_URL: string
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: string
-      SUPABASE_SERVICE_ROLE_KEY: string
-      NEXT_PUBLIC_APP_URL: string
-      VIMEO_ACCESS_TOKEN: string
-      VIMEO_CLIENT_ID: string
-      VIMEO_CLIENT_SECRET: string
-      STRIPE_SECRET_KEY: string
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: string
-      STRIPE_WEBHOOK_SECRET: string
-      SMTP_USERNAME: string
-      SMTP_PASSWORD: string
-      SMTP_SERVER: string
-      SMTP_PORT: string
-      NODE_ENV: 'development' | 'production' | 'test'
-    }
+declare namespace NodeJS {
+  interface ProcessEnv {
+    VITE_SUPABASE_URL: string
+    VITE_SUPABASE_ANON_KEY: string
+    VITE_STRIPE_PUBLIC_KEY: string
+    VITE_STRIPE_SECRET_KEY: string
+    VITE_VIMEO_ACCESS_TOKEN: string
+    VITE_VIMEO_CLIENT_ID: string
+    VITE_VIMEO_CLIENT_SECRET: string
+    VITE_API_URL: string
+    VITE_SENTRY_DSN: string
+    VITE_APPLOVIN_SDK_KEY: string
+    VITE_APPLOVIN_INTERSTITIAL_ID: string
+    VITE_APPLOVIN_REWARDED_ID: string
+    NODE_ENV: 'development' | 'production' | 'test'
   }
 }
 
-export {}
+export { }
+

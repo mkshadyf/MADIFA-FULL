@@ -1,4 +1,4 @@
-import type { Content } from '@/types';
+import type { export Content } from '@/types';
 import type { User } from '@/types/auth';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];

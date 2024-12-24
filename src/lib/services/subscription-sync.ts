@@ -1,7 +1,7 @@
-import { createAPIError } from '@/lib/error'
 import { createClient } from '@/lib/supabase/client'
+import { createAPIError, createErrorContext } from '@/lib/utils/error-handler'
 import { subscriptionService } from './subscription'
-import { updateVideoPrivacy } from './vimeo'
+import { vimeoService } from './vimeo'
 
 interface SyncLogEntry {
   user_id: string
@@ -29,10 +29,12 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
 
     if (contentError) {
       throw createAPIError(
-        500,
         'Failed to fetch content',
         'CONTENT_FETCH_ERROR',
-        contentError
+        createErrorContext('subscriptionSync', 'syncSubscriptionAccess', {
+          userId,
+          error: contentError
+        })
       )
     }
 
@@ -40,16 +42,22 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
 
     // Update Vimeo privacy settings
     try {
-      await updateVideoPrivacy(
-        content.map(item => item.vimeo_id).filter(Boolean)[0],
-        isActive
-      )
+      const videoId = content.map(item => item.vimeo_id).filter(Boolean)[0]
+      await vimeoService.updateVideoPrivacy(videoId, {
+        view: isActive ? 'anybody' : 'disable',
+        embed: isActive ? 'public' : 'private',
+        comments: isActive ? 'anybody' : 'nobody',
+        download: isActive
+      })
     } catch (error) {
       throw createAPIError(
-        500,
         'Failed to update video privacy',
         'PRIVACY_UPDATE_ERROR',
-        error
+        createErrorContext('subscriptionSync', 'syncSubscriptionAccess', {
+          userId,
+          isActive,
+          error
+        })
       )
     }
 
@@ -68,19 +76,24 @@ export async function syncSubscriptionAccess(userId: string): Promise<void> {
 
     if (logError) {
       throw createAPIError(
-        500,
         'Failed to log sync',
         'SYNC_LOG_ERROR',
-        logError
+        createErrorContext('subscriptionSync', 'syncSubscriptionAccess', {
+          userId,
+          logEntry,
+          error: logError
+        })
       )
     }
   } catch (error) {
     console.error('Error syncing subscription access:', error)
     throw createAPIError(
-      500,
       'Failed to sync subscription access',
       'SYNC_ACCESS_ERROR',
-      error
+      createErrorContext('subscriptionSync', 'syncSubscriptionAccess', {
+        userId,
+        error
+      })
     )
   }
 }

@@ -1,39 +1,86 @@
+import type { User as SupabaseUser } from '@supabase/supabase-js'
+
 export interface UserProfile {
   id: string
-  userId: string
-  fullName: string | null
-  avatarUrl: string | null
+  user_id: string
   email: string
-  stripeCustomerId?: string
-  createdAt: string
-  updatedAt: string
+  full_name: string
+  avatar_url?: string
+  bio?: string
+  website?: string
+  role: string
+  subscription_status: string
+  subscription_tier: string
+  created_at: string
+  updated_at: string
 }
 
-export interface UserSettings {
-  id: string
-  userId: string
-  emailNotifications: boolean
-  theme: 'light' | 'dark' | 'system'
-  language: string
-  autoplay: boolean
-  quality: 'auto' | '1080p' | '720p' | '480p'
+export interface User extends Omit<SupabaseUser, 'user_metadata'> {
+  user_metadata?: {
+    full_name?: string
+    subscription_status?: string
+    subscription_tier?: string
+  }
+  email_verified?: boolean
+  full_name?: string
+  subscription_status?: string
+  subscription_tier?: string
+  email: string
 }
 
-export interface UserSession {
+export interface Permission {
   id: string
-  userId: string
-  deviceId: string
-  deviceType: string
-  ipAddress: string
-  lastActive: string
-  createdAt: string
+  name: string
+  description: string
+  resource: string
+  action: 'read' | 'write' | 'delete' | 'manage' | '*'
+  scope: 'global' | 'user' | 'role'
+  created_at?: string
+  updated_at?: string
+}
+
+export interface UserPermission {
+  user_id: string
+  permission_id: string
+  granted_at: string
+  granted_by: string
+  expires_at?: string
+}
+
+export interface Role {
+  id: string
+  name: string
+  description: string
+  permissions: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface UserRole {
+  user_id: string
+  role_id: string
+  assigned_at: string
+  assigned_by: string
+  expires_at?: string
 }
 
 export interface UserActivity {
   id: string
-  userId: string
-  type: 'watch' | 'like' | 'comment' | 'share'
-  contentId?: string
-  metadata: Record<string, any>
-  createdAt: string
+  user_id: string
+  content_id: string
+  action_type: 'view' | 'download' | 'like' | 'comment'
+  created_at: string
+  metadata?: Record<string, unknown>
+}
+
+export interface UserSettings {
+  id: string
+  user_id: string
+  theme: 'light' | 'dark' | 'system'
+  notifications_enabled: boolean
+  download_quality: 'auto' | 'low' | 'medium' | 'high'
+  autoplay_videos: boolean
+  language: string
+  created_at: string
+  updated_at: string
 }

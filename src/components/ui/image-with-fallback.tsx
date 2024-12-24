@@ -18,7 +18,7 @@ export function ImageWithFallback({
   const [imgSrc, setImgSrc] = useState(src)
 
   return (
-    <Image
+    <img
       {...props}
       alt={alt}
       src={imgSrc}

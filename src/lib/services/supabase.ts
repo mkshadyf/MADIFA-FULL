@@ -27,8 +27,8 @@ export const handleSupabaseError = (error: unknown, context: ErrorContext): Supa
   }
 
   return {
-    status: 500,
-    code: 'SUPABASE_ERROR',
+
+    code: '500',
     message: error instanceof Error ? error.message : 'Database operation failed',
     name: 'SupabaseError',
     details: context

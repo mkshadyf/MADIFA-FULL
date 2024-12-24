@@ -1,27 +1,13 @@
 import { useEffect, useState } from 'react'
 
-import { permissionService } from '@/lib/services/permissions'
+import { permissionService, type Permission } from '@/lib/services/permissions'
 import { usePermissions } from '@/hooks/usePermissions'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 
-import type { UserProfile } from '@/types/auth'
-
-type UserRole = UserProfile['role']
-
-interface Permission {
-  id: string
-  name: string
-  description: string
-  scope: 'global' | 'user' | 'role'
-  actions: string[]
-  resource: string // Added missing resource field
-  action: string // Added missing action field
-}
-
 interface PermissionManagerProps {
   userId?: string // If provided, manage specific user permissions
-  role?: UserRole // If provided, manage role permissions
+  role?: string // If provided, manage role permissions
 }
 
 export function PermissionManager({ userId, role }: PermissionManagerProps) {

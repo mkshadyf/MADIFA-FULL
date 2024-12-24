@@ -1,6 +1,6 @@
 import React from 'react'
 import { useEffect, useState } from 'react'
-
+import fetchMetrics from './manage/page'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/database.types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'

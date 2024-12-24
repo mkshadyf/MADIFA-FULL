@@ -1,25 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import type { VideoQuality } from '@/types/vimeo'
 
-export type VideoQuality =
-  | 'auto'
-  | '4K'
-  | '2K'
-  | '1080p'
-  | '720p'
-  | '480p'
-  | '360p'
-
-interface QualitySelectorProps {
+export interface QualitySelectorProps {
   currentQuality: VideoQuality
   availableQualities: VideoQuality[]
-  onChange: (quality: VideoQuality) => void
+  onQualityChange: (quality: VideoQuality) => void
   className?: string
 }
 
 export default function QualitySelector({
   currentQuality,
   availableQualities,
-  onChange,
+  onQualityChange,
   className = '',
 }: QualitySelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -116,7 +108,7 @@ export default function QualitySelector({
                   : 'text-white'
               }`}
               onClick={() => {
-                onChange(quality)
+                onQualityChange(quality)
                 setIsOpen(false)
               }}
               role="menuitem"

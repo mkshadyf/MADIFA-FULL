@@ -1,82 +1,144 @@
-import type { BaseError, VimeoError } from '@/types';
+import type { ApiError, BaseError } from '@/types';
+
+type ErrorDetails = Record<string, unknown>
 
 export interface ErrorContext {
-  service: string;
   operation: string;
   details?: unknown;
 }
 
-export const isBaseError = (error: unknown): error is BaseError => {
-  return error !== null &&
-    typeof error === 'object' &&
-    'status' in error &&
-    'code' in error;
+export enum ErrorCodes {
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  FORBIDDEN = 'FORBIDDEN',
+  NOT_FOUND = 'NOT_FOUND',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  API_ERROR = 'API_ERROR',
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
 }
 
-export const isVimeoError = (error: unknown): error is VimeoError => {
-  return isBaseError(error) &&
-    'developer_message' in error &&
-    'error_code' in error;
+export class AppError extends Error {
+  code: string
+  details?: ErrorDetails
+
+  constructor(message: string, code: string = ErrorCodes.UNKNOWN_ERROR, details?: ErrorDetails) {
+    super(message)
+    this.name = 'AppError'
+    this.code = code
+    this.details = details
+  }
 }
 
-export const createErrorContext = (
-  service: string,
-  operation: string,
-  details?: unknown
-): ErrorContext => ({
-  service,
-  operation,
-  details
-});
+export const throwAppError = (message: string, code: string = ErrorCodes.UNKNOWN_ERROR, details?: ErrorDetails): never => {
+  throw new AppError(message, code, details)
+}
 
-export const handleError = <T extends BaseError>(
-  error: unknown,
-  context: ErrorContext
-): T => {
-  if (isBaseError(error)) {
-    return {
-      ...error,
-      details: { ...error.details, ...context }
-    } as T;
+const mergeDetails = (context?: ErrorContext, additional?: ErrorDetails): ErrorDetails | undefined => {
+  if (!context?.details && !additional) {
+    return undefined
   }
 
   return {
+    ...(context?.details as ErrorDetails || {}),
+    ...(additional || {})
+  }
+}
+
+export const createApiError = (error: unknown, context: ErrorContext): ApiError => {
+  const baseError: ApiError = {
+    name: 'ApiError',
+    code: 'API_ERROR',
+    message: 'An unexpected error occurred',
     status: 500,
+    details: context.details
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: baseError.name,
+      code: error.name,
+      message: error.message,
+      status: baseError.status,
+      details: mergeDetails(context, { stack: error.stack })
+    }
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    const apiError = error as Record<string, unknown>
+    return {
+      name: baseError.name,
+      code: (apiError.code as string) || baseError.code,
+      message: (apiError.message as string) || baseError.message,
+      status: (apiError.status as number) || baseError.status,
+      details: mergeDetails(context, apiError as ErrorDetails)
+    }
+  }
+
+  return baseError
+}
+
+export const handleApiError = (error: unknown, context: ErrorContext): ApiError => {
+  const apiError = createApiError(error, context)
+  console.error(`API Error (${context.operation}):`, apiError)
+  return apiError
+}
+
+export const handleError = (error: unknown, context: ErrorContext): BaseError => {
+  const baseError: BaseError = {
+    name: 'Error',
+    message: 'An unexpected error occurred',
     code: 'UNKNOWN_ERROR',
-    message: error instanceof Error ? error.message : 'Unknown error occurred',
-    name: 'APIError',
-    details: context
-  } as T;
-};
-
-export const handleVimeoError = (error: unknown, context: ErrorContext): VimeoError => {
-  if (isVimeoError(error)) {
-    return {
-      ...error,
-      details: { ...error.details, ...context }
-    };
+    details: context.details
   }
 
-  return {
-    status: 500,
-    code: 'VIMEO_ERROR',
-    message: error instanceof Error ? error.message : 'Vimeo API error occurred',
-    developer_message: 'An unexpected error occurred while processing the Vimeo API request',
-    error_code: 'UNKNOWN',
-    name: 'VimeoError',
-    details: context
-  };
-};
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      code: baseError.code,
+      stack: error.stack,
+      details: mergeDetails(context, { stack: error.stack })
+    }
+  }
 
-export const createAPIError = (
-  status: number,
-  code: string,
-  message: string,
-  details?: unknown
-): BaseError => ({
-  status,
-  code,
-  message,
-  name: 'APIError',
-  details
-});
+  if (typeof error === 'object' && error !== null) {
+    const errorObj = error as Record<string, unknown>
+    return {
+      name: baseError.name,
+      message: (errorObj.message as string) || baseError.message,
+      code: (errorObj.code as string) || baseError.code,
+      details: mergeDetails(context, errorObj as ErrorDetails)
+    }
+  }
+
+  return baseError
+}
+
+export const createAPIError = (message: string, code: string, context?: ErrorContext): ApiError => {
+  return {
+    name: 'ApiError',
+    code,
+    message,
+    status: 500,
+    details: context?.details
+  }
+}
+
+export const createErrorContext = (service: string, operation: string, details?: unknown): ErrorContext => {
+  return {
+    operation: `${service}.${operation}`,
+    details: details ? { details } : undefined
+  }
+}
+
+export const handleStripeError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    return error
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    const stripeError = error as { type?: string; message?: string }
+    return new Error(stripeError.message || 'An unexpected Stripe error occurred')
+  }
+
+  return new Error('An unexpected Stripe error occurred')
+}
