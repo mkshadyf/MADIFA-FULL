@@ -29,14 +29,14 @@ export default function QuotaAwareDownloadButton({
   const { showToast } = useToast()
 
   const handleDownload = async () => {
-    if (!user?.id) {
-      showToast('Please sign in to download content', 'error')
+    if (!user?.id || !content?.size) {
+      showToast('Invalid user or content data', 'error')
       return
     }
 
     try {
       setIsLoading(true)
-      const check = await quotaEnforcement.checkQuota(user.id, content.size)
+      const check = await quotaEnforcement.checkQuota(user.id, content.size.toString())
       setQuotaCheck(check)
       
       if (!check || !check.allowed) {

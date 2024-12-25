@@ -1,4 +1,3 @@
-import { env } from '@/config/env'
 
 interface AdConfig {
   unitId: string
@@ -34,7 +33,7 @@ class AdService {
     try {
       await this.loadApplovinSDK()
       window.applovin.initializeSdk({
-        sdkKey: env.VITE_APPLOVIN_SDK_KEY,
+        sdkKey: import.meta.env.VITE_APPLOVIN_SDK_KEY,
       })
       this.isInitialized = true
     } catch (error) {
@@ -74,14 +73,14 @@ class AdService {
 
   async showPreRollAd(): Promise<boolean> {
     return this.showAd({
-      unitId: env.VITE_APPLOVIN_INTERSTITIAL_ID,
+      unitId: import.meta.env.VITE_APPLOVIN_INTERSTITIAL_ID,
       format: 'interstitial',
     })
   }
 
   async showMidRollAd(): Promise<boolean> {
     return this.showAd({
-      unitId: env.VITE_APPLOVIN_REWARDED_ID,
+      unitId: import.meta.env.VITE_APPLOVIN_REWARDED_ID,
       format: 'rewarded',
     })
   }

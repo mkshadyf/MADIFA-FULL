@@ -26,6 +26,7 @@ export interface User extends Omit<SupabaseUser, 'user_metadata'> {
   subscription_status?: string
   subscription_tier?: string
   email: string
+  sendEmailVerification?: () => Promise<void>
 }
 
 export interface Permission {

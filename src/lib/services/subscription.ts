@@ -18,7 +18,7 @@ export interface SubscriptionService {
   getSubscription: (userId: string) => Promise<Subscription | null>
   getSubscriptionTier: (userId: string) => Promise<string | null>
   getSubscriptionStatus: (userId: string) => Promise<SubscriptionStatus>
-  checkAccess: (userId: string, contentId: string) => Promise<{ canProceed: boolean; message?: string }>
+  checkAccess: (userId: string, contentId: string) => Promise<{ canProceed: boolean; message?: string; currentUsage: number; quota: number; remaining: number }>
   checkQuotaBeforeDownload: (content: Content) => Promise<{ canProceed: boolean; message?: string }>
   startQuotaMonitoring: () => void
   stopQuotaMonitoring: () => void
@@ -32,6 +32,7 @@ export interface SubscriptionService {
   setDefaultPaymentMethod: (userId: string, paymentMethodId: string) => Promise<void>
   deletePaymentMethod: (userId: string, paymentMethodId: string) => Promise<void>
   getUsage: (userId: string) => Promise<SubscriptionUsage>
+  updateUsage: (size: number) => Promise<void>
 }
 
 export class SubscriptionServiceImpl implements SubscriptionService {
@@ -260,15 +261,36 @@ export class SubscriptionServiceImpl implements SubscriptionService {
     }
   }
 
-  async checkAccess(userId: string, contentId: string): Promise<{ canProceed: boolean; message?: string }> {
+  async checkAccess(userId: string, contentId: string): Promise<{ canProceed: boolean; message?: string; currentUsage: number; quota: number; remaining: number }> {
     try {
-      // Implementation
-      throw new Error('Not implemented')
+      // Mock implementation for demonstration
+      const currentUsage = 50; // Example value
+      const quota = 100; // Example value
+      const remaining = quota - currentUsage;
+      return {
+        canProceed: remaining > 0,
+        currentUsage,
+        quota,
+        remaining,
+      }
     } catch (error) {
       throw createAPIError(
         'Failed to check access',
         'CHECK_ACCESS_ERROR',
         createErrorContext('subscription', 'checkAccess', { userId, contentId })
+      )
+    }
+  }
+
+  async updateUsage(size: number): Promise<void> {
+    try {
+      // Implementation for updating usage
+      console.log(`Usage updated by ${size} units.`)
+    } catch (error) {
+      throw createAPIError(
+        'Failed to update usage',
+        'UPDATE_USAGE_ERROR',
+        createErrorContext('subscription', 'updateUsage', { size })
       )
     }
   }
@@ -292,5 +314,6 @@ export const {
   getPaymentMethods,
   setDefaultPaymentMethod,
   deletePaymentMethod,
-  checkAccess
+  checkAccess,
+  updateUsage
 } = subscriptionService

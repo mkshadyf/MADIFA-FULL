@@ -37,10 +37,16 @@ export default function QuotaAwareDownloadQueue({
     const checkQuotas = async () => {
       for (const item of queueItems) {
         try {
-          const quotaCheck = await quotaEnforcement.checkQuota(user.id, item.content.size)
-          if (quotaCheck && !quotaCheck.allowed) {
+          if (!item.content?.size) {
+            console.warn('Missing content size for queue item')
+            continue
+          }
+          const quotaCheck: QuotaCheckResult = await quotaEnforcement.checkQuota(user.id, item.content.size.toString())
+          if (quotaCheck.allowed && quotaCheck.remaining > 0) {
+            // Proceed with download
+          } else if (quotaCheck.error) {
             removeFromQueue(item.id)
-            onError(new Error(quotaCheck.error || `Quota exceeded for ${item.content.title}`))
+            onError(new Error(quotaCheck.error))
           }
         } catch (error) {
           removeFromQueue(item.id)

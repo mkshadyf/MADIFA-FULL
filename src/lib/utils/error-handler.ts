@@ -13,7 +13,8 @@ export enum ErrorCodes {
   NOT_FOUND = 'NOT_FOUND',
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   API_ERROR = 'API_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+  AUTH = 'AUTH'
 }
 
 export class AppError extends Error {

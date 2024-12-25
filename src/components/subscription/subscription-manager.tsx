@@ -58,7 +58,7 @@ export default function SubscriptionManager() {
         prev
           ? {
               ...prev,
-              status: 'cancelled',
+              status: 'canceled',
               cancel_at_period_end: true,
             }
           : null
@@ -115,7 +115,7 @@ export default function SubscriptionManager() {
                 <p className="text-sm text-gray-400">
                   Next billing date:{' '}
                   {new Date(
-                    subscription.current_period_end
+                    subscription.end_date
                   ).toLocaleDateString()}
                 </p>
               </div>
