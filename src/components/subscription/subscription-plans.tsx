@@ -7,7 +7,7 @@ import {
   getSubscriptionPlans,
   upgradePlan,
 } from '@/lib/services/subscription-management'
-import type { BillingPeriod, SubscriptionPlan } from '@/types/subscription'
+import type { BillingPeriod, SubscriptionPlan, SubscriptionData } from '@/types/subscription'
 
 export default function SubscriptionPlans() {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
@@ -27,18 +27,18 @@ export default function SubscriptionPlans() {
     setError(null)
 
     try {
-      const { success, error, checkoutUrl } = await upgradePlan(
+      const response =  await upgradePlan(
         user.id,
         selectedPlan.id,
-        billingPeriod
+        billingPeriod === 'monthly'
       )
 
-      if (!success || !checkoutUrl) {
-        throw new Error(error || 'Failed to initiate upgrade')
+      if (response.status !== 'active') {
+        throw new Error('Failed to upgrade plan')
       }
 
       // Redirect to checkout
-      window.location.href = checkoutUrl
+      window.location.href = response.metadata.checkoutUrl
     } catch (error) {
       console.error('Plan upgrade error:', error)
       setError(
@@ -83,7 +83,7 @@ export default function SubscriptionPlans() {
         </div>
 
         <div className="mt-12 space-y-4 sm:mt-16 sm:grid sm:grid-cols-3 sm:gap-6 sm:space-y-0 lg:mx-auto lg:max-w-4xl xl:mx-0 xl:max-w-none">
-          {plans.map(plan => (
+          { plans.map((plan: SubscriptionPlan) => (
             <div
               key={plan.id}
               className={`divide-y divide-gray-700 rounded-lg shadow-sm ${
@@ -122,7 +122,7 @@ export default function SubscriptionPlans() {
                   What's included
                 </h3>
                 <ul className="mt-6 space-y-4">
-                  {plan.features.map((feature, index) => (
+                  {plan.features.map((feature: string, index: number) => (
                     <li key={index} className="flex space-x-3">
                       <svg
                         className="h-5 w-5 flex-shrink-0 text-green-500"

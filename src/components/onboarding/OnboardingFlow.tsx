@@ -99,7 +99,7 @@ export default function OnboardingFlow() {
         setIsLoading(true)
         const plans = await subscriptionService.getSubscriptionTiers()
         const selectedPlan = plans.find(
-          (p: SubscriptionTier) => p.id === data.planId
+          ( p: SubscriptionTier) => p.id === data.planId
         )
 
         if (!selectedPlan) {

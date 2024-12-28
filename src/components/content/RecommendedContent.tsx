@@ -24,14 +24,14 @@ export default function RecommendedContent({
     return <LoadingSpinner />
   }
 
-  if (error || !recommendations?.length) {
+  if (error || !recommendations) {
     return null
   }
 
   return (
     <section className="space-y-4">
       <h2 className="text-xl font-bold text-white">{title}</h2>
-      <ContentGrid content={recommendations} />
+      <ContentGrid  content={recommendations} />
     </section>
   )
 }

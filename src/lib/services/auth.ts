@@ -10,6 +10,8 @@ export interface AuthService {
   getSession(): Promise<{ user: User | null; session: Session | null }>
   refreshSession(): Promise<{ user: User | null; session: Session | null }>
   updateProfile(user: Partial<User>): Promise<{ user: User | null; error: Error | null }>
+  resetPassword(email: string): Promise<void>
+  updatePassword(newPassword: string): Promise<void>
 }
 
 export class AuthServiceImpl implements AuthService {
@@ -22,6 +24,7 @@ export class AuthServiceImpl implements AuthService {
       email: user.email || '',
       email_verified: user.email_confirmed_at !== null,
       full_name: user.user_metadata?.full_name,
+      user_id: user.id,
       subscription_status: user.user_metadata?.subscription_status,
       subscription_tier: user.user_metadata?.subscription_tier
     }
@@ -89,6 +92,16 @@ export class AuthServiceImpl implements AuthService {
     }
   }
 
+  async sendEmailVerification(email: string): Promise<void> {
+    const { error } = await this.supabase.auth.resend({
+      type: 'signup',
+      email
+    })
+    if (error) {
+      throw error
+    }
+  }
+
   async signOut(): Promise<void> {
     const { error } = await this.supabase.auth.signOut()
     if (error) {
@@ -124,6 +137,24 @@ export class AuthServiceImpl implements AuthService {
     return {
       user: this.mapUser(data.user),
       error: error ? { name: error.name, message: error.message } : null
+    }
+  }
+
+  async resetPassword(email: string): Promise<void> {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`
+    })
+    if (error) {
+      throw error
+    }
+  }
+
+  async updatePassword(newPassword: string): Promise<void> {
+    const { error } = await this.supabase.auth.updateUser({
+      password: newPassword
+    })
+    if (error) {
+      throw error
     }
   }
 }

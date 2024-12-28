@@ -32,7 +32,7 @@ function ContentCard({ content }: { content: Content }) {
       <Link to={hasAccess ? `/watch/${content.id}` : `/subscribe`}>
         <div className="aspect-video overflow-hidden rounded-lg">
           <img
-            src={content.thumbnail_url}
+            src={content.thumbnail_url || ''}
             alt={content.title}
             className="h-full w-full object-cover"
           />

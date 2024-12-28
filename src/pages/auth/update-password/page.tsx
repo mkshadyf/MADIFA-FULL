@@ -47,7 +47,6 @@ export default function UpdatePasswordPage() {
           src="/images/auth-bg-4.jpg"
           alt="Background"
           className="h-full w-full object-cover"
-          priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40" />
       </div>

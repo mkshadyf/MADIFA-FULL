@@ -174,15 +174,15 @@ export function VimeoPlayer({
     vimeoPlayer.on('play', handlePlayerPlay)
     vimeoPlayer.on('pause', handlePlayerPause)
     vimeoPlayer.on('ended', handlePlayerEnd)
-    vimeoPlayer.on('timeupdate', handlePlayerTimeUpdate)
-    vimeoPlayer.on('progress', handlePlayerProgress)
+    vimeoPlayer.on('timeupdate', handlePlayerTimeUpdate as any)
+    vimeoPlayer.on('progress', handlePlayerProgress as any)
 
     return () => {
       vimeoPlayer.off('play', handlePlayerPlay)
       vimeoPlayer.off('pause', handlePlayerPause)
       vimeoPlayer.off('ended', handlePlayerEnd)
-      vimeoPlayer.off('timeupdate', handlePlayerTimeUpdate)
-      vimeoPlayer.off('progress', handlePlayerProgress)
+      vimeoPlayer.off('timeupdate', handlePlayerTimeUpdate as any)
+      vimeoPlayer.off('progress', handlePlayerProgress as any)
       vimeoPlayer.destroy()
     }
   }, [

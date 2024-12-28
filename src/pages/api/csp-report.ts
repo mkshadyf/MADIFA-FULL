@@ -53,10 +53,10 @@ export default async function handler(
   } catch (error) {
     console.error('Error processing CSP violation:', error)
     throw createAPIError(
-      500,
       'Failed to process CSP violation',
       'CSP_VIOLATION_ERROR',
-      error
+      { operation: 'CSPReport.handler', details: error }
+
     )
   }
 }

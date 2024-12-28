@@ -1,7 +1,7 @@
-import type { QueryKey, UseQueryOptions } from '@tanstack/react-query'
-import { useQuery } from '@tanstack/react-query'
+import type { QueryKey, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
-import { handleError } from '@/lib/utils/error-handler'
+import { handleError } from '@/lib/utils/error-handler';
 
 interface FetchOptions<TData>
   extends Omit<UseQueryOptions<TData, Error>, 'queryKey' | 'queryFn'> {
@@ -24,7 +24,10 @@ export function useDataFetch<TData>(
         return await fetcher()
       } catch (error) {
         console.error('Data fetch error:', error)
-        const apiError = handleError(error, 'data_fetch_error')
+        const apiError = handleError(error, {
+          operation: 'data_fetch_error',
+          details: { message: 'An error occurred while fetching data' }
+        })
         onError?.(apiError)
         throw apiError
       }

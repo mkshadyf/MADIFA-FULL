@@ -1,5 +1,19 @@
-import type { export Content } from '@/types';
 import type { User } from '@/types/auth';
+export interface Content {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  duration: number;
+  size: number;
+  category: string;
+  tags: string[];
+  release_year: number;
+  status: VideoStatus;
+  created_at: string;
+  updated_at: string;
+  video_url: string | null;
+}
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 

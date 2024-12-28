@@ -26,12 +26,12 @@ const navLinks: NavLink[] = [
 ]
 
 export function Navigation(): JSX.Element {
-  const { isAuthenticated, userProfile, signOut } = useAuth()
+  const { isAuthenticated, user, signOut } = useAuth()
   const location = useLocation()
 
   const filteredLinks = navLinks.filter(link => {
     if (link.requireAuth && !isAuthenticated) return false
-    if (link.requireAdmin && userProfile?.role !== 'admin') return false
+    if (link.requireAdmin && user?.role !== 'admin') return false
     return true
   })
 

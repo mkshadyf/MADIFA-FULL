@@ -7,6 +7,7 @@ import type { OnboardingState } from '@/lib/services/onboarding'
 import type { User } from '@/types/auth'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/ui/button'
+import { authService } from '@/lib/services/auth'
 
 interface EmailVerificationStepProps {
   onNext: (data: Partial<OnboardingState>) => Promise<void>
@@ -36,7 +37,7 @@ export default function EmailVerificationStep({
   const handleResendEmail = async () => {
     try {
       setIsResending(true)
-      await user?.sendEmailVerification()
+      await authService.sendEmailVerification(user?.email || '')
       showToast('Verification email sent!', 'success')
     } catch (error) {
       console.error('Error sending verification email:', error)

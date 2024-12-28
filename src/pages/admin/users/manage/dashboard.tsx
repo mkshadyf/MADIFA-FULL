@@ -6,7 +6,7 @@ import type { Database } from '@/lib/database.types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import UsersList from '@/components/admin/users-list'
 
-type UserProfile = Database['public']['Tables']['user_profile']['Row']
+type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
 interface UserMetrics {
   totalUsers: number

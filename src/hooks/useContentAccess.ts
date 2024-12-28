@@ -21,7 +21,7 @@ export function useContentAccess(contentId: string) {
       try {
         setIsLoading(true)
         const access = await subscriptionService.checkAccess(user.id, contentId)
-        setHasAccess(access)
+        setHasAccess(access.canProceed)
         setError(null)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to check access')

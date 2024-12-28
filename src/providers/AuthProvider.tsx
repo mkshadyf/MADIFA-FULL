@@ -33,7 +33,7 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null)
@@ -138,7 +138,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   }
 
   const signInWithProvider = async (
-    provider: 'google' | 'github'
+    provider: 'google'
   ): Promise<void> => {
     try {
       setIsLoading(true)

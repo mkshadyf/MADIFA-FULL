@@ -94,7 +94,7 @@ export default function BrowsePage() {
               >
                 <div className="relative aspect-video overflow-hidden rounded-lg">
                   <img
-                    src={item.thumbnail_url}
+                    src={item.thumbnail_url || ''}
                     alt={item.title}
                     className="h-full w-full object-cover"
                   />

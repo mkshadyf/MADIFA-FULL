@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useActivityTracking } from '@/hooks/useActivityTracking'
 import { useDebounce } from '@/hooks/useDebounce'
 import { searchContent } from '@/lib/services/search'
-import type { Content } from '@/lib/supabase/types'
+import type { Content } from '@/types'
 
 import SearchSuggestions from './search-suggestions'
 

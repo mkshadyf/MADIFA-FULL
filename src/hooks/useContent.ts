@@ -46,8 +46,12 @@ export function useSearch(query: string) {
   return useQuery<Content[]>({
     queryKey: ['search', query],
     queryFn: async () => {
-      const videos = await vimeoService.getVideos({ query })
-      return videos.map(mapVimeoVideoToContent)
+      const videos = await vimeoService.getVideos({ page: 1, per_page: 20 })
+      const filteredVideos = videos.filter(video =>
+        video.name.toLowerCase().includes(query.toLowerCase()) ||
+        (video.description?.toLowerCase().includes(query.toLowerCase()))
+      )
+      return filteredVideos.map(mapVimeoVideoToContent)
     },
     enabled: !!query,
     staleTime: 1 * 60 * 1000,

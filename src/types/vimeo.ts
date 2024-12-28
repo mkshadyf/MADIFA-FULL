@@ -108,6 +108,7 @@ export interface VimeoVideo {
   stats?: VimeoStats;
   metadata?: VimeoMetadata;
   base_link?: string;
+  files: VimeoFile[]; // Added files property to fix TypeScript error
 }
 
 export interface VimeoChapter {

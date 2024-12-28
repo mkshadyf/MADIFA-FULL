@@ -1,6 +1,6 @@
 export type SubscriptionTierType = 'free' | 'basic' | 'premium' | 'premium_plus'
 
-export type SubscriptionStatus = 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid'
+export type SubscriptionStatus = 'active' | 'inactive' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid'
 
 export type PaymentMethodType = 'card' | 'paypal' | 'bank_transfer'
 
@@ -60,6 +60,12 @@ export interface Subscription {
   end_date: string
   created_at: string
   updated_at: string
+}
+
+export interface SubscriptionData extends Subscription {
+  success: boolean
+  error?: string
+  checkoutUrl?: string
 }
 
 export type UserSubscription = Subscription & {

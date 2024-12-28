@@ -9,6 +9,7 @@ export interface UserProfile {
   bio?: string
   website?: string
   role: string
+  permissions: Permission[]
   subscription_status: string
   subscription_tier: string
   created_at: string
@@ -16,6 +17,8 @@ export interface UserProfile {
 }
 
 export interface User extends Omit<SupabaseUser, 'user_metadata'> {
+  id: string
+  user_id: string
   user_metadata?: {
     full_name?: string
     subscription_status?: string
@@ -26,6 +29,8 @@ export interface User extends Omit<SupabaseUser, 'user_metadata'> {
   subscription_status?: string
   subscription_tier?: string
   email: string
+  role?: string
+  permissions?: Permission[]
   sendEmailVerification?: () => Promise<void>
 }
 
@@ -57,13 +62,7 @@ export interface Role {
   updated_at: string
 }
 
-export interface UserRole {
-  user_id: string
-  role_id: string
-  assigned_at: string
-  assigned_by: string
-  expires_at?: string
-}
+export type UserRole = 'admin' | 'user' | 'guest';
 
 export interface UserActivity {
   id: string

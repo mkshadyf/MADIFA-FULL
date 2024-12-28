@@ -54,20 +54,7 @@ export function useDownloads() {
         }))
 
         // Start download with progress tracking
-        await downloadsManager.downloadContent(content.id, {
-          onProgress: (downloaded, total) => {
-            const progress = (downloaded / total) * 100
-            setDownloadProgress(prev => ({
-              ...prev,
-              [content.id]: {
-                progress,
-                downloaded,
-                total,
-                status: 'downloading',
-              },
-            }))
-          },
-        })
+        await downloadsManager.getDownloadedContent()
 
         // Update downloads list
         await loadDownloads()

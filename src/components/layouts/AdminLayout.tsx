@@ -34,7 +34,7 @@ export function AdminLayout({ children }: AdminLayoutProps): JSX.Element {
   }
 
   return (
-    <RoleGuard requiredRole={UserRole.ADMIN}>
+    <RoleGuard requiredRole={'admin' as UserRole}>
       <ErrorBoundary>
         <div className="flex min-h-screen">
           {/* Admin Sidebar */}

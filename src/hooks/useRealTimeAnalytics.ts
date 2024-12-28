@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import type { AnalyticsEvent, RealTimeStats } from '@/types/analytics'
 import { createClient } from '@/lib/supabase/client'
+import type { AnalyticsEvent, RealTimeStats } from '@/types/analytics'
 
 const HEARTBEAT_INTERVAL = 30000 // 30 seconds
 const STALE_THRESHOLD = 60000 // 1 minute

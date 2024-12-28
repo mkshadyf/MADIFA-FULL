@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 
 import { authService } from '@/lib/services/auth'
-import type { User } from '@/types/auth'
+import type { AuthChangeEvent, AuthResponse, User } from '@/types/auth'
 
 interface AuthService {
   getSession: () => Promise<Session | null>
   signIn: (email: string, password: string) => Promise<AuthResponse>
-  signUp: (email: string, password: string) => Promise<AuthResponse>
+  signUp: (email: string, password: string, full_name: string) => Promise<AuthResponse>
   signOut: () => Promise<void>
   onAuthStateChange: (callback: (event: AuthChangeEvent, session: Session | null) => void) => () => void
 }
@@ -49,7 +49,7 @@ export function useSession() {
 
     initSession()
 
-    const subscription = authService.onAuthStateChange(user => {
+    const subscription = authService.onAuthStateChange((event, user) => {
       setSession(prev => ({
         ...prev,
         user,

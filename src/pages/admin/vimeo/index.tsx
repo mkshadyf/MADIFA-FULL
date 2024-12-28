@@ -55,7 +55,7 @@ export default function VimeoManagement() {
   ) => {
     try {
       await vimeoService.updateVideoMetadata(video.uri.split('/').pop()!, {
-        pictures: {
+          pictures: {
           active: true,
           uri: thumbnailUrl,
         },

@@ -138,7 +138,10 @@ export default function UsersList({ users, onRefresh }: UsersListProps) {
 
       {selectedUser ? (
         <UserDetailsModal
-          user={selectedUser}
+          user={{
+            ...selectedUser,
+            permissions: selectedUser.permissions || [],
+          }}
           onClose={() => setSelectedUser(null)}
         />
       ) : null}

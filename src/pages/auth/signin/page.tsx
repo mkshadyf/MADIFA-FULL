@@ -40,11 +40,11 @@ export default function SignInPage(): JSX.Element {
     setIsLoading(true)
 
     try {
-      await signIn('google')
+      await signIn(formData.email, formData.password)
       const redirectTo = searchParams.get('redirectTo') || '/'
       navigate(redirectTo)
     } catch (error) {
-      handleError(error, context)
+      handleError(error, { operation: 'SignInPage.handleSubmit: signing in user' })
     } finally {
       setIsLoading(false)
     }

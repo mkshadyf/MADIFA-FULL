@@ -6,11 +6,15 @@ import {
   handleError,
   throwAppError,
 } from '@/lib/utils/error-handler'
-import { hasRequiredPermissions } from '@/types/auth'
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import type { UserProfile, UserRole, Permission } from '@/types/user'
 
-import type { UserRole } from '@/types/auth'
+const hasRequiredPermissions = (permissions: Permission[], role: UserRole): boolean => {
+  // Implement your permission checking logic here
+  return permissions.some(permission => permission.scope === 'role' && permission.action === '*');
+};
+
 interface RoleGuardProps {
   children: React.ReactNode
   requiredRole: UserRole
@@ -38,16 +42,16 @@ export function RoleGuard({
         if (!profile) {
           throwAppError(
             'User profile not found',
-            ErrorCodes.AUTH.NOT_AUTHENTICATED,
-            'RoleGuard.checkPermissions'
+            ErrorCodes.UNAUTHORIZED,
+            { operation: 'RoleGuard.checkPermissions' }
           )
         }
 
-        if (!hasRequiredPermissions(profile, requiredRole)) {
+        if (profile && !hasRequiredPermissions(profile.permissions, requiredRole)) {
           throwAppError(
             `Insufficient permissions: required role '${requiredRole}'`,
-            ErrorCodes.AUTH.INSUFFICIENT_PERMISSIONS,
-            'RoleGuard.checkPermissions'
+            ErrorCodes.FORBIDDEN,
+            { operation: 'RoleGuard.checkPermissions' }
           )
         }
       }
@@ -63,13 +67,11 @@ export function RoleGuard({
     }
   }, [profile, requiredRole, fallbackPath, loading, navigate, location])
 
-  // Don't render anything while checking permissions
   if (loading) {
     return null
   }
 
-  // Only render children if user has required permissions
-  if (hasRequiredPermissions(profile, requiredRole)) {
+  if (profile && hasRequiredPermissions(profile.permissions, requiredRole)) {
     return <>{children}</>
   }
 

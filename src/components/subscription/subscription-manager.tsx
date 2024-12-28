@@ -29,8 +29,37 @@ export default function SubscriptionManager() {
           getBillingHistory(user.id),
         ])
 
-        setSubscription(subscriptionData)
-        setBillingHistory(billingData)
+        setSubscription(subscriptionData ? {
+          id: subscriptionData.id,
+          user_id: user.id,
+          plan_id: subscriptionData.prices[0]?.id || '',
+          status: subscriptionData.status as 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid',
+          tier: subscriptionData.prices[0]?.product || 'free',
+          start_date: new Date(subscriptionData.created * 1000).toISOString(),
+          end_date: subscriptionData.current_period_end 
+            ? new Date(subscriptionData.current_period_end * 1000).toISOString()
+            : new Date().toISOString(),
+          created_at: new Date(subscriptionData.created * 1000).toISOString(),
+          updated_at: new Date().toISOString(),
+          user: {
+            id: user.id,
+            email: user.email || '',
+            full_name: user.full_name || ''
+          },
+          billing_period: subscriptionData.prices[0]?.recurring?.interval || 'month',
+          price: (subscriptionData.prices[0]?.unit_amount || 0) / 100 // Convert cents to dollars
+        } : null)
+
+        setBillingHistory(billingData.map(invoice => ({
+          id: invoice.id,
+          user_id: user.id,
+          subscription_id: invoice.subscription || '',
+          amount: invoice.amount_due / 100, // Convert cents to dollars
+          currency: invoice.currency,
+          status: invoice.status === 'paid' ? 'succeeded' : 'failed',
+          payment_method: 'card' as const,
+          created_at: new Date(invoice.created * 1000).toISOString()
+        })))
       } catch (error) {
         console.error('Error loading subscription data:', error)
         setError(

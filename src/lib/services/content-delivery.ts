@@ -11,7 +11,7 @@ export async function getStreamUrl(
   // Check subscription if user is provided
   if (userId) {
     const subscription = await getSubscriptionStatus(userId)
-    if (subscription?.status !== 'active') {
+    if (subscription !== 'active') {
       throw new Error('Active subscription required')
     }
   }

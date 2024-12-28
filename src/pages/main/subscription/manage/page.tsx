@@ -50,14 +50,9 @@ export default function ManageSubscription() {
 
     try {
       await subscriptionService.cancelSubscription(subscription.id)
-      setSubscription(prev =>
+      setSubscription(  prev =>
         prev
-          ? {
-              ...prev,
-              status: 'inactive',
-              cancel_at_period_end: true,
-            }
-          : null
+
       )
       setMessage('Subscription cancelled successfully')
     } catch (error) {
@@ -119,7 +114,7 @@ export default function ManageSubscription() {
               <div className="grid grid-cols-2 gap-4 text-gray-300">
                 <div>
                   <p className="text-sm font-medium">Plan</p>
-                  <p className="text-lg">{subscription.tier.name}</p>
+                  <p className="text-lg">{subscription.tier}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Status</p>
@@ -129,14 +124,14 @@ export default function ManageSubscription() {
                   <p className="text-sm font-medium">Current Period End</p>
                   <p className="text-lg">
                     {new Date(
-                      subscription.current_period_end
+                      subscription.billing_period
                     ).toLocaleDateString()}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Auto Renew</p>
                   <p className="text-lg">
-                    {subscription.cancel_at_period_end ? 'No' : 'Yes'}
+                    {subscription.end_date ? 'No' : 'Yes'}
                   </p>
                 </div>
               </div>
@@ -150,7 +145,7 @@ export default function ManageSubscription() {
 
             <div>
               {subscription.status === 'active' &&
-              !subscription.cancel_at_period_end ? (
+              !subscription.end_date ? (
                 <button
                   type="button"
                   onClick={handleCancelSubscription}
@@ -160,7 +155,7 @@ export default function ManageSubscription() {
                   {actionLoading ? 'Processing...' : 'Cancel Subscription'}
                 </button>
               ) : subscription.status === 'inactive' ||
-                subscription.cancel_at_period_end ? (
+                subscription.end_date ? (
                 <button
                   type="button"
                   onClick={handleReactivateSubscription}

@@ -108,7 +108,7 @@ export default function VideoControls({
             <QualitySelector
               currentQuality={currentQuality as VideoQuality}
               availableQualities={availableQualities as VideoQuality[]}
-              onChange={onQualityChange}
+              onQualityChange={onQualityChange}
             />
 
             <IconButton

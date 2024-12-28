@@ -12,7 +12,8 @@ vi.mock('@/lib/supabase/client', () => ({
       signOut: vi.fn(),
       getSession: vi.fn(),
       refreshSession: vi.fn(),
-      updateUser: vi.fn()
+      updateUser: vi.fn(),
+      onAuthStateChange: vi.fn()
     }
   }
 }))
@@ -96,7 +97,7 @@ describe('AuthServiceImpl', () => {
         error: null
       })
 
-      const result = await authService.signUpWithEmail('test@test.com', 'password')
+      const result = await authService.signUp('test@test.com', 'password', 'test')
 
       expect(result.user).toEqual(mappedUser)
       expect(result.session).toEqual(mockSession)
@@ -109,7 +110,7 @@ describe('AuthServiceImpl', () => {
         error
       })
 
-      await expect(authService.signUpWithEmail('test@test.com', 'password')).rejects.toThrow('Email already exists')
+      await expect(authService.signUp('test@test.com', 'password', 'test')).rejects.toThrow('Email already exists')
     })
   })
 
