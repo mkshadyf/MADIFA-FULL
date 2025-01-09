@@ -1,11 +1,11 @@
 import React from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 
-import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ErrorBoundary } from '@/components/error-boundary'
 import { RoleGuard } from '@/components/guards/RoleGuard'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useAuth } from '@/hooks/useAuth'
+import { cn } from '@/lib/utils'
 import type { UserRole } from '@/types/auth'
 
 interface AdminLayoutProps {
@@ -25,17 +25,50 @@ const adminNavLinks: AdminNavLink[] = [
   { href: '/admin/settings', label: 'Settings' },
 ]
 
+const AdminErrorFallback = (
+  <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+      <h2 className="mb-4 text-2xl font-bold text-gray-900">
+        Something went wrong in the admin panel
+      </h2>
+      <p className="mb-4 text-gray-600">
+        Please try refreshing the page or contact support if the problem
+        persists.
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+      >
+        Reload Page
+      </button>
+    </div>
+  </div>
+)
+
 export function AdminLayout({ children }: AdminLayoutProps): JSX.Element {
   const { isLoading } = useAuth()
   const location = useLocation()
 
   if (isLoading) {
-    return <LoadingSpinner fullscreen text="Loading..." />
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner />
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <RoleGuard requiredRole={'admin' as UserRole}>
-      <ErrorBoundary>
+      <ErrorBoundary
+        fallback={AdminErrorFallback}
+        onError={(error, errorInfo) => {
+          console.error('Admin Error:', error)
+          console.error('Error Info:', errorInfo)
+        }}
+      >
         <div className="flex min-h-screen">
           {/* Admin Sidebar */}
           <aside className="w-64 bg-gray-900 text-white">

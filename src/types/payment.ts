@@ -44,7 +44,15 @@ export interface PaymentError {
   param?: string
 }
 
-export type PaymentStatus = 'requires_payment_method' | 'requires_confirmation' | 'requires_action' | 'processing' | 'requires_capture' | 'canceled' | 'succeeded' | 'failed'
+export type PaymentStatus =
+  | 'requires_payment_method'
+  | 'requires_confirmation'
+  | 'requires_action'
+  | 'processing'
+  | 'requires_capture'
+  | 'canceled'
+  | 'succeeded'
+  | 'failed'
 
 export interface PaymentResult {
   success: boolean
@@ -53,8 +61,23 @@ export interface PaymentResult {
 }
 
 export interface PaymentNotification {
+  // PayFast specific fields
+  m_payment_id: string
+  pf_payment_id: string
+  payment_status: string
+  amount_gross: string
+  amount_fee: string
+  amount_net: string
+  signature: string
+
+  // Generic payment fields
   id: string
-  type: 'payment.success' | 'payment.failed' | 'subscription.created' | 'subscription.updated' | 'subscription.cancelled'
+  type:
+    | 'payment.success'
+    | 'payment.failed'
+    | 'subscription.created'
+    | 'subscription.updated'
+    | 'subscription.cancelled'
   data: {
     customer_id: string
     payment_id?: string
@@ -68,4 +91,7 @@ export interface PaymentNotification {
     }
   }
   created_at: string
+
+  // Allow additional string fields
+  [key: string]: string | number | object | undefined
 }

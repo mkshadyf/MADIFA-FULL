@@ -21,7 +21,9 @@ class DownloadEventEmitter extends EventEmitter {
   }
 }
 
-export function useDownloadPersistence(downloadsManager: DownloadsManager & DownloadEventEmitter) {
+export function useDownloadPersistence(
+  downloadsManager: DownloadsManager & DownloadEventEmitter
+) {
   useEffect(() => {
     const handleProgress = (data: any) => {
       // Handle progress event

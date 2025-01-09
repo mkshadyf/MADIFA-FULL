@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/client'
-import { createAPIError, createErrorContext } from '@/lib/utils/error-handler'
+import { createErrorContext, handleApiError } from '@/lib/utils/error-handler'
 import type { Permission } from '@/types/user'
 
 export type { Permission }
@@ -21,10 +21,9 @@ export class PermissionService {
       if (error) throw error
       return data.permissions
     } catch (error) {
-      throw createAPIError(
-        'Failed to get role permissions',
-        'GET_PERMISSIONS_ERROR',
-        createErrorContext('permissions', 'getRolePermissions', { role, error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'getRolePermissions', { role })
       )
     }
   }
@@ -38,10 +37,11 @@ export class PermissionService {
 
       if (error) throw error
     } catch (error) {
-      throw createAPIError(
-        'Failed to update role permissions',
-        'UPDATE_PERMISSIONS_ERROR',
-        createErrorContext('permissions', 'updateRolePermissions', { rolePermission, error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'updateRolePermissions', {
+          rolePermission,
+        })
       )
     }
   }
@@ -82,10 +82,11 @@ export class PermissionService {
         new Set(allPermissions.map(p => JSON.stringify(p)))
       ).map(p => JSON.parse(p))
     } catch (error) {
-      throw createAPIError(
-        'Failed to get user permissions',
-        'GET_USER_PERMISSIONS_ERROR',
-        createErrorContext('permissions', 'getUserPermissions', { userId, error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'getUserPermissions', {
+          userId,
+        })
       )
     }
   }
@@ -102,10 +103,12 @@ export class PermissionService {
 
       if (error) throw error
     } catch (error) {
-      throw createAPIError(
-        'Failed to update user permissions',
-        'UPDATE_USER_PERMISSIONS_ERROR',
-        createErrorContext('permissions', 'updateUserPermissions', { userId, permissions, error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'updateUserPermissions', {
+          userId,
+          permissions,
+        })
       )
     }
   }
@@ -119,10 +122,11 @@ export class PermissionService {
 
       if (error) throw error
     } catch (error) {
-      throw createAPIError(
-        'Failed to remove user permissions',
-        'REMOVE_PERMISSIONS_ERROR',
-        createErrorContext('permissions', 'removeUserPermissions', { userId, error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'removeUserPermissions', {
+          userId,
+        })
       )
     }
   }
@@ -137,10 +141,9 @@ export class PermissionService {
       if (error) throw error
       return data
     } catch (error) {
-      throw createAPIError(
-        'Failed to get available permissions',
-        'GET_AVAILABLE_PERMISSIONS_ERROR',
-        createErrorContext('permissions', 'getAvailablePermissions', { error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'getAvailablePermissions')
       )
     }
   }
@@ -164,10 +167,11 @@ export class PermissionService {
       if (error) throw error
       return data
     } catch (error) {
-      throw createAPIError(
-        'Failed to create permission',
-        'CREATE_PERMISSION_ERROR',
-        createErrorContext('permissions', 'createPermission', { permission, error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'createPermission', {
+          permission,
+        })
       )
     }
   }
@@ -181,10 +185,11 @@ export class PermissionService {
 
       if (error) throw error
     } catch (error) {
-      throw createAPIError(
-        'Failed to delete permission',
-        'DELETE_PERMISSION_ERROR',
-        createErrorContext('permissions', 'deletePermission', { permissionId, error })
+      throw handleApiError(
+        error,
+        createErrorContext('permissions', 'deletePermission', {
+          permissionId,
+        })
       )
     }
   }
@@ -201,5 +206,5 @@ export const {
   removeUserPermissions,
   getAvailablePermissions,
   createPermission,
-  deletePermission
+  deletePermission,
 } = permissionService

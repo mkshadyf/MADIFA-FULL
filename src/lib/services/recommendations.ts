@@ -28,12 +28,9 @@ export async function getRecommendations(
       .limit(20)
 
     // Extract categories from watch history
-    const watchedCategories =
-      history
-        ?.map(
-          (item: { content: { category: string } }) => item.content?.category
-        )
-        .filter(Boolean) || []
+    const watchedCategories = (history || [])
+      .map(item => item.content?.[0]?.category)
+      .filter((category): category is string => typeof category === 'string')
 
     // Get content IDs to exclude
     const excludeIds =

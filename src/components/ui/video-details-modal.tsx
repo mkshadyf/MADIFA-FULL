@@ -1,95 +1,104 @@
-import { useEffect, useRef } from 'react'
-import { createPortal } from 'react-dom'
-
-import type { Database } from '@/lib/database.types'
-
-type Content = Database['public']['Tables']['videos']['Row'] & {
-  release_year: number
-  category: string
-}
+import type { Content } from '@/types/content'
+import { Modal } from './modal'
 
 interface VideoDetailsModalProps {
-  content: Content
+  video?: Content | null
+  content?: Content | null
+  isOpen: boolean
   onClose: () => void
-  onPlay: () => void
 }
 
 export default function VideoDetailsModal({
+  video,
   content,
+  isOpen,
   onClose,
-  onPlay,
 }: VideoDetailsModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null)
+  const videoContent = video || content
+  if (!videoContent) return null
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
-      ) {
-        onClose()
-      }
-    }
+  const releaseDate = videoContent.metadata?.release_date
+    ? new Date(videoContent.metadata.release_date).toLocaleDateString()
+    : 'Release date not available'
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [onClose])
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      <div
-        ref={modalRef}
-        className="mx-4 w-full max-w-2xl rounded-lg bg-gray-900"
-      >
-        <div className="relative aspect-video">
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={videoContent.title}
+      description={`Released: ${releaseDate}`}
+      size="lg"
+    >
+      <div className="space-y-6">
+        <div className="aspect-video w-full overflow-hidden rounded-lg">
           <img
-            src={content.thumbnail_url ?? ''}
-            alt={content.title}
-            className="h-full w-full rounded-t-lg object-cover"
+            src={videoContent.thumbnail_url || ''}
+            alt={videoContent.title}
+            className="h-full w-full object-cover"
           />
-          <button
-            onClick={onPlay}
-            className="absolute inset-0 flex items-center justify-center bg-black/40 transition-colors hover:bg-black/60"
-            aria-label="Play video"
-          >
-            <svg
-              className="h-20 w-20 text-white"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </button>
         </div>
 
-        <div className="p-6">
-          <h2 className="mb-2 text-2xl font-bold text-white">
-            {content.title}
-          </h2>
-          <p className="mb-4 text-gray-400">{content.description}</p>
-
-          <div className="flex items-center space-x-4 text-sm text-gray-400">
-            <span>{content.release_year}</span>
-            <span>{content.category}</span>
-          </div>
-
-          <div className="mt-6 flex space-x-4">
-            <button
-              onClick={onPlay}
-              className="flex-1 rounded-md bg-indigo-600 py-2 text-white hover:bg-indigo-700"
-            >
-              Play
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 rounded-md bg-gray-800 py-2 text-white hover:bg-gray-700"
-            >
-              Close
-            </button>
-          </div>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-500">
+            Duration: {formatDuration(videoContent.metadata?.duration || 0)}
+          </p>
+          <p className="text-sm text-gray-500">
+            Views: {formatNumber(videoContent.metadata?.views || 0)}
+          </p>
+          <p className="text-sm text-gray-500">
+            Likes: {formatNumber(videoContent.metadata?.likes || 0)}
+          </p>
         </div>
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Description</h3>
+          <p className="text-sm text-gray-500">{videoContent.description}</p>
+        </div>
+
+        {videoContent.metadata?.categories &&
+          videoContent.metadata.categories.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Categories</h3>
+              <div className="flex flex-wrap gap-2">
+                {videoContent.metadata.categories.map((category: string) => (
+                  <span
+                    key={category}
+                    className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                  >
+                    {category}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+        {videoContent.metadata?.tags &&
+          videoContent.metadata.tags.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {videoContent.metadata.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
       </div>
-    </div>,
-    document.body
+    </Modal>
   )
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = Math.floor(seconds % 60)
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+function formatNumber(num: number): string {
+  return new Intl.NumberFormat().format(num)
 }

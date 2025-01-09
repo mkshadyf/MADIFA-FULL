@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
-import { adService } from '@/lib/services/ads'
 import { usePerformance } from '@/hooks/usePerformance'
+import { adService } from '@/lib/services/ads'
 
 interface AdUnitProps {
   slot?: string
@@ -22,40 +22,15 @@ export default function AdUnit({
 
     const loadAd = async () => {
       await measureOperation('loadAd', async () => {
-        await adService.showAd({
-          unitId: slot || import.meta.env.VITE_APPLOVIN_INTERSTITIAL_ID,
-          format:
-            format === 'auto' ||
-            format === 'fluid' ||
-            format === 'rectangle' ||
-            format === 'vertical'
-              ? 'banner'
-              : 'interstitial',
-        })
+        const unitId = slot || import.meta.env.VITE_APPLOVIN_INTERSTITIAL_ID
+        await adService.showAd('banner', unitId)
       })
     }
 
     loadAd()
-
-    const refreshInterval = setInterval(() => {
-      loadAd()
-    }, 10000)
-
-    return () => clearInterval(refreshInterval)
-  }, [])
-
-  if (import.meta.env.VITE_AD_ENABLED !== 'true') return null
+  }, [slot, format])
 
   return (
-    <div ref={adRef} className={className}>
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block' }}
-        data-ad-client={import.meta.env.VITE_GOOGLE_ADS_CLIENT_ID}
-        data-ad-slot={slot}
-        data-ad-format={format}
-        data-full-width-responsive="true"
-      />
-    </div>
+    <div ref={adRef} className={`ad-unit ${className}`} data-format={format} />
   )
 }

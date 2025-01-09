@@ -1,20 +1,25 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/providers/AuthProvider'
-
-import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/database.types'
 import ContentCard from '@/components/ui/content-card'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import Navbar from '@/components/ui/navbar'
+import type { NavItem } from '@/components/ui/navbar'
+import { Navbar } from '@/components/ui/navbar'
+import { useAuth } from '@/hooks/useAuth'
+import { createClient } from '@/lib/supabase/client'
+import type { Content } from '@/types/content'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-type Content = Database['public']['Tables']['content']['Row']
+const navItems: NavItem[] = [
+  { name: 'Browse', path: '/browse' },
+  { name: 'Categories', path: '/categories' },
+  { name: 'My List', path: '/my-list' },
+]
 
 export default function SearchPage() {
-  const { loading: authLoading } = useAuth()
+  const navigate = useNavigate()
+  const { isLoading, user } = useAuth()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Content[]>([])
-  const [loading, setLoading] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -24,7 +29,7 @@ export default function SearchPage() {
     }
 
     const timer = setTimeout(async () => {
-      setLoading(true)
+      setSearchLoading(true)
       try {
         const { data, error } = await supabase
           .from('content')
@@ -33,22 +38,58 @@ export default function SearchPage() {
           .limit(20)
 
         if (error) throw error
-        setResults(data || [])
+        setResults(
+          (data || []).map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            thumbnail_url: item.thumbnail_url,
+            preview_url: item.preview_url,
+            video_url: item.video_url,
+            duration: item.duration,
+            category_id: item.category_id || 'uncategorized',
+            category: item.category || 'Uncategorized',
+            fileSize: item.size || 0,
+            type: item.content_type || 'video',
+            content_type: item.content_type || 'video',
+            status: item.status || 'published',
+            visibility: item.visibility || 'public',
+            views: item.views || 0,
+            tags: item.tags || [],
+            owner_id: item.owner_id || '',
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            rating: item.rating,
+            size: item.size || 0,
+            metadata: item.metadata
+          })) as Content[]
+        )
       } catch (error) {
         console.error('Error searching content:', error)
       } finally {
-        setLoading(false)
+        setSearchLoading(false)
       }
     }, 300)
 
     return () => clearTimeout(timer)
   }, [query])
 
-  if (authLoading) return <LoadingSpinner />
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
+  if (!user) {
+    navigate('/auth/signin')
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <Navbar />
+      <Navbar items={navItems} user={user} />
 
       <main className="px-4 pb-12 pt-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
@@ -62,7 +103,7 @@ export default function SearchPage() {
             />
           </div>
 
-          {loading ? (
+          {searchLoading ? (
             <div className="flex justify-center">
               <LoadingSpinner />
             </div>

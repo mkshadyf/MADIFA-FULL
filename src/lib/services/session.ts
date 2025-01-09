@@ -1,4 +1,4 @@
-import { createAPIError, createErrorContext } from '@/lib/utils/error-handler'
+import { createErrorContext, handleApiError } from '@/lib/utils/error-handler'
 import type { Session } from '@/types'
 
 export interface SessionService {
@@ -13,9 +13,8 @@ export class SessionServiceImpl implements SessionService {
       // Implementation
       throw new Error('Not implemented')
     } catch (error) {
-      throw createAPIError(
-        'Failed to refresh session',
-        'REFRESH_SESSION_ERROR',
+      throw handleApiError(
+        error,
         createErrorContext('session', 'refreshSession')
       )
     }
@@ -26,11 +25,7 @@ export class SessionServiceImpl implements SessionService {
       // Implementation
       throw new Error('Not implemented')
     } catch (error) {
-      throw createAPIError(
-        'Failed to get session',
-        'GET_SESSION_ERROR',
-        createErrorContext('session', 'getSession')
-      )
+      throw handleApiError(error, createErrorContext('session', 'getSession'))
     }
   }
 
@@ -39,11 +34,7 @@ export class SessionServiceImpl implements SessionService {
       // Implementation
       throw new Error('Not implemented')
     } catch (error) {
-      throw createAPIError(
-        'Failed to clear session',
-        'CLEAR_SESSION_ERROR',
-        createErrorContext('session', 'clearSession')
-      )
+      throw handleApiError(error, createErrorContext('session', 'clearSession'))
     }
   }
 }
@@ -51,8 +42,4 @@ export class SessionServiceImpl implements SessionService {
 export const sessionService = new SessionServiceImpl()
 
 // Export individual functions for convenience
-export const {
-  refreshSession,
-  getSession,
-  clearSession
-} = sessionService
+export const { refreshSession, getSession, clearSession } = sessionService

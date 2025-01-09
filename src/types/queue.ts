@@ -1,18 +1,42 @@
 import type { Content } from './content'
+import type { DownloadStatus } from './downloads'
 
 export interface QueueItem {
   id: string
-  content: Content
-  status: 'queued' | 'downloading' | 'paused' | 'completed' | 'error'
+  title: string
+  status: DownloadStatus
   progress: number
+  size: number
+  downloaded: number
   speed?: number
-  error?: string
   priority: number
-  addedAt: number
+  createdAt: string
+  updatedAt: string
+  error?: string
+  content: Content
+  addedAt?: string // Optional for backward compatibility
 }
 
-export interface QueueItemWithStats extends QueueItem {
-  estimatedTimeRemaining?: number
-  averageSpeed?: number
-  retryCount?: number
+export interface QueueItemWithStats {
+  total: number
+  active: number
+  paused: number
+  completed: number
+  failed: number
+  totalSize: number
+  downloadedSize: number
+  averageSpeed: number
+}
+
+export interface QueueStats {
+  itemCount: number
+  totalItems: number
+  totalSize: number
+  queuedItems: number
+  downloadingItems: number
+  completedItems: number
+  failedItems: number
+  averageProgress: number
+  estimatedTimeRemaining: number
+  quotaUsageAfterQueue: number
 }

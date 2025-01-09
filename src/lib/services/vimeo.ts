@@ -1,294 +1,140 @@
-import { handleApiError } from '@/lib/utils/error-handler'
-import type {
-  VimeoError,
-  VimeoFolder,
-  VimeoPrivacy,
-  VimeoService,
-  VimeoUploadOptions,
-  VimeoUploadResponse,
-  VimeoVideo
-} from '@/types/vimeo'
-import * as tus from 'tus-js-client'
+import type { VimeoFolder, VimeoVideo } from '@/types/vimeo'
 
-interface VimeoResponse<T> {
-  data: T[]
-  page: number
-  per_page: number
-  total: number
-}
+class VimeoService {
+  private readonly API_URL = 'https://api.vimeo.com'
+  private readonly ACCESS_TOKEN = process.env.VITE_VIMEO_ACCESS_TOKEN
 
-export class VimeoServiceImpl implements VimeoService {
-  private apiKey: string
-  private baseUrl = 'https://api.vimeo.com'
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const response = await fetch(`${this.API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${this.ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey
+    if (!response.ok) {
+      throw new Error(`Vimeo API error: ${response.statusText}`)
+    }
+
+    return response.json()
   }
 
-  private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`
-    const headers = {
-      'Authorization': `Bearer ${this.apiKey}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/vnd.vimeo.*+json;version=3.4',
-      ...options.headers
-    }
-
-    try {
-      const response = await fetch(url, { ...options, headers })
-      if (!response.ok) {
-        throw this.handleError(await response.json())
-      }
-      const data = await response.json()
-      return data as T
-    } catch (error) {
-      throw handleApiError(error as Error, {
-        operation: 'VimeoService.makeRequest',
-        details: { endpoint }
-      })
-    }
+  async getVideos(): Promise<VimeoVideo[]> {
+    return this.request<VimeoVideo[]>('/me/videos')
   }
 
-  private handleError(error: unknown): VimeoError {
-    const err = error as Record<string, unknown>
-    return {
-      name: 'VimeoError',
-      code: (err.error as string) || 'UNKNOWN_ERROR',
-      message: (err.error_description as string) || (err.message as string) || 'An unknown error occurred',
-      developer_message: (err.developer_message as string) || '',
-      error_code: (err.error_code as number) || 500,
-      status: (err.status as number) || 500,
-      link: (err.link as string) || null
-    }
+  async getVideo(videoId: string): Promise<VimeoVideo> {
+    return this.request<VimeoVideo>(`/videos/${videoId}`)
   }
 
-  async getVideos(options?: { page?: number; per_page?: number }): Promise<VimeoVideo[]> {
-    try {
-      const queryParams = new URLSearchParams()
-      if (options?.page) queryParams.append('page', options.page.toString())
-      if (options?.per_page) queryParams.append('per_page', options.per_page.toString())
-      const response = await this.makeRequest<VimeoResponse<VimeoVideo>>(`/me/videos?${queryParams.toString()}`)
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async deleteVideo(videoId: string): Promise<void> {
+    await this.request(`/videos/${videoId}`, { method: 'DELETE' })
   }
 
-  async getVideosByFolder(folderId: string): Promise<VimeoVideo[]> {
-    try {
-      const response = await this.makeRequest<VimeoResponse<VimeoVideo>>(`/me/folders/${folderId}/videos`)
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async getAllVideos(): Promise<VimeoVideo[]> {
-    try {
-      const response = await this.makeRequest<VimeoResponse<VimeoVideo>>('/me/videos')
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async updateVideoSecurity(
+    videoId: string,
+    updates: Partial<VimeoVideo['privacy']>
+  ): Promise<VimeoVideo> {
+    return this.request<VimeoVideo>(`/videos/${videoId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ privacy: updates }),
+    })
   }
 
   async getFolders(): Promise<VimeoFolder[]> {
-    try {
-      const response = await this.makeRequest<VimeoResponse<VimeoFolder>>('/me/folders')
-      return response.data
-    } catch (error) {
-      throw this.handleError(error)
-    }
+    return this.request<VimeoFolder[]>('/me/folders')
   }
 
-  async uploadVideo(file: File, metadata: VimeoUploadOptions): Promise<VimeoVideo> {
-    try {
-      const uploadResponse = await this.makeRequest<VimeoUploadResponse>('/me/videos', {
-        method: 'POST',
-        body: JSON.stringify({
-          upload: { approach: 'tus', size: file.size },
-          name: metadata.name,
-          description: metadata.description,
-          privacy: metadata.privacy
-        })
-      })
-
-      // Upload the file using TUS protocol
-      const upload = new tus.Upload(file, {
-        endpoint: uploadResponse.upload.upload_link,
-        retryDelays: [0, 3000, 5000, 10000, 20000],
-        metadata: {
-          filename: file.name,
-          filetype: file.type
-        },
-        onError: (error) => {
-          throw this.handleError(error)
-        }
-      })
-
-      await new Promise<void>((resolve, reject) => {
-        upload.start()
-        upload.on('success', () => resolve())
-        upload.on('error', reject)
-      })
-
-      const video = await this.makeRequest<VimeoVideo>(uploadResponse.uri)
-      return video
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async getFolder(folderId: string): Promise<VimeoFolder> {
+    return this.request<VimeoFolder>(`/folders/${folderId}`)
   }
 
-  async createFolder(name: string): Promise<VimeoFolder> {
-    try {
-      const response = await this.makeRequest<VimeoFolder>('/me/projects', {
-        method: 'POST',
-        body: JSON.stringify({ name })
-      })
-      return response
-    } catch (error) {
-      throw this.handleError(error)
-    }
+  async getFolderVideos(folderId: string): Promise<VimeoVideo[]> {
+    return this.request<VimeoVideo[]>(`/folders/${folderId}/videos`)
+  }
+
+  async getVideoDetails(videoId: string): Promise<VimeoVideo> {
+    return this.request<VimeoVideo>(`/videos/${videoId}`)
+  }
+
+  async uploadVideo(
+    file: File,
+    metadata: Partial<VimeoVideo>
+  ): Promise<VimeoVideo> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('metadata', JSON.stringify(metadata))
+
+    return this.request<VimeoVideo>('/me/videos', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${this.ACCESS_TOKEN}`,
+      },
+    })
+  }
+
+  async uploadThumbnail(videoId: string, file: File): Promise<VimeoVideo> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return this.request<VimeoVideo>(`/videos/${videoId}/pictures`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${this.ACCESS_TOKEN}`,
+      },
+    })
+  }
+
+  async generateThumbnail(videoId: string, time: number): Promise<VimeoVideo> {
+    return this.request<VimeoVideo>(`/videos/${videoId}/pictures`, {
+      method: 'POST',
+      body: JSON.stringify({ time }),
+    })
   }
 
   async updateVideoMetadata(
     videoId: string,
-    metadata: Partial<VimeoUploadOptions>
+    metadata: Partial<VimeoVideo>
   ): Promise<VimeoVideo> {
-    try {
-      return await this.makeRequest<VimeoVideo>(`/videos/${videoId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(metadata)
-      })
-    } catch (error) {
-      throw handleApiError(error as Error, {
-        operation: 'VimeoService.updateVideoMetadata',
-        details: { videoId, metadata }
-      })
-    }
+    return this.request<VimeoVideo>(`/videos/${videoId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(metadata),
+    })
+  }
+
+  async getVideosByFolder(folderId: string): Promise<VimeoVideo[]> {
+    return this.getFolderVideos(folderId)
+  }
+
+  async getAllVideos(): Promise<VimeoVideo[]> {
+    return this.getVideos()
   }
 
   async updateVideoPrivacy(
     videoId: string,
-    privacy: VimeoPrivacy
+    privacy: Partial<VimeoVideo['privacy']>
   ): Promise<VimeoVideo> {
-    try {
-      return await this.makeRequest<VimeoVideo>(`/videos/${videoId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ privacy })
-      })
-    } catch (error) {
-      throw handleApiError(error as Error, {
-        operation: 'VimeoService.updateVideoPrivacy',
-        details: { videoId, privacy }
-      })
-    }
-  }
-
-  async getVideoDetails(videoId: string): Promise<VimeoVideo> {
-    try {
-      const response = await this.makeRequest(`/videos/${videoId}`)
-      return response as VimeoVideo
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async uploadThumbnail(videoId: string, file: File): Promise<VimeoVideo> {
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const response = await this.makeRequest(`/videos/${videoId}/pictures`, {
-        method: 'POST',
-        body: formData
-      })
-      return response as VimeoVideo
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async generateThumbnail(videoId: string, time: number): Promise<VimeoVideo> {
-    try {
-      const response = await this.makeRequest(`/videos/${videoId}/pictures`, {
-        method: 'POST',
-        body: JSON.stringify({ time })
-      })
-      return response as VimeoVideo
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async deleteVideo(videoId: string): Promise<void> {
-    try {
-      await this.makeRequest(`/videos/${videoId}`, { method: 'DELETE' })
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async updateVideo(videoId: string, updates: Partial<VimeoVideo>): Promise<VimeoVideo> {
-    try {
-      const response = await this.makeRequest(`/videos/${videoId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updates)
-      })
-      return response as VimeoVideo
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async createShowcase(name: string, description?: string): Promise<VimeoFolder> {
-    try {
-      const response = await this.makeRequest('/me/albums', {
-        method: 'POST',
-        body: JSON.stringify({ name, description })
-      })
-      return response as VimeoFolder
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async addToShowcase(showcaseId: string, videoId: string): Promise<void> {
-    try {
-      await this.makeRequest(`/me/albums/${showcaseId}/videos/${videoId}`, {
-        method: 'PUT'
-      })
-    } catch (error) {
-      throw this.handleError(error)
-    }
-  }
-
-  async getVideo(videoId: string): Promise<VimeoVideo> {
-    return this.getVideoDetails(videoId)
+    return this.updateVideoSecurity(videoId, privacy)
   }
 }
 
-// Create and export a singleton instance
-export const vimeoService = new VimeoServiceImpl(process.env.VIMEO_ACCESS_TOKEN || '')
+export const vimeoService = new VimeoService()
 
-// Export individual functions for convenience
+// Export individual functions
 export const {
-  uploadVideo,
-  createFolder,
-  updateVideoMetadata,
+  getVideoDetails,
   updateVideoPrivacy,
   getVideosByFolder,
-  getVideos,
   getAllVideos,
-  getFolders,
-  getVideoDetails,
+  uploadVideo,
   uploadThumbnail,
   generateThumbnail,
-  deleteVideo,
-  updateVideo,
-  createShowcase,
-  addToShowcase,
-  getVideo
+  updateVideoMetadata
 } = vimeoService
-
-// Alias for backward compatibility
-export const getVideosFromFolder = getVideosByFolder

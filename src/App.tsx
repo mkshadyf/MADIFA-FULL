@@ -1,19 +1,21 @@
-import { Suspense, useEffect } from 'react'
 import { AuthProvider } from '@/providers/AuthProvider'
 import { AppRoutes } from '@/routes'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { Suspense, useEffect } from 'react'
 
+import {
+  AuthErrorBoundary,
+  ErrorBoundaryProvider,
+  RootErrorBoundary,
+} from '@/components/error-boundary'
+import { Toaster } from '@/components/ui/toast'
+import { useAuth } from '@/hooks/useAuth'
 import { queryClient } from '@/lib/react-query'
 import { initPerformanceMonitoring } from '@/lib/services/performance'
 import { initSentry } from '@/lib/services/sentry'
-import { useAuth } from '@/hooks/useAuth'
-import { RootErrorBoundary } from '@/components/ui/RootErrorBoundary'
-import { Toaster } from '@/components/ui/toast'
-import { AuthErrorBoundary } from '@/components/providers/AuthErrorBoundary'
-import ErrorBoundaryProvider from '@/components/providers/ErrorBoundaryProvider'
 
 function AuthenticatedContent() {
-  const { user, loading: isLoading } = useAuth()
+  const { isLoading } = useAuth()
 
   if (isLoading) {
     return (
@@ -24,7 +26,7 @@ function AuthenticatedContent() {
   }
 
   return (
-    <AuthErrorBoundary userId={user?.id} userEmail={user?.email}>
+    <AuthErrorBoundary>
       <Suspense
         fallback={
           <div className="flex min-h-screen items-center justify-center">

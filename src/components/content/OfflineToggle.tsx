@@ -9,7 +9,12 @@ interface OfflineToggleProps {
 export default function OfflineToggle({ contentId }: OfflineToggleProps) {
   const [isAvailable, setIsAvailable] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
-  const { isAvailableOffline, isProcessing: checkProcessing, downloadForOffline, removeFromOffline } = useOfflineContent()
+  const {
+    isAvailableOffline,
+    isProcessing: checkProcessing,
+    downloadForOffline,
+    removeFromOffline,
+  } = useOfflineContent()
 
   useEffect(() => {
     checkOfflineStatus()
@@ -19,7 +24,7 @@ export default function OfflineToggle({ contentId }: OfflineToggleProps) {
     try {
       const [available, processing] = await Promise.all([
         isAvailableOffline(contentId),
-        checkProcessing(contentId)
+        checkProcessing(contentId),
       ])
       setIsAvailable(available)
       setIsProcessing(processing)

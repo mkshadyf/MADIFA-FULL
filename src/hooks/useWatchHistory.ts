@@ -18,29 +18,26 @@ export function useWatchHistory(limit = 20): UseWatchHistoryResult {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    async function fetchHistory() {
       if (!user) {
+        setHistory([])
         setLoading(false)
         return
       }
 
       try {
-        const data = await watchHistoryService.getWatchHistory(user.id, limit)
-        setHistory(data)
-        setError(null)
-      } catch (error) {
-        console.error('Error fetching watch history:', error)
+        const items = await watchHistoryService.getWatchHistory(user.id, limit)
+        setHistory(items)
+      } catch (err) {
         setError(
-          error instanceof Error
-            ? error.message
-            : 'Failed to load watch history'
+          err instanceof Error ? err.message : 'Failed to fetch watch history'
         )
       } finally {
         setLoading(false)
       }
     }
 
-    void fetchHistory()
+    fetchHistory()
   }, [user, limit])
 
   const updateProgress = async (contentId: string, progress: number) => {
@@ -52,8 +49,6 @@ export function useWatchHistory(limit = 20): UseWatchHistoryResult {
         contentId,
         progress
       )
-
-      // Update local state
       setHistory(prev =>
         prev.map(item =>
           item.vimeo_id === contentId
@@ -66,10 +61,9 @@ export function useWatchHistory(limit = 20): UseWatchHistoryResult {
             : item
         )
       )
-      setError(null)
-    } catch (error) {
-      console.error('Error updating progress:', error)
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update progress')
+      throw err
     }
   }
 
@@ -78,13 +72,10 @@ export function useWatchHistory(limit = 20): UseWatchHistoryResult {
 
     try {
       await watchHistoryService.removeFromHistory(user.id, contentId)
-
-      // Update local state
       setHistory(prev => prev.filter(item => item.vimeo_id !== contentId))
-      setError(null)
-    } catch (error) {
-      console.error('Error removing item:', error)
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove item')
+      throw err
     }
   }
 

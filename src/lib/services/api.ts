@@ -1,6 +1,5 @@
 import { createErrorContext, handleApiError } from '@/lib/utils/error-handler'
-import type { ApiResponse } from '@/types'
-
+import type { ApiResponse } from '@/types/api'
 interface FetchOptions extends RequestInit {
   baseUrl?: string
   query?: Record<string, string>
@@ -33,7 +32,9 @@ export class ApiClient {
     const isJson = contentType?.includes('application/json')
 
     if (!response.ok) {
-      const error = isJson ? await response.json() : { message: response.statusText }
+      const error = isJson
+        ? await response.json()
+        : { message: response.statusText }
       throw handleApiError(error, createErrorContext('api', 'handleResponse'))
     }
 
@@ -57,7 +58,10 @@ export class ApiClient {
     return url.toString()
   }
 
-  async get<T>(path: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+  async get<T>(
+    path: string,
+    options: FetchOptions = {}
+  ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, options.query)
     const response = await fetch(url, {
       ...options,
@@ -70,7 +74,11 @@ export class ApiClient {
     return this.handleResponse<T>(response)
   }
 
-  async post<T>(path: string, data?: unknown, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+  async post<T>(
+    path: string,
+    data?: unknown,
+    options: FetchOptions = {}
+  ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, options.query)
     const response = await fetch(url, {
       ...options,
@@ -85,7 +93,11 @@ export class ApiClient {
     return this.handleResponse<T>(response)
   }
 
-  async put<T>(path: string, data?: unknown, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+  async put<T>(
+    path: string,
+    data?: unknown,
+    options: FetchOptions = {}
+  ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, options.query)
     const response = await fetch(url, {
       ...options,
@@ -100,7 +112,10 @@ export class ApiClient {
     return this.handleResponse<T>(response)
   }
 
-  async delete<T>(path: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+  async delete<T>(
+    path: string,
+    options: FetchOptions = {}
+  ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, options.query)
     const response = await fetch(url, {
       ...options,

@@ -1,69 +1,42 @@
-import React from 'react'
+import * as SliderPrimitive from '@radix-ui/react-slider'
+import type { ComponentPropsWithoutRef } from 'react'
 
-import { cn } from '@/lib/utils'
-
-interface SliderProps {
+interface SliderProps
+  extends ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
   value: number[]
   onValueChange: (value: number[]) => void
   max: number
-  min?: number
   step?: number
+  min?: number
   className?: string
-  label?: string
-  ariaLabel?: string
 }
 
 export function Slider({
   value,
   onValueChange,
   max,
-  min = 0,
   step = 1,
-  className,
-  label,
-  ariaLabel,
+  min = 0,
+  className = '',
+  ...props
 }: SliderProps) {
-  const percentage = ((value[0] - min) / (max - min)) * 100
-  const id = React.useId()
-
   return (
-    <div
-      className={cn('group relative h-2 w-full', className)}
-      role="group"
-      aria-labelledby={id}
+    <SliderPrimitive.Root
+      className={`relative flex h-5 w-full touch-none select-none items-center ${className}`}
+      value={value}
+      onValueChange={onValueChange}
+      max={max}
+      step={step}
+      min={min}
+      {...props}
     >
-      {label ? (
-        <label id={id} className="sr-only">
-          {label}
-        </label>
-      ) : null}
-      <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-gray-200" />
-      <div
-        className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
-        style={{ width: `${percentage}%` }}
+      <SliderPrimitive.Track className="relative h-1 w-full grow rounded-full bg-gray-200 dark:bg-gray-700">
+        <SliderPrimitive.Range className="absolute h-full rounded-full bg-indigo-600" />
+      </SliderPrimitive.Track>
+      <SliderPrimitive.Thumb
+        className="focus-visible:ring-ring block h-3 w-3 rounded-full bg-indigo-600 ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+        aria-label="Seek time"
       />
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value[0]}
-        onChange={e => onValueChange([Number(e.target.value)])}
-        className={cn(
-          'absolute h-2 w-full cursor-pointer opacity-0',
-          'range-input::-webkit-slider-thumb:hover:scale-110',
-          'range-input::-moz-range-thumb:hover:scale-110'
-        )}
-        aria-label={ariaLabel || label}
-      />
-      <div
-        className={cn(
-          'absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary',
-          'transition-transform group-hover:scale-110'
-        )}
-        style={{ left: `${percentage}%` }}
-        role="presentation"
-      />
-    </div>
+    </SliderPrimitive.Root>
   )
 }

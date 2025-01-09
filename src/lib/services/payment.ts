@@ -1,8 +1,7 @@
-import md5 from 'md5'
-
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase'
+import type { PaymentNotification } from '@/types/payment'
 import type { BillingPeriod, SubscriptionTier } from '@/types/subscription'
-
+import md5 from 'md5'
 import { subscriptionService } from './subscription'
 
 interface CreatePaymentSessionParams {
@@ -11,17 +10,6 @@ interface CreatePaymentSessionParams {
   tier: SubscriptionTier
   price: number
   billingPeriod: BillingPeriod
-}
-
-interface PaymentNotification {
-  m_payment_id: string
-  pf_payment_id: string
-  payment_status: string
-  amount_gross: string
-  amount_fee: string
-  amount_net: string
-  signature: string
-  [key: string]: string
 }
 
 export class PaymentService {
@@ -45,10 +33,20 @@ export class PaymentService {
       // Update subscription based on payment status
       switch (data.payment_status) {
         case 'COMPLETE':
-          await subscriptionService.updateSubscription(userId, planId)
+          await subscriptionService.updateSubscription(userId, {
+            status: 'active',
+            plan_id: planId,
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(
+              Date.now() + 30 * 24 * 60 * 60 * 1000
+            ).toISOString(), // 30 days
+          })
           break
         case 'CANCELLED':
-          await subscriptionService.cancelSubscription(userId)
+          await subscriptionService.updateSubscription(userId, {
+            status: 'canceled',
+            cancel_at_period_end: true,
+          })
           break
         case 'FAILED':
           // Log failed payment
@@ -65,14 +63,16 @@ export class PaymentService {
   }
 
   private validateSignature(data: PaymentNotification): boolean {
-    const passPhrase = import.meta.env.VITE_PAYFAST_PASSPHRASE
+    const passPhrase = process.env.PAYFAST_PASSPHRASE
     const receivedSignature = data.signature
     const dataForSignature = { ...data }
     delete (dataForSignature as Partial<PaymentNotification>).signature
 
     const dataString = Object.entries(dataForSignature)
       .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
-      .map(([key, value]) => `${key}=${encodeURIComponent(value.trim())}`)
+      .map(
+        ([key, value]) => `${key}=${encodeURIComponent(String(value).trim())}`
+      )
       .join('&')
 
     const calculatedSignature = md5(dataString + '&passphrase=' + passPhrase)

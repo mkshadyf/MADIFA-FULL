@@ -1,10 +1,8 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
-
-import { createClient } from '@/lib/supabase/client'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import ActivityLog from '@/components/admin/activity-log'
-import UserActivityChart from '@/components/admin/user-activity-chart'
+import UserActivityChart from '@/components/admin/Analytics/user-activity-chart'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 
 interface ActivityMetrics {
   totalActivities: number

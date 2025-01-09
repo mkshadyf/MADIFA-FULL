@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 
-import type { VimeoVideo } from '@/types/vimeo'
-import { vimeoService } from '@/lib/services/vimeo'
+import BatchUploader from '@/components/admin/Content/BatchUploader'
+import { VideoCard } from '@/components/admin/Content/VideoCard'
 import { toast } from '@/components/ui/toast'
-import { BatchUploader } from '@/components/admin/BatchUploader'
-import { VideoCard } from '@/components/admin/VideoCard'
+import { vimeoService } from '@/lib/services/vimeo'
+import type { VimeoVideo } from '@/types/vimeo'
 
 export default function VimeoManagement() {
   const [videos, setVideos] = useState<VimeoVideo[]>([])
@@ -55,9 +55,19 @@ export default function VimeoManagement() {
   ) => {
     try {
       await vimeoService.updateVideoMetadata(video.uri.split('/').pop()!, {
-          pictures: {
+        pictures: {
           active: true,
           uri: thumbnailUrl,
+          type: 'custom',
+          base_link: thumbnailUrl,
+          sizes: [
+            {
+              width: 1920,
+              height: 1080,
+              link: thumbnailUrl,
+              link_with_play_button: thumbnailUrl
+            }
+          ]
         },
       })
       toast.success('Thumbnail updated successfully')

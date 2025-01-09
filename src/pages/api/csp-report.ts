@@ -1,19 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-
-import { createAPIError } from '@/lib/error'
-import { supabase } from '@/lib/supabase/client'
-
-interface CSPViolation {
-  'csp-report': {
-    'document-uri': string
-    referrer: string
-    'violated-directive': string
-    'effective-directive': string
-    'original-policy': string
-    'blocked-uri': string
-    'status-code': number
-  }
-}
+import { captureError } from '../../lib/error'
 
 export default async function handler(
   req: NextApiRequest,
@@ -24,39 +10,24 @@ export default async function handler(
   }
 
   try {
-    const violation: CSPViolation = req.body
+    const report = req.body['csp-report']
+    if (!report) {
+      return res.status(400).json({ message: 'Invalid CSP report' })
+    }
 
-    // Store violation report
-    const { error } = await supabase.from('csp_violations').insert({
-      document_uri: violation['csp-report']['document-uri'],
-      referrer: violation['csp-report']['referrer'],
-      violated_directive: violation['csp-report']['violated-directive'],
-      effective_directive: violation['csp-report']['effective-directive'],
-      original_policy: violation['csp-report']['original-policy'],
-      blocked_uri: violation['csp-report']['blocked-uri'],
-      status_code: violation['csp-report']['status-code'],
-      user_agent: req.headers['user-agent'],
-      ip_address: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-      created_at: new Date().toISOString(),
-    })
-
-    if (error) throw error
-
-    // Log violation for monitoring
-    console.warn('CSP Violation:', {
-      ...violation['csp-report'],
-      userAgent: req.headers['user-agent'],
-      ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+    // Log CSP violation
+    captureError('CSP Violation', {
+      'document-uri': report['document-uri'],
+      'violated-directive': report['violated-directive'],
+      'blocked-uri': report['blocked-uri'],
+      'source-file': report['source-file'],
+      'line-number': report['line-number'],
+      'column-number': report['column-number'],
     })
 
     return res.status(204).end()
   } catch (error) {
-    console.error('Error processing CSP violation:', error)
-    throw createAPIError(
-      'Failed to process CSP violation',
-      'CSP_VIOLATION_ERROR',
-      { operation: 'CSPReport.handler', details: error }
-
-    )
+    console.error('Error processing CSP report:', error)
+    return res.status(500).json({ message: 'Internal server error' })
   }
 }

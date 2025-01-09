@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react'
 import type { Content } from '@/types'
+import { useEffect, useState } from 'react'
 
 import { useContent } from '@/hooks/useContent'
 
-interface ContentFilterProps {
+export interface ContentFilterProps {
+  onFilterChange: (filteredContent: Content[]) => void
   className?: string
-  onFilter: (filteredContent: Content[]) => void
 }
 
 export default function ContentFilter({
   className = '',
-  onFilter,
+  onFilterChange,
 }: ContentFilterProps) {
   const { data: contents } = useContent()
   const [filters, setFilters] = useState({
@@ -76,8 +76,8 @@ export default function ContentFilter({
       return matchesCategory && matchesYear && matchesDuration && matchesSearch
     })
 
-    onFilter(filteredContent)
-  }, [contents, filters, onFilter])
+    onFilterChange(filteredContent)
+  }, [contents, filters, onFilterChange])
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))

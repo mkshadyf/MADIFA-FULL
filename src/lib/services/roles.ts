@@ -1,61 +1,62 @@
 import { createClient } from '@/lib/supabase/server'
+import type { Role } from '@/types/roles'
 
-export type Role = 'admin' | 'moderator' | 'user'
+export async function getUserRoles(userId: string): Promise<Role[]> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
 
-interface Permission {
-  action: string
-  resource: string
+    if (error) throw error
+    return data?.map(r => r.role) || []
+  } catch (error) {
+    console.error('Error getting user roles:', error)
+    return []
+  }
 }
 
-const rolePermissions: Record<Role, Permission[]> = {
-  admin: [{ action: '*', resource: '*' }],
-  moderator: [
-    { action: 'read', resource: '*' },
-    { action: 'update', resource: 'content' },
-    { action: 'delete', resource: 'content' },
-    { action: 'create', resource: 'content' },
-  ],
-  user: [
-    { action: 'read', resource: 'content' },
-    { action: 'update', resource: 'profile' },
-  ],
+export async function addUserRole(userId: string, role: Role): Promise<void> {
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase.from('user_roles').insert({
+      user_id: userId,
+      role,
+    })
+
+    if (error) throw error
+  } catch (error) {
+    console.error('Error adding user role:', error)
+    throw error
+  }
 }
 
-export async function getUserRole(userId: string): Promise<Role> {
-  const supabase = createClient()
-
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('role')
-    .eq('user_id', userId)
-    .single()
-
-  if (error) throw error
-  return data?.role || 'user'
-}
-
-export async function hasPermission(
+export async function removeUserRole(
   userId: string,
-  action: string,
-  resource: string
-): Promise<boolean> {
-  const role = await getUserRole(userId)
-  const permissions = rolePermissions[role]
+  role: Role
+): Promise<void> {
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('user_roles')
+      .delete()
+      .eq('user_id', userId)
+      .eq('role', role)
 
-  return permissions.some(
-    permission =>
-      (permission.action === '*' || permission.action === action) &&
-      (permission.resource === '*' || permission.resource === resource)
-  )
+    if (error) throw error
+  } catch (error) {
+    console.error('Error removing user role:', error)
+    throw error
+  }
 }
 
-export async function assignRole(userId: string, role: Role) {
-  const supabase = createClient()
-
-  const { error } = await supabase
-    .from('user_profiles')
-    .update({ role })
-    .eq('user_id', userId)
-
-  if (error) throw error
+export async function hasRole(userId: string, role: Role): Promise<boolean> {
+  try {
+    const roles = await getUserRoles(userId)
+    return roles.includes(role)
+  } catch (error) {
+    console.error('Error checking user role:', error)
+    return false
+  }
 }

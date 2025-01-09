@@ -48,7 +48,7 @@ export function useOfflineContent() {
     removeFromOffline: async (contentId: string) => {
       // Implementation
       toast.success('Content removed from offline storage')
-    }
+    },
   }
 
   return manager

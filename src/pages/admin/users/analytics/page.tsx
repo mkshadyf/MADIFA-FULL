@@ -1,9 +1,7 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
-
-import { createClient } from '@/lib/supabase/client'
+import UserActivityChart from '@/components/admin/Analytics/user-activity-chart'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import UserActivityChart from '@/components/admin/user-activity-chart'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 
 interface UserMetrics {
   totalUsers: number

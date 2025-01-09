@@ -1,4 +1,5 @@
 import type { Content } from '@/types'
+import type { DownloadStatus } from '@/types/downloads'
 import { EventEmitter } from 'events'
 
 export interface DownloadProgress {
@@ -16,8 +17,8 @@ export interface DownloadError {
 export class DownloadsManager extends EventEmitter {
   private downloads: Map<string, Content> = new Map()
   private progress: Map<string, DownloadProgress> = new Map()
-  private queue: Map<string, Content> = new Map()
-  private storageUsage: number = 0
+  private queue: Map<string, { content: Content; status: DownloadStatus }> =
+    new Map()
   private storageQuota: number = 0
 
   constructor() {
@@ -26,7 +27,7 @@ export class DownloadsManager extends EventEmitter {
 
   // Queue management
   addToQueue(content: Content) {
-    this.queue.set(content.id, content)
+    this.queue.set(content.id, { content, status: 'queued' })
     this.emit('queueUpdated', Array.from(this.queue.values()))
   }
 
@@ -59,69 +60,115 @@ export class DownloadsManager extends EventEmitter {
     return progress ? progress.percent : 0
   }
 
-  getQueueStatus(): { queued: Content[]; downloading: Content[]; completed: Content[] } {
-    const queued = Array.from(this.queue.values())
-    const downloading = queued.filter(content => this.progress.has(content.id))
-    const completed = Array.from(this.downloads.values())
-    return { queued, downloading, completed }
+  getQueueStatus(): {
+    queued: Content[]
+    downloading: Content[]
+    completed: Content[]
+    failed: Content[]
+  } {
+    const items = Array.from(this.queue.values())
+    return {
+      queued: items
+        .filter(item => item.status === 'queued')
+        .map(item => item.content),
+      downloading: items
+        .filter(item => item.status === 'downloading')
+        .map(item => item.content),
+      completed: items
+        .filter(item => item.status === 'completed')
+        .map(item => item.content),
+      failed: items
+        .filter(item => item.status === 'failed')
+        .map(item => item.content),
+    }
   }
 
   clearQueue() {
     this.queue.clear()
+    this.progress.clear()
     this.emit('queueCleared')
+    this.emit('queueUpdated', [])
   }
 
   getDownloadedFiles(): Content[] {
-    return Array.from(this.downloads.values())
+    const items = Array.from(this.queue.values())
+    return items
+      .filter(item => item.status === 'completed')
+      .map(item => item.content)
   }
 
   getDownloadedContent(): Content[] {
-    return Array.from(this.downloads.values())
+    return this.getDownloadedFiles()
   }
 
   getStorageUsage(): { used: number; total: number } {
+    const completedDownloads = Array.from(this.queue.values())
+      .filter(item => item.status === 'completed')
+      .map(item => item.content)
+
+    const used = completedDownloads.reduce(
+      (sum, content) => sum + (content.size || 0),
+      0
+    )
     return {
-      used: this.storageUsage,
-      total: this.storageQuota
+      used,
+      total: this.storageQuota,
     }
   }
 
   // Original methods
   addDownload(content: Content) {
-    this.downloads.set(content.id, content)
+    const item = { content, status: 'queued' as const }
+    this.queue.set(content.id, item)
     this.emit('downloadAdded', content)
+    this.emit('queueUpdated', Array.from(this.queue.values()))
   }
 
   removeDownload(contentId: string) {
-    const content = this.downloads.get(contentId)
-    if (content) {
+    const item = this.queue.get(contentId)
+    if (item) {
+      this.queue.delete(contentId)
       this.downloads.delete(contentId)
       this.progress.delete(contentId)
-      this.emit('downloadRemoved', content)
+      this.emit('downloadRemoved', item.content)
+      this.emit('queueUpdated', Array.from(this.queue.values()))
     }
   }
 
   updateProgress(contentId: string, bytesLoaded: number, bytesTotal: number) {
-    const progress: DownloadProgress = {
-      contentId,
-      bytesLoaded,
-      bytesTotal,
-      percent: (bytesLoaded / bytesTotal) * 100
+    const item = this.queue.get(contentId)
+    if (item) {
+      item.status = 'downloading'
+      const progress: DownloadProgress = {
+        contentId,
+        bytesLoaded,
+        bytesTotal,
+        percent: (bytesLoaded / bytesTotal) * 100,
+      }
+      this.progress.set(contentId, progress)
+      this.emit('progress', progress)
+      this.emit('queueUpdated', Array.from(this.queue.values()))
     }
-    this.progress.set(contentId, progress)
-    this.emit('progress', progress)
   }
 
   completeDownload(contentId: string) {
-    const content = this.downloads.get(contentId)
-    if (content) {
-      this.emit('complete', content)
+    const item = this.queue.get(contentId)
+    if (item) {
+      item.status = 'completed'
+      this.downloads.set(contentId, item.content)
+      this.emit('complete', item.content)
+      this.emit('queueUpdated', Array.from(this.queue.values()))
     }
   }
 
   errorDownload(contentId: string, error: Error) {
-    const downloadError: DownloadError = { contentId, error }
-    this.emit('error', downloadError)
+    const item = this.queue.get(contentId)
+    if (item) {
+      item.status = 'failed'
+      const downloadError: DownloadError = { contentId, error }
+      this.emit('error', downloadError)
+      this.emit('queueUpdated', Array.from(this.queue.values()))
+    }
   }
 
   getDownloads(): Content[] {
@@ -154,5 +201,5 @@ export const {
   clearQueue,
   getDownloadedFiles,
   getDownloadedContent,
-  getStorageUsage
+  getStorageUsage,
 } = downloadsManager

@@ -1,9 +1,7 @@
-import React from 'react'
 import { AuthProvider } from '@/providers/AuthProvider'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import React from 'react'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,11 +12,15 @@ const queryClient = new QueryClient({
   },
 })
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+interface ProvidersProps {
+  children: React.ReactNode
+}
+
+export default function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <div>{children}</div>
       </AuthProvider>
       <ReactQueryDevtools />
     </QueryClientProvider>

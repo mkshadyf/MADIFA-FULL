@@ -1,183 +1,206 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/types/content'
+import type { UserInteraction } from '@/types/supabase'
 
-interface UserInteraction {
-  favorite?: boolean
-  watchlist?: boolean
-  rating?: number
+interface UserInteractionWithContent extends UserInteraction {
+  content?: Content
 }
 
-export async function toggleFavorite(
-  contentId: string,
-  userId: string
-): Promise<boolean> {
-  const supabase = createClient()
+class UserInteractionsService {
+  private static instance: UserInteractionsService
+  private supabase = createClient()
 
-  try {
-    // Get current state
-    const { data: existing } = await supabase
-      .from('user_content_interactions')
-      .select('favorite')
-      .eq('content_id', contentId)
-      .eq('user_id', userId)
-      .single()
+  private constructor() {}
 
-    const newState = !existing?.favorite
-
-    // Upsert the interaction
-    const { error } = await supabase.from('user_content_interactions').upsert({
-      user_id: userId,
-      content_id: contentId,
-      favorite: newState,
-      updated_at: new Date().toISOString(),
-    })
-
-    if (error) throw error
-
-    return newState
-  } catch (error) {
-    console.error('Error toggling favorite:', error)
-    throw error
-  }
-}
-
-export async function toggleWatchlist(
-  contentId: string,
-  userId: string
-): Promise<boolean> {
-  const supabase = createClient()
-
-  try {
-    // Get current state
-    const { data: existing } = await supabase
-      .from('user_content_interactions')
-      .select('watchlist')
-      .eq('content_id', contentId)
-      .eq('user_id', userId)
-      .single()
-
-    const newState = !existing?.watchlist
-
-    // Upsert the interaction
-    const { error } = await supabase.from('user_content_interactions').upsert({
-      user_id: userId,
-      content_id: contentId,
-      watchlist: newState,
-      updated_at: new Date().toISOString(),
-    })
-
-    if (error) throw error
-
-    return newState
-  } catch (error) {
-    console.error('Error toggling watchlist:', error)
-    throw error
-  }
-}
-
-export async function rateContent(
-  contentId: string,
-  userId: string,
-  rating: number
-): Promise<void> {
-  const supabase = createClient()
-
-  try {
-    const { error } = await supabase.from('user_content_interactions').upsert({
-      user_id: userId,
-      content_id: contentId,
-      rating,
-      updated_at: new Date().toISOString(),
-    })
-
-    if (error) throw error
-  } catch (error) {
-    console.error('Error rating content:', error)
-    throw error
-  }
-}
-
-export async function getUserFavorites(userId: string): Promise<Content[]> {
-  const supabase = createClient()
-
-  try {
-    const { data, error } = await supabase.rpc('get_user_favorites', {
-      p_user_id: userId,
-    })
-
-    if (error) throw error
-
-    return data || []
-  } catch (error) {
-    console.error('Error getting favorites:', error)
-    throw error
-  }
-}
-
-export async function getUserWatchlist(userId: string): Promise<Content[]> {
-  const supabase = createClient()
-
-  try {
-    const { data, error } = await supabase.rpc('get_user_watchlist', {
-      p_user_id: userId,
-    })
-
-    if (error) throw error
-
-    return data || []
-  } catch (error) {
-    console.error('Error getting watchlist:', error)
-    throw error
-  }
-}
-
-export async function getUserRatings(userId: string): Promise<
-  {
-    content_id: string
-    title: string
-    rating: number
-    rated_at: string
-  }[]
-> {
-  const supabase = createClient()
-
-  try {
-    const { data, error } = await supabase.rpc('get_user_ratings', {
-      p_user_id: userId,
-    })
-
-    if (error) throw error
-
-    return data || []
-  } catch (error) {
-    console.error('Error getting ratings:', error)
-    throw error
-  }
-}
-
-export async function getContentInteractions(
-  contentId: string,
-  userId: string
-): Promise<UserInteraction> {
-  const supabase = createClient()
-
-  try {
-    const { data, error } = await supabase
-      .from('user_content_interactions')
-      .select('favorite, watchlist, rating')
-      .eq('content_id', contentId)
-      .eq('user_id', userId)
-      .single()
-
-    if (error && error.code !== 'PGRST116') throw error // Ignore not found error
-
-    return {
-      favorite: data?.favorite || false,
-      watchlist: data?.watchlist || false,
-      rating: data?.rating || 0,
+  public static getInstance(): UserInteractionsService {
+    if (!UserInteractionsService.instance) {
+      UserInteractionsService.instance = new UserInteractionsService()
     }
-  } catch (error) {
-    console.error('Error getting content interactions:', error)
-    throw error
+    return UserInteractionsService.instance
+  }
+
+  public async getUserFavorites(userId: string): Promise<Content[]> {
+    const { data, error } = await this.supabase
+      .from('user_interactions')
+      .select('*, content(*)')
+      .eq('user_id', userId)
+      .eq('type', 'favorite')
+      .returns<UserInteractionWithContent[]>()
+
+    if (error) throw error
+    return data?.filter(item => item.content).map(item => item.content!) || []
+  }
+
+  public async getUserRatings(
+    userId: string
+  ): Promise<Array<Content & { rating: number }>> {
+    const { data, error } = await this.supabase
+      .from('user_interactions')
+      .select('*, content(*)')
+      .eq('user_id', userId)
+      .eq('type', 'rating')
+      .returns<UserInteractionWithContent[]>()
+
+    if (error) throw error
+    return (
+      data
+        ?.filter(item => item.content && item.value)
+        .map(item => ({
+          ...item.content!,
+          rating: item.value!,
+        })) || []
+    )
+  }
+
+  public async getUserWatchlist(userId: string): Promise<Content[]> {
+    const { data, error } = await this.supabase
+      .from('user_interactions')
+      .select('*, content(*)')
+      .eq('user_id', userId)
+      .eq('type', 'watchlist')
+      .returns<UserInteractionWithContent[]>()
+
+    if (error) throw error
+    return data?.filter(item => item.content).map(item => item.content!) || []
+  }
+
+  public async addToFavorites(
+    userId: string,
+    contentId: string
+  ): Promise<void> {
+    const { error } = await this.supabase.from('user_interactions').insert({
+      user_id: userId,
+      content_id: contentId,
+      type: 'favorite',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+
+    if (error) throw error
+  }
+
+  public async addToWatchlist(
+    userId: string,
+    contentId: string
+  ): Promise<void> {
+    const { error } = await this.supabase.from('user_interactions').insert({
+      user_id: userId,
+      content_id: contentId,
+      type: 'watchlist',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+
+    if (error) throw error
+  }
+
+  public async rateContent(
+    userId: string,
+    contentId: string,
+    rating: number
+  ): Promise<void> {
+    const { error } = await this.supabase.from('user_interactions').upsert({
+      user_id: userId,
+      content_id: contentId,
+      type: 'rating',
+      value: rating,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+
+    if (error) throw error
+  }
+
+  public async removeFromFavorites(
+    userId: string,
+    contentId: string
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from('user_interactions')
+      .delete()
+      .eq('user_id', userId)
+      .eq('content_id', contentId)
+      .eq('type', 'favorite')
+
+    if (error) throw error
+  }
+
+  public async removeFromWatchlist(
+    userId: string,
+    contentId: string
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from('user_interactions')
+      .delete()
+      .eq('user_id', userId)
+      .eq('content_id', contentId)
+      .eq('type', 'watchlist')
+
+    if (error) throw error
+  }
+
+  public async removeRating(userId: string, contentId: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('user_interactions')
+      .delete()
+      .eq('user_id', userId)
+      .eq('content_id', contentId)
+      .eq('type', 'rating')
+
+    if (error) throw error
+  }
+
+  public async toggleFavorite(
+    userId: string,
+    contentId: string
+  ): Promise<void> {
+    const { data } = await this.supabase
+      .from('user_interactions')
+      .select()
+      .eq('user_id', userId)
+      .eq('content_id', contentId)
+      .eq('type', 'favorite')
+      .single()
+
+    if (data) {
+      await this.removeFromFavorites(userId, contentId)
+    } else {
+      await this.addToFavorites(userId, contentId)
+    }
+  }
+
+  public async toggleWatchlist(
+    userId: string,
+    contentId: string
+  ): Promise<void> {
+    const { data } = await this.supabase
+      .from('user_interactions')
+      .select()
+      .eq('user_id', userId)
+      .eq('content_id', contentId)
+      .eq('type', 'watchlist')
+      .single()
+
+    if (data) {
+      await this.removeFromWatchlist(userId, contentId)
+    } else {
+      await this.addToWatchlist(userId, contentId)
+    }
   }
 }
+
+export const userInteractionsService = UserInteractionsService.getInstance()
+
+export const {
+  getUserFavorites,
+  getUserRatings,
+  getUserWatchlist,
+  addToFavorites,
+  addToWatchlist,
+  rateContent,
+  removeFromFavorites,
+  removeFromWatchlist,
+  removeRating,
+  toggleFavorite,
+  toggleWatchlist,
+} = userInteractionsService

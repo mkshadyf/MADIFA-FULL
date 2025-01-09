@@ -1,120 +1,45 @@
-export interface BaseError extends Error {
+export interface BaseError {
+  name: string
   code: string
-  details?: unknown
+  message: string
+  originalError?: unknown
+  stack?: string
 }
 
 export interface ApiError extends BaseError {
-  name: 'ApiError'
-  code: string
-  message: string
   status: number
-  details?: unknown
+  path: string
+  method?: string
 }
 
-export interface VimeoError extends BaseError {
-  name: 'VimeoError'
+export interface SupabaseError extends BaseError {
   code: string
-  message: string
-  developer_message: string
-  error_code: number | string
-  status?: number
-  link?: string | null
-}
-
-export interface AuthError extends BaseError {
-  name: 'AuthError'
-  code: string
-  message: string
-  status: number
-  details?: unknown
+  details?: string
+  hint?: string
 }
 
 export interface ValidationError extends BaseError {
-  name: 'ValidationError'
-  code: string
-  message: string
-  status: number
-  details?: {
-    field: string
-    message: string
-  }[]
+  field: string
+  value: unknown
 }
 
 export interface NetworkError extends BaseError {
-  name: 'NetworkError'
-  code: string
-  message: string
-  status: number
+  status?: number
+  url?: string
+  method?: string
+}
+
+export interface ErrorContext {
+  service: string
+  operation: string
   details?: unknown
+  componentStack?: string
+  timestamp?: string
+  environment?: string
+  metadata?: Record<string, unknown>
 }
 
-export interface DatabaseError extends BaseError {
-  name: 'DatabaseError'
-  code: string
-  message: string
-  status: number
-  details?: unknown
+export interface AppError extends BaseError {
+  context?: ErrorContext
+  status?: number
 }
-
-export interface StorageError extends BaseError {
-  name: 'StorageError'
-  code: string
-  message: string
-  status: number
-  details?: unknown
-}
-
-export interface PermissionError extends BaseError {
-  name: 'PermissionError'
-  code: string
-  message: string
-  status: number
-  details?: unknown
-}
-
-export interface QuotaError extends BaseError {
-  name: 'QuotaError'
-  code: string
-  message: string
-  status: number
-  details?: {
-    limit: number
-    usage: number
-    remaining: number
-  }
-}
-
-export interface RateLimitError extends BaseError {
-  name: 'RateLimitError'
-  code: string
-  message: string
-  status: number
-  details?: {
-    limit: number
-    remaining: number
-    reset: number
-  }
-}
-
-export interface TimeoutError extends BaseError {
-  name: 'TimeoutError'
-  code: string
-  message: string
-  status: number
-  details?: {
-    timeout: number
-  }
-}
-
-export type AppError =
-  | ApiError
-  | VimeoError
-  | AuthError
-  | ValidationError
-  | NetworkError
-  | DatabaseError
-  | StorageError
-  | PermissionError
-  | QuotaError
-  | RateLimitError
-  | TimeoutError 

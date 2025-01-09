@@ -1,10 +1,11 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 
-import { useAuth } from '@/hooks/useAuth'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Navigation } from '@/components/layouts/Navigation'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useAuth } from '@/hooks/useAuth'
+import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
+import { ErrorComponent } from '../error-boundary/ErrorComponent'
 
 interface MainLayoutProps {
   children?: React.ReactNode
@@ -14,11 +15,11 @@ export function MainLayout({ children }: MainLayoutProps): JSX.Element {
   const { isLoading } = useAuth()
 
   if (isLoading) {
-    return <LoadingSpinner fullscreen text="Loading..." />
+    return <LoadingSpinner size="lg" />
   }
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary errorComponent={ErrorComponent}>
       <div className="flex min-h-screen flex-col">
         <Navigation />
         <main className="container mx-auto flex-1 px-4 py-8">

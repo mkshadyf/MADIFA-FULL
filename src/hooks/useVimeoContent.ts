@@ -5,34 +5,46 @@ import { useToast } from './useToast'
 export function useVimeoContent(vimeoService: VimeoService) {
   const toast = useToast()
 
-  const getVideo = useCallback(async (videoId: string): Promise<VimeoVideo | null> => {
-    try {
-      return await vimeoService.getVideo(videoId)
-    } catch (error) {
-      toast.error('Failed to fetch video details')
-      return null
-    }
-  }, [vimeoService, toast])
+  const getVideo = useCallback(
+    async (videoId: string): Promise<VimeoVideo | null> => {
+      try {
+        return await vimeoService.getVideo(videoId)
+      } catch (error) {
+        toast.error('Failed to fetch video details')
+        return null
+      }
+    },
+    [vimeoService, toast]
+  )
 
-  const deleteVideo = useCallback(async (videoId: string): Promise<boolean> => {
-    try {
-      await vimeoService.deleteVideo(videoId)
-      toast.success('Video deleted successfully')
-      return true
-    } catch (error) {
-      toast.error('Failed to delete video')
-      return false
-    }
-  }, [vimeoService, toast])
+  const deleteVideo = useCallback(
+    async (videoId: string): Promise<boolean> => {
+      try {
+        await vimeoService.deleteVideo(videoId)
+        toast.success('Video deleted successfully')
+        return true
+      } catch (error) {
+        toast.error('Failed to delete video')
+        return false
+      }
+    },
+    [vimeoService, toast]
+  )
 
-  const getVideos = useCallback(async (options?: { page?: number; per_page?: number }): Promise<VimeoVideo[]> => {
-    try {
-      return await vimeoService.getVideos(options)
-    } catch (error) {
-      toast.error('Failed to fetch videos')
-      return []
-    }
-  }, [vimeoService, toast])
+  const getVideos = useCallback(
+    async (options?: {
+      page?: number
+      per_page?: number
+    }): Promise<VimeoVideo[]> => {
+      try {
+        return await vimeoService.getVideos(options)
+      } catch (error) {
+        toast.error('Failed to fetch videos')
+        return []
+      }
+    },
+    [vimeoService, toast]
+  )
 
   return {
     getVideo,
@@ -50,6 +62,6 @@ export function useVimeoContent(vimeoService: VimeoService) {
     addToShowcase: vimeoService.addToShowcase,
     getVideosByFolder: vimeoService.getVideosByFolder,
     getAllVideos: vimeoService.getAllVideos,
-    getFolders: vimeoService.getFolders
+    getFolders: vimeoService.getFolders,
   }
 }

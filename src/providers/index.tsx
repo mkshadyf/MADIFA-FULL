@@ -1,7 +1,7 @@
-import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React from 'react'
 
-import AuthProvider from './AuthProvider'
+import { AuthProvider } from './AuthProvider'
 
 const queryClient = new QueryClient()
 
@@ -13,5 +13,4 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   )
 }
 
-export { default as AuthProvider } from './AuthProvider'
 export * from './AuthProvider'

@@ -1,3 +1,4 @@
+import type { TouchEvent } from 'react'
 import { useCallback, useRef } from 'react'
 
 interface UseSwipeOptions {
@@ -14,6 +15,12 @@ interface TouchPosition {
   y: number
 }
 
+interface UseSwipeResult {
+  onTouchStart: (e: TouchEvent) => void
+  onTouchMove: (e: TouchEvent) => void
+  onTouchEnd: (e: TouchEvent) => void
+}
+
 export function useSwipe({
   onSwipeLeft,
   onSwipeRight,
@@ -21,66 +28,79 @@ export function useSwipe({
   onSwipeDown,
   threshold = 50,
   preventDefault = true,
-}: UseSwipeOptions) {
+}: UseSwipeOptions = {}): UseSwipeResult {
   const touchStart = useRef<TouchPosition | null>(null)
-  const touchEnd = useRef<TouchPosition | null>(null)
 
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    touchEnd.current = null
-    touchStart.current = {
-      x: event.targetTouches[0].clientX,
-      y: event.targetTouches[0].clientY,
-    }
-  }, [])
-
-  const handleTouchMove = useCallback(
-    (event: React.TouchEvent) => {
+  const handleTouchStart = useCallback(
+    (e: TouchEvent) => {
       if (preventDefault) {
-        event.preventDefault()
+        e.preventDefault()
       }
 
-      touchEnd.current = {
-        x: event.targetTouches[0].clientX,
-        y: event.targetTouches[0].clientY,
+      const touch = e.touches[0]
+      touchStart.current = {
+        x: touch.clientX,
+        y: touch.clientY,
       }
     },
     [preventDefault]
   )
 
-  const handleTouchEnd = useCallback(() => {
-    if (!touchStart.current || !touchEnd.current) return
-
-    const distanceX = touchEnd.current.x - touchStart.current.x
-    const distanceY = touchEnd.current.y - touchStart.current.y
-    const isHorizontal = Math.abs(distanceX) > Math.abs(distanceY)
-
-    if (isHorizontal) {
-      if (Math.abs(distanceX) > threshold) {
-        if (distanceX > 0) {
-          onSwipeRight?.(Math.abs(distanceX))
-        } else {
-          onSwipeLeft?.(Math.abs(distanceX))
-        }
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (preventDefault) {
+        e.preventDefault()
       }
-    } else {
-      if (Math.abs(distanceY) > threshold) {
-        if (distanceY > 0) {
-          onSwipeDown?.(Math.abs(distanceY))
-        } else {
-          onSwipeUp?.(Math.abs(distanceY))
-        }
-      }
-    }
 
-    touchStart.current = null
-    touchEnd.current = null
-  }, [threshold, onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown])
+      if (!touchStart.current) return
+
+      const touch = e.touches[0]
+      const deltaX = touch.clientX - touchStart.current.x
+      const deltaY = touch.clientY - touchStart.current.y
+      const absX = Math.abs(deltaX)
+      const absY = Math.abs(deltaY)
+
+      if (absX > threshold || absY > threshold) {
+        if (absX > absY) {
+          if (deltaX > 0 && onSwipeRight) {
+            onSwipeRight(absX)
+          } else if (deltaX < 0 && onSwipeLeft) {
+            onSwipeLeft(absX)
+          }
+        } else {
+          if (deltaY > 0 && onSwipeDown) {
+            onSwipeDown(absY)
+          } else if (deltaY < 0 && onSwipeUp) {
+            onSwipeUp(absY)
+          }
+        }
+
+        touchStart.current = null
+      }
+    },
+    [
+      onSwipeLeft,
+      onSwipeRight,
+      onSwipeUp,
+      onSwipeDown,
+      threshold,
+      preventDefault,
+    ]
+  )
+
+  const handleTouchEnd = useCallback(
+    (e: TouchEvent) => {
+      if (preventDefault) {
+        e.preventDefault()
+      }
+      touchStart.current = null
+    },
+    [preventDefault]
+  )
 
   return {
-    bind: {
-      onTouchStart: handleTouchStart,
-      onTouchMove: handleTouchMove,
-      onTouchEnd: handleTouchEnd,
-    },
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd,
   }
 }

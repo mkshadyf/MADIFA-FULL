@@ -37,10 +37,13 @@ export const sentryService = {
     if (process.env.NODE_ENV === 'production') {
       Sentry.setUser(null)
     }
-  }
+  },
 }
 
-export const captureException = (error: unknown, context?: Record<string, unknown>) => {
+export const captureException = (
+  error: unknown,
+  context?: Record<string, unknown>
+) => {
   if (process.env.NODE_ENV === 'development') {
     console.error('Error captured:', error)
     if (context) {
@@ -50,6 +53,6 @@ export const captureException = (error: unknown, context?: Record<string, unknow
   }
 
   Sentry.captureException(error, {
-    extra: context
+    extra: context,
   })
 }

@@ -1,79 +1,62 @@
-import React from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import {
-  createErrorContext,
-  ErrorCodes,
-  handleError,
-  throwAppError,
-} from '@/lib/utils/error-handler'
-import { useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import type { UserProfile, UserRole, Permission } from '@/types/user'
-
-const hasRequiredPermissions = (permissions: Permission[], role: UserRole): boolean => {
-  // Implement your permission checking logic here
-  return permissions.some(permission => permission.scope === 'role' && permission.action === '*');
-};
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useAuth } from '@/hooks/useAuth';
+import { createErrorContext, handleApiError } from '@/lib/utils/error-handler';
+import type { Permission, UserRole } from '@/types/auth';
+import React, { useEffect } from 'react';
 
 interface RoleGuardProps {
   children: React.ReactNode
   requiredRole: UserRole
-  fallbackPath?: string
+  requiredPermissions?: Permission[]
 }
 
 export function RoleGuard({
   children,
   requiredRole,
-  fallbackPath = '/unauthorized',
+  requiredPermissions = [],
 }: RoleGuardProps): JSX.Element | null {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { profile, loading } = useAuth()
+  const { profile, isLoading, isAuthenticated } = useAuth()
+
+  const hasRequiredRole = profile?.role === requiredRole
+  const hasRequiredPermissions = requiredPermissions.every(permission =>
+    profile?.permissions?.includes(permission)
+  )
 
   useEffect(() => {
-    const context = createErrorContext(
-      'RoleGuard',
-      'checkPermissions',
-      `checking ${requiredRole} role permissions`
-    )
-
-    try {
-      if (!loading) {
-        if (!profile) {
-          throwAppError(
-            'User profile not found',
-            ErrorCodes.UNAUTHORIZED,
-            { operation: 'RoleGuard.checkPermissions' }
-          )
-        }
-
-        if (profile && !hasRequiredPermissions(profile.permissions, requiredRole)) {
-          throwAppError(
-            `Insufficient permissions: required role '${requiredRole}'`,
-            ErrorCodes.FORBIDDEN,
-            { operation: 'RoleGuard.checkPermissions' }
-          )
-        }
-      }
-    } catch (error) {
-      handleError(error, context)
-      navigate(fallbackPath, {
-        state: {
-          from: location.pathname,
-          error: error instanceof Error ? error.message : 'Access denied',
-        },
-        replace: true,
-      })
+    if (!isLoading && !isAuthenticated) {
+      const error = handleApiError(
+        new Error('Authentication required'),
+        createErrorContext('auth', 'role-guard')
+      )
+      throw error
     }
-  }, [profile, requiredRole, fallbackPath, loading, navigate, location])
 
-  if (loading) {
-    return null
+    if (!isLoading && !hasRequiredRole) {
+      const error = handleApiError(
+        new Error(`Insufficient role: ${requiredRole} required`),
+        createErrorContext('auth', 'role-guard')
+      )
+      throw error
+    }
+
+    if (!isLoading && !hasRequiredPermissions) {
+      const error = handleApiError(
+        new Error('Insufficient permissions'),
+        createErrorContext('auth', 'role-guard')
+      )
+      throw error
+    }
+  }, [
+    isLoading,
+    isAuthenticated,
+    hasRequiredRole,
+    hasRequiredPermissions,
+    requiredRole,
+  ])
+
+  if (isLoading) {
+    return <LoadingSpinner />
   }
 
-  if (profile && hasRequiredPermissions(profile.permissions, requiredRole)) {
-    return <>{children}</>
-  }
-
-  return null
+  return <>{children}</>
 }

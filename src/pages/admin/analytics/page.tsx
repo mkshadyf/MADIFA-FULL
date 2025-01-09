@@ -1,9 +1,8 @@
-import React from 'react'
 import { useEffect, useState } from 'react'
 
-import { createClient } from '@/lib/supabase/client'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import UserActivityChart from '@/components/admin/user-activity-chart'
+import { createClient } from '@/lib/supabase/client'
+import UserActivityChart from '@/components/admin/Analytics/user-activity-chart'
 
 interface UserMetrics {
   totalUsers: number
@@ -23,9 +22,6 @@ interface UserMetrics {
   userRetention: number
   averageSessionDuration: number
 }
-
-type _SubscriptionTier = 'free' | 'premium' | 'premium_plus'
-type _SubscriptionStatus = 'active' | 'inactive' | 'past_due'
 
 export default function AnalyticsPage(): JSX.Element {
   const [metrics, setMetrics] = useState<UserMetrics | null>(null)

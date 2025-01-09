@@ -1,120 +1,128 @@
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { Alert } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { supabase } from '@/lib/supabase/client'
+import { debounce } from '@/lib/utils/debounce'
 import type { Content } from '@/types/content'
+import React, { useCallback, useState } from 'react'
 
-interface ContentSearchProps {
-  onSelect?: (content: Content) => void
+interface SearchState {
+  query: string
+  results: Content[]
+  loading: boolean
+  error: string | null
 }
 
-export default function ContentSearch({ onSelect }: ContentSearchProps) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<Content[]>([])
-  const [loading, setLoading] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const supabase = createClient()
+export const ContentSearch: React.FC = () => {
+  const [state, setState] = useState<SearchState>({
+    query: '',
+    results: [],
+    loading: false,
+    error: null,
+  })
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (query) {
-        searchContent()
-      } else {
-        setResults([])
-      }
-    }, 300)
+  const searchContent = async (query: string) => {
+    if (!query.trim()) {
+      setState(prev => ({ ...prev, results: [], loading: false }))
+      return
+    }
 
-    return () => clearTimeout(timer)
-  }, [query, selectedCategory])
+    setState(prev => ({ ...prev, loading: true, error: null }))
 
-  const searchContent = async () => {
-    setLoading(true)
     try {
-      let queryBuilder = supabase
+      const { data, error } = await supabase
         .from('content')
         .select('*')
         .ilike('title', `%${query}%`)
         .order('created_at', { ascending: false })
-        .limit(10)
-
-      if (selectedCategory !== 'all') {
-        queryBuilder = queryBuilder.eq('category', selectedCategory)
-      }
-
-      const { data, error } = await queryBuilder
 
       if (error) throw error
-      setResults(data || [])
+
+      setState(prev => ({
+        ...prev,
+        results: data || [],
+        loading: false,
+      }))
     } catch (error) {
-      console.error('Error searching content:', error)
-    } finally {
-      setLoading(false)
+      setState(prev => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Search failed',
+        loading: false,
+      }))
     }
   }
 
+  const debouncedSearch = useCallback(
+    debounce((query: string) => searchContent(query), 300),
+    []
+  )
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value
+    setState(prev => ({ ...prev, query }))
+    debouncedSearch(query)
+  }
+
+  const formatRating = (rating: number | null): string => {
+    if (rating === null) return 'N/A'
+    return rating.toFixed(1)
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex space-x-4">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Search content..."
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            className="w-full rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <select
-          title="Category"
-          value={selectedCategory}
-          onChange={e => setSelectedCategory(e.target.value)}
-          className="rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-white"
+    <div className="space-y-4 p-4">
+      <div className="flex gap-2">
+        <Input
+          type="text"
+          placeholder="Search content..."
+          value={state.query}
+          onChange={handleInputChange}
+          className="flex-1"
+        />
+        <Button
+          onClick={() => searchContent(state.query)}
+          disabled={state.loading || !state.query.trim()}
         >
-          <option value="all">All Categories</option>
-          <option value="movies">Movies</option>
-          <option value="series">Series</option>
-          <option value="documentaries">Documentaries</option>
-        </select>
+          Search
+        </Button>
       </div>
 
-      {loading ? (
-        <div className="py-4 text-center text-gray-400">Searching...</div>
-      ) : null}
-
-      {results.length > 0 && (
-        <div className="overflow-hidden rounded-lg bg-gray-800">
-          <div className="divide-y divide-gray-700">
-            {results.map(content => (
-              <div
-                key={content.id}
-                className="hover:bg-gray-750 cursor-pointer p-4"
-                onClick={() => onSelect?.(content)}
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="flex-shrink-0">
-                    <img
-                      src={content.thumbnail_url || ''}
-                      alt={content.title}
-                      className="h-16 w-24 rounded object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-white">{content.title}</h3>
-                    <p className="text-sm text-gray-400">
-                      {content.category} • {content.release_year}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-sm text-gray-400">
-                      {content.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {state.loading && (
+        <div className="flex justify-center p-4">
+          <LoadingSpinner />
         </div>
       )}
 
-      {query && !loading && results.length === 0 ? (
-        <div className="py-4 text-center text-gray-400">No results found</div>
-      ) : null}
+      {state.error && (
+        <Alert variant="destructive">
+          <p>{state.error}</p>
+        </Alert>
+      )}
+
+      {state.results.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {state.results.map(content => (
+            <div
+              key={content.id}
+              className="rounded-lg border p-4 transition-shadow hover:shadow-md"
+            >
+              <h3 className="font-semibold">{content.title}</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                {content.description}
+              </p>
+              <div className="mt-2 flex justify-between text-sm text-gray-500">
+                <span>Views: {content.views}</span>
+                <span>Rating: {formatRating(content.rating)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        !state.loading &&
+        state.query && (
+          <p className="text-center text-gray-500">No results found</p>
+        )
+      )}
     </div>
   )
 }

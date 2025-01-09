@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import { permissionService, type Permission } from '@/lib/services/permissions'
-import { usePermissions } from '@/hooks/usePermissions'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+import { usePermissions } from '@/hooks/usePermissions'
+import { permissionService, type Permission } from '@/lib/services/permissions'
 
 interface PermissionManagerProps {
   userId?: string // If provided, manage specific user permissions

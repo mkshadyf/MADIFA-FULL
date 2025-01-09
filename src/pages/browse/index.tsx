@@ -1,21 +1,14 @@
-import React from 'react'
 import { useQuery } from '@tanstack/react-query'
+import React from 'react'
 import { Link } from 'react-router-dom'
 
-import { createClient } from '@/lib/supabase/client'
+import ContentFilter from '@/components/content/ContentFilter'
+import FeaturedContent from '@/components/content/Featured/FeaturedContent'
+import RecommendedContent from '@/components/content/Recommendations/Content'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useFilteredContent } from '@/hooks/useFilteredContent'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import ContentFilters from '@/components/content/ContentFilters'
-import FeaturedContent from '@/components/content/FeaturedContent'
-import RecommendedContent from '@/components/content/RecommendedContent'
-
-interface Content {
-  id: string
-  title: string
-  description: string
-  thumbnail_url: string
-  category: string
-}
+import { createClient } from '@/lib/supabase/client'
+import type { Content } from '@/types/content'
 
 export default function BrowsePage() {
   const supabase = createClient()
@@ -52,10 +45,10 @@ export default function BrowsePage() {
 
   return (
     <div className="space-y-8">
-      <FeaturedContent />
+      <FeaturedContent content={displayContent?.[0] as Content} />
 
-      <ContentFilters
-        onFilterChange={filters => {
+      <ContentFilter
+        onFilterChange={() => {
           setSelectedCategory('all')
         }}
       />

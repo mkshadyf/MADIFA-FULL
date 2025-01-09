@@ -1,13 +1,11 @@
-import React from 'react'
+import VimeoAnalytics from '@/components/admin/Analytics/vimeo-analytics'
+import VimeoContentManager from '@/components/admin/Vimeo/vimeo-content-manager'
+import VimeoMetadataEditor from '@/components/admin/Vimeo/vimeo-metadata-editor'
+import VimeoShowcaseManager from '@/components/admin/Vimeo/vimeo-showcase-manager'
+import type { VimeoVideo } from '@/types/vimeo'
 import { useState } from 'react'
 
-import type { VimeoVideo } from '@/types/vimeo'
-import VimeoAnalytics from '@/components/admin/vimeo-analytics'
-import VimeoContentManager from '@/components/admin/vimeo-content-manager'
-import VimeoMetadataEditor from '@/components/admin/vimeo-metadata-editor'
-import VimeoShowcaseManager from '@/components/admin/vimeo-showcase-manager'
-
-type ActiveView = 'showcases' | 'analytics' | 'content' | 'metadata'
+type ActiveView = 'content' | 'showcases' | 'analytics' | 'metadata'
 
 export default function AdminDashboard() {
   const [activeView, setActiveView] = useState<ActiveView>('content')
@@ -76,7 +74,7 @@ export default function AdminDashboard() {
 
         {activeView === 'analytics' && (
           <div className="px-4 py-6 sm:px-0">
-            <VimeoAnalytics />
+            {selectedVideo ? <VimeoAnalytics video={selectedVideo} /> : <div>No video selected</div>}
           </div>
         )}
 

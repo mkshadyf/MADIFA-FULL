@@ -21,22 +21,32 @@
     },
     "types": [
       "vite/client",
-      "vitest/globals",
       "node",
-      "@sentry/types"
+      "react",
+      "react-dom",
+      "@vimeo/player"
     ],
     "allowJs": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "importsNotUsedAsValues": "remove",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
     "verbatimModuleSyntax": true
   },
-  "include": ["src"],
+  "include": [
+    "src",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts"
+  ],
   "exclude": [
     "node_modules",
-    "vite.config.ts",
-    "vitest.config.ts",
+    "dist",
+    "build",
+    "coverage",
     "tailwind.config.js",
     "postcss.config.js"
   ],

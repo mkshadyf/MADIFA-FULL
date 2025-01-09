@@ -1,11 +1,9 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
-
-import { createClient } from '@/lib/supabase/client'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import ActivityLog from '@/components/admin/activity-log'
-import ContentCategories from '@/components/admin/content-categories'
+import ContentCategories from '@/components/admin/Content/content-categories'
 import StatsOverview from '@/components/admin/stats-overview'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 
 interface QuickStats {
   newUsers24h: number
@@ -113,7 +111,13 @@ export default function DashboardOverview() {
           <h2 className="mb-4 text-xl font-bold text-white">
             Content Categories
           </h2>
-          <ContentCategories />
+          <ContentCategories distribution={{
+            videos: 12,
+            articles: 8,
+            podcasts: 5,
+            courses: 3,
+            uncategorized: 2
+          }} />
         </div>
       </div>
 

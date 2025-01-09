@@ -1,14 +1,11 @@
+import { AdsConfig } from '@/lib/config/ads'
 
-interface AdConfig {
-  unitId: string
-  format: 'banner' | 'interstitial' | 'rewarded'
-  position?: 'top' | 'bottom'
-}
+type AdType = 'banner' | 'interstitial' | 'rewarded'
 
 interface AdEvent {
-  type: 'impression' | 'click' | 'revenue'
+  type: 'impression' | 'click' | 'error'
   adUnitId: string
-  data?: Record<string, any>
+  error?: Error
 }
 
 class AdService {
@@ -16,9 +13,7 @@ class AdService {
   private isInitialized = false
   private eventListeners: ((event: AdEvent) => void)[] = []
 
-  private constructor() {
-    this.initializeSDK()
-  }
+  private constructor() {}
 
   static getInstance(): AdService {
     if (!AdService.instance) {
@@ -27,73 +22,65 @@ class AdService {
     return AdService.instance
   }
 
-  private async initializeSDK() {
-    if (this.isInitialized) return
-
+  async initialize(): Promise<void> {
     try {
-      await this.loadApplovinSDK()
-      window.applovin.initializeSdk({
-        sdkKey: import.meta.env.VITE_APPLOVIN_SDK_KEY,
-      })
+      if (typeof window.applovin === 'undefined') {
+        throw new Error('AppLovin SDK not loaded')
+      }
+
+      await window.applovin.initialize(AdsConfig.sdkKey)
       this.isInitialized = true
     } catch (error) {
-      console.error('Failed to initialize ad SDK:', error)
+      console.error('Failed to initialize AppLovin SDK:', error)
+      throw error
     }
   }
 
-  private loadApplovinSDK(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script')
-      script.src = 'https://sdk.applovin.com/js/applovin.min.js'
-      script.async = true
-      script.onload = () => resolve()
-      script.onerror = () => reject(new Error('Failed to load AppLovin SDK'))
-      document.head.appendChild(script)
-    })
-  }
-
-  async showAd(config: AdConfig): Promise<boolean> {
+  async showAd(adType: AdType, unitId: string): Promise<boolean> {
     if (!this.isInitialized) {
-      await this.initializeSDK()
+      throw new Error('AppLovin SDK not initialized')
     }
 
-    return new Promise(resolve => {
-      window.applovin.showAd(config.unitId, {
-        onAdLoadSuccess: () => {
-          this.trackEvent({
-            type: 'impression',
-            adUnitId: config.unitId,
-          })
-        },
-        onAdLoadFailed: () => resolve(false),
-        onAdDisplayed: () => resolve(true),
-      })
-    })
+    try {
+      if (typeof window.applovin === 'undefined') {
+        throw new Error('AppLovin SDK not loaded')
+      }
+
+      switch (adType) {
+        case 'banner':
+          await window.applovin.showBanner(unitId)
+          break
+        case 'interstitial':
+          await window.applovin.showInterstitial(unitId)
+          break
+        case 'rewarded':
+          await window.applovin.showRewarded(unitId)
+          break
+        default:
+          throw new Error(`Unsupported ad type: ${adType}`)
+      }
+
+      return true
+    } catch (error) {
+      console.error(`Failed to show ${adType} ad:`, error)
+      return false
+    }
   }
 
   async showPreRollAd(): Promise<boolean> {
-    return this.showAd({
-      unitId: import.meta.env.VITE_APPLOVIN_INTERSTITIAL_ID,
-      format: 'interstitial',
-    })
+    return this.showAd('interstitial', AdsConfig.adUnits.interstitial)
   }
 
   async showMidRollAd(): Promise<boolean> {
-    return this.showAd({
-      unitId: import.meta.env.VITE_APPLOVIN_REWARDED_ID,
-      format: 'rewarded',
-    })
+    return this.showAd('rewarded', AdsConfig.adUnits.rewarded)
   }
 
-  onEvent(callback: (event: AdEvent) => void) {
+  addEventListener(callback: (event: AdEvent) => void): void {
     this.eventListeners.push(callback)
-    return () => {
-      this.eventListeners = this.eventListeners.filter(cb => cb !== callback)
-    }
   }
 
-  private trackEvent(event: AdEvent) {
-    this.eventListeners.forEach(callback => callback(event))
+  removeEventListener(callback: (event: AdEvent) => void): void {
+    this.eventListeners = this.eventListeners.filter(cb => cb !== callback)
   }
 }
 

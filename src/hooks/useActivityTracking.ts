@@ -4,7 +4,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import {
   trackActivity,
   type ActivityType,
-} from '@/lib/services/activity-tracking'
+} from '@/lib/services/analytics/tracking'
 
 interface UseActivityTrackingOptions {
   onError?: (error: Error) => void

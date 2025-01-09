@@ -1,245 +1,225 @@
-import { useRef, useState } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
+import { Alert } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Progress } from '@/components/ui/progress'
+import {
+  processContentBatch,
+  retryFailedUploads,
+  type UploadResult,
+} from '@/lib/utils/content-upload'
+import React, { useCallback, useState } from 'react'
+import { useDropzone } from 'react-dropzone'
 
-import { createClient } from '@/lib/supabase/client'
-import { uploadContent } from '@/lib/utils/content-upload'
-
-import UploadProgress from './upload-progress'
-
-interface BatchFile {
-  id: string
-  file: File
-  title: string
-  description: string
-  category: string
+interface UploadState {
+  files: File[]
+  uploading: boolean
   progress: number
-  status: 'pending' | 'uploading' | 'complete' | 'error'
-  error?: string
+  results: UploadResult[]
+  error: string | null
 }
 
-export default function ContentBatchUpload() {
-  const [files, setFiles] = useState<BatchFile[]>([])
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
+export const ContentBatchUpload: React.FC = () => {
+  const [state, setState] = useState<UploadState>({
+    files: [],
+    uploading: false,
+    progress: 0,
+    results: [],
+    error: null,
+  })
 
-  const generateId = () =>
-    Math.random().toString(36).substring(2) + Date.now().toString(36)
-
-  const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) return
-
-    const newFiles: BatchFile[] = Array.from(e.target.files).map(file => ({
-      id: generateId(),
-      file,
-      title: file.name.split('.')[0],
-      description: '',
-      category: '',
-      progress: 0,
-      status: 'pending',
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setState(prev => ({
+      ...prev,
+      files: [...prev.files, ...acceptedFiles],
+      error: null,
     }))
+  }, [])
 
-    setFiles(prev => [...prev, ...newFiles])
-  }
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'video/*': ['.mp4', '.webm', '.ogg'],
+    },
+    maxSize: 100 * 1024 * 1024, // 100MB
+  })
 
-  const handleRemoveFile = (id: string) => {
-    setFiles(prev => prev.filter(file => file.id !== id))
-  }
+  const handleUpload = async () => {
+    if (state.files.length === 0) return
 
-  const uploadFile = async (file: BatchFile) => {
+    setState(prev => ({ ...prev, uploading: true, error: null }))
+
     try {
-      const url = await uploadContent(file.file, {
-        onProgress: progress => {
-          setFiles(prev =>
-            prev.map(f =>
-              f.id === file.id ? { ...f, progress: progress.percent } : f
-            )
-          )
+      const results = await processContentBatch(
+        state.files,
+        {
+          category_id: 'default',
+          description: 'Batch uploaded content',
         },
-      })
-      return url
+        (completed, total) => {
+          setState(prev => ({
+            ...prev,
+            progress: (completed / total) * 100,
+          }))
+        }
+      )
+
+      setState(prev => ({
+        ...prev,
+        uploading: false,
+        results,
+        files: results.filter(r => !r.success).map(r => r.file),
+      }))
     } catch (error) {
-      console.error('Upload error:', error)
-      throw error
+      setState(prev => ({
+        ...prev,
+        uploading: false,
+        error: error instanceof Error ? error.message : 'Upload failed',
+        progress: 0,
+      }))
     }
   }
 
-  const handleUpload = async (e: FormEvent) => {
-    e.preventDefault()
-    setUploading(true)
+  const handleRetry = async () => {
+    const failedResults = state.results.filter(r => !r.success)
+    if (failedResults.length === 0) return
+
+    setState(prev => ({ ...prev, uploading: true, error: null }))
 
     try {
-      await Promise.all(
-        files.map(async batchFile => {
-          try {
-            // Update file status
-            setFiles(prev =>
-              prev.map(f =>
-                f.id === batchFile.id ? { ...f, status: 'uploading' } : f
-              )
-            )
-
-            // Upload file
-            const contentUrl = await uploadFile(batchFile)
-
-            // Create content record
-            const { error: dbError } = await supabase.from('content').insert({
-              title: batchFile.title,
-              description: batchFile.description,
-              category: batchFile.category,
-              thumbnail_url: contentUrl,
-              release_year: new Date().getFullYear(),
-            })
-
-            if (dbError) throw dbError
-
-            // Update file status to complete
-            setFiles(prev =>
-              prev.map(f =>
-                f.id === batchFile.id ? { ...f, status: 'complete' } : f
-              )
-            )
-          } catch (error) {
-            // Update file status to error
-            setFiles(prev =>
-              prev.map(f =>
-                f.id === batchFile.id
-                  ? {
-                      ...f,
-                      status: 'error',
-                      error:
-                        error instanceof Error
-                          ? error.message
-                          : 'Upload failed',
-                    }
-                  : f
-              )
-            )
-          }
-        })
+      const results = await retryFailedUploads(
+        failedResults,
+        {
+          category_id: 'default',
+          description: 'Batch uploaded content',
+        },
+        (completed, total) => {
+          setState(prev => ({
+            ...prev,
+            progress: (completed / total) * 100,
+          }))
+        }
       )
-    } finally {
-      setUploading(false)
+
+      setState(prev => ({
+        ...prev,
+        uploading: false,
+        results: [...state.results.filter(r => r.success), ...results],
+        files: results.filter(r => !r.success).map(r => r.file),
+      }))
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        uploading: false,
+        error: error instanceof Error ? error.message : 'Retry failed',
+        progress: 0,
+      }))
     }
+  }
+
+  const removeFile = (index: number) => {
+    setState(prev => ({
+      ...prev,
+      files: prev.files.filter((_, i) => i !== index),
+      results: prev.results.filter((_, i) => i !== index),
+    }))
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Batch Upload</h2>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
-        >
-          Add Files
-        </button>
-        <input
-          title="Select files"
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept="video/*"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+    <div className="space-y-4 p-4">
+      <div
+        {...getRootProps()}
+        className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center
+          ${isDragActive ? 'border-primary bg-primary/10' : 'border-gray-300'}`}
+      >
+        <input {...getInputProps()} />
+        {isDragActive ? (
+          <p>Drop the files here...</p>
+        ) : (
+          <p>Drag and drop video files here, or click to select files</p>
+        )}
       </div>
 
-      {files.length > 0 && (
-        <form onSubmit={handleUpload} className="space-y-6">
-          <div className="space-y-4">
-            {files.map(file => (
-              <div key={file.id} className="rounded-lg bg-gray-800 p-4">
-                <div className="mb-4 flex items-start justify-between">
-                  <div>
-                    <input
-                      type="text"
-                      value={file.title}
-                      onChange={e =>
-                        setFiles(prev =>
-                          prev.map(f =>
-                            f.id === file.id
-                              ? { ...f, title: e.target.value }
-                              : f
-                          )
-                        )
-                      }
-                      className="rounded-md bg-gray-700 px-2 py-1 text-white"
-                      placeholder="Title"
-                      required
-                    />
-                    <select
-                      title="Select category"
-                      value={file.category}
-                      onChange={e =>
-                        setFiles(prev =>
-                          prev.map(f =>
-                            f.id === file.id
-                              ? { ...f, category: e.target.value }
-                              : f
-                          )
-                        )
-                      }
-                      className="ml-2 rounded-md bg-gray-700 px-2 py-1 text-white"
-                      required
-                    >
-                      <option value="">Select Category</option>
-                      <option value="movies">Movies</option>
-                      <option value="series">Series</option>
-                      <option value="documentaries">Documentaries</option>
-                    </select>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveFile(file.id)}
-                    disabled={uploading}
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    Remove
-                  </button>
-                </div>
+      {state.files.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-semibold">Selected Files:</h3>
+          {state.files.map((file, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between rounded bg-gray-50 p-2"
+            >
+              <span>{file.name}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeFile(index)}
+                disabled={state.uploading}
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
 
-                <textarea
-                  title="Enter description"
-                  value={file.description}
-                  onChange={e =>
-                    setFiles(prev =>
-                      prev.map(f =>
-                        f.id === file.id
-                          ? { ...f, description: e.target.value }
-                          : f
-                      )
-                    )
-                  }
-                  className="mb-4 w-full rounded-md bg-gray-700 px-2 py-1 text-white"
-                  placeholder="Description"
-                  rows={2}
-                  required
-                />
+      {state.uploading && (
+        <div className="space-y-2">
+          <Progress value={state.progress} />
+          <div className="flex items-center justify-center">
+            <LoadingSpinner />
+            <span className="ml-2">
+              Uploading {Math.round(state.progress)}%
+            </span>
+          </div>
+        </div>
+      )}
 
-                <UploadProgress
-                  progress={file.progress}
-                  status={file.status === 'error' ? file.error : file.status}
-                />
+      {state.error && (
+        <Alert variant="destructive">
+          <p>{state.error}</p>
+        </Alert>
+      )}
+
+      {state.results.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-semibold">Upload Results:</h3>
+          <div className="space-y-1">
+            {state.results.map((result, index) => (
+              <div
+                key={index}
+                className={`rounded p-2 ${
+                  result.success ? 'bg-green-50' : 'bg-red-50'
+                }`}
+              >
+                <p className="text-sm">
+                  {result.file.name} -{' '}
+                  {result.success ? 'Success' : result.error}
+                </p>
               </div>
             ))}
           </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={uploading || !files.length}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {uploading ? 'Uploading...' : 'Upload All'}
-            </button>
-          </div>
-        </form>
+        </div>
       )}
 
-      {!files.length && (
-        <div className="py-12 text-center text-gray-400">No files selected</div>
-      )}
+      <div className="flex gap-2">
+        <Button
+          onClick={handleUpload}
+          disabled={state.files.length === 0 || state.uploading}
+          className="flex-1"
+        >
+          Upload {state.files.length}{' '}
+          {state.files.length === 1 ? 'file' : 'files'}
+        </Button>
+
+        {state.results.some(r => !r.success) && (
+          <Button
+            onClick={handleRetry}
+            disabled={state.uploading}
+            variant="outline"
+          >
+            Retry Failed
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

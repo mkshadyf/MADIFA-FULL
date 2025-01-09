@@ -1,16 +1,15 @@
-import React from 'react'
+import { useAuth } from '@/providers/AuthProvider'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/providers/AuthProvider'
 
-import { getUserRatings } from '@/lib/services/user-interactions'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { getUserRatings } from '@/lib/services/user-interactions'
+import type { Content } from '@/types/content'
 
-interface RatedContent {
+interface RatedContent extends Content {
   content_id: string
-  title: string
-  rating: number
   rated_at: string
+  rating: number
 }
 
 export default function RatingsPage() {
@@ -26,7 +25,16 @@ export default function RatingsPage() {
 
       try {
         const data = await getUserRatings(user.id)
-        setRatings(data)
+        setRatings(
+          data
+            .filter(item => item.rating !== null)
+            .map(item => ({
+              ...item,
+              content_id: item.id,
+              rating: item.rating as number,
+              rated_at: new Date().toISOString(), // TODO: Get actual rated_at from backend
+            }))
+        )
       } catch (error) {
         console.error('Error loading ratings:', error)
         setError(

@@ -1,69 +1,51 @@
-import React from 'react'
-import { useQueueStore } from '@/stores/queueStore'
-import { AnimatePresence, motion } from 'framer-motion'
-
-import ProgressBar from '../ui/ProgressBar'
+import { Progress } from '@/components/ui/progress'
 
 interface DownloadProgressProps {
   contentId: string
+  progress: number
+  status: 'pending' | 'downloading' | 'completed' | 'error'
 }
 
-export default function DownloadProgress({ contentId }: DownloadProgressProps) {
-  const { queue } = useQueueStore()
-  const item = queue.get(contentId)
+export function DownloadProgress({ progress, status }: DownloadProgressProps) {
+  const getStatusColor = () => {
+    switch (status) {
+      case 'downloading':
+        return 'bg-blue-500'
+      case 'completed':
+        return 'bg-green-500'
+      case 'error':
+        return 'bg-red-500'
+      default:
+        return 'bg-gray-500'
+    }
+  }
 
-  if (!item || item.status === 'completed') return null
+  const getStatusText = () => {
+    switch (status) {
+      case 'downloading':
+        return `Downloading (${Math.round(progress)}%)`
+      case 'completed':
+        return 'Download Complete'
+      case 'error':
+        return 'Download Failed'
+      default:
+        return 'Pending'
+    }
+  }
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className="fixed bottom-4 left-4 right-4 mx-auto max-w-md rounded-lg bg-white p-4 shadow-lg"
-      >
-        <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-900">
-            {item.status === 'error' ? 'Download Failed' : 'Downloading...'}
-          </h3>
-          <span className="text-xs text-gray-500">
-            {item.status === 'downloading'
-              ? `${Math.round(item.progress)}%`
-              : ''}
-          </span>
-        </div>
-
-        {item.status === 'downloading' && (
-          <ProgressBar
-            progress={item.progress}
-            showPercentage={false}
-            height={2}
-            color="bg-indigo-600"
-            backgroundColor="bg-gray-100"
-          />
+    <div className="space-y-2">
+      <div className="flex justify-between text-sm">
+        <span>{getStatusText()}</span>
+        {status === 'downloading' && (
+          <span>{Math.round(progress)}%</span>
         )}
-
-        {item.status === 'error' && (
-          <div className="text-sm text-red-600">{item.error}</div>
-        )}
-
-        <div className="mt-2 flex justify-end space-x-2">
-          {item.status === 'error' && (
-            <button
-              onClick={() => useQueueStore.getState().retryDownload(contentId)}
-              className="text-sm text-indigo-600 hover:text-indigo-500"
-            >
-              Retry
-            </button>
-          )}
-          <button
-            onClick={() => useQueueStore.getState().removeFromQueue(contentId)}
-            className="text-sm text-gray-600 hover:text-gray-500"
-          >
-            {item.status === 'error' ? 'Dismiss' : 'Cancel'}
-          </button>
-        </div>
-      </motion.div>
-    </AnimatePresence>
+      </div>
+      <Progress
+        value={progress}
+        max={100}
+        className={`h-2 ${getStatusColor()}`}
+      />
+    </div>
   )
 }

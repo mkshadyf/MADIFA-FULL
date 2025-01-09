@@ -1,8 +1,6 @@
-import React from 'react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/lib/database.types'
 import { uploadContent } from '@/lib/utils/content-upload'
 
 export default function ContentUpload() {
@@ -29,14 +27,14 @@ export default function ContentUpload() {
     setUploadProgress(0)
     try {
       const thumbnailUrl = await uploadContent(thumbnailFile, {
-        onProgress: (progress: { loaded: number; total: number }) => {
-          setUploadProgress((progress.loaded / progress.total) * 50)
+        onProgress: (progress: number) => {
+          setUploadProgress(progress)
         },
       })
 
       const videoUrl = await uploadContent(videoFile, {
-        onProgress: (progress: { loaded: number; total: number }) => {
-          setUploadProgress(50 + (progress.loaded / progress.total) * 50)
+        onProgress: (progress: number) => {
+          setUploadProgress(50 + (progress / 100) * 50)
         },
       })
 

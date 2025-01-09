@@ -1,12 +1,12 @@
-import React from 'react'
-import { useState } from 'react'
-import { useAuth } from '@/providers/AuthProvider'
-
-import { createClient } from '@/lib/supabase/client'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/providers/AuthProvider'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function AdminSettings() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, profile, isLoading } = useAuth()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -58,7 +58,9 @@ export default function AdminSettings() {
     }
   }
 
-  if (authLoading) return <LoadingSpinner />
+  if (isLoading) {
+    return <LoadingSpinner />
+  }
 
   return (
     <div className="space-y-6">

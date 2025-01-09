@@ -28,7 +28,12 @@ export interface UploadTask {
   updated_at: string
 }
 
-export type UploadStatus = 'pending' | 'uploading' | 'processing' | 'completed' | 'failed'
+export type UploadStatus =
+  | 'pending'
+  | 'uploading'
+  | 'processing'
+  | 'completed'
+  | 'failed'
 
 export interface UploadQueue {
   tasks: UploadTask[]
@@ -38,4 +43,9 @@ export interface UploadQueue {
   updated_at: string
 }
 
-export type QueueStatus = 'idle' | 'processing' | 'paused' | 'completed' | 'failed'
+export type QueueStatus =
+  | 'idle'
+  | 'processing'
+  | 'paused'
+  | 'completed'
+  | 'failed'

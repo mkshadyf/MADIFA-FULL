@@ -1,7 +1,5 @@
-import React from 'react'
-import { useEffect, useRef } from 'react'
-
 import { AdsConfig } from '@/lib/config/ads'
+import { useRef, useEffect } from 'react'
 
 export default function BannerAd() {
   const bannerRef = useRef<HTMLDivElement>(null)
@@ -12,18 +10,20 @@ export default function BannerAd() {
     const loadBanner = async () => {
       if (typeof window.applovin === 'undefined') return
 
-      window.applovin.createBanner({
-        adUnitId: AdsConfig.adUnits.banner,
-        position: 'bottom',
-        container: bannerRef.current || undefined,
-      })
+      try {
+        await window.applovin.showBanner(AdsConfig.adUnits.banner)
+      } catch (error) {
+        console.error('Failed to load banner ad:', error)
+      }
     }
 
     loadBanner()
 
     return () => {
       if (typeof window.applovin !== 'undefined') {
-        window.applovin.destroyBanner(AdsConfig.adUnits.banner)
+        window.applovin.hideBanner().catch(error => {
+          console.error('Failed to hide banner ad:', error)
+        })
       }
     }
   }, [])

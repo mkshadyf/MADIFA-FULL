@@ -19,7 +19,7 @@ export function useRealTimeAnalytics(videoId: string) {
   const supabase = createClient()
 
   useEffect(() => {
-    let heartbeatInterval: NodeJS.Timeout
+    let heartbeatInterval: ReturnType<typeof setInterval>
 
     const channel = supabase
       .channel(`video:${videoId}`)
@@ -57,7 +57,7 @@ export function useRealTimeAnalytics(videoId: string) {
           }
 
           // Update buffering count
-          if (event.event_type === 'buffer_start') {
+          if (event.event_type === 'buffer') {
             newStats.bufferingCount = prev.bufferingCount + 1
           }
 

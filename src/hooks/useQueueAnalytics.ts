@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { queueAnalytics } from '@/lib/services/queue-analytics'
-
+import { queueAnalytics } from '../lib/services/queue-analytics'
 import { useAuth } from './useAuth'
 import { useToast } from './useToast'
 

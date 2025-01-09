@@ -40,4 +40,4 @@ export interface ApiRequestConfig {
   path: string
   body?: unknown
   options?: ApiRequestOptions
-} 
+}

@@ -1,7 +1,6 @@
+import { createErrorContext, handleApiError } from '@/lib/utils/error-handler'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-
-import { createErrorContext, handleError } from '@/lib/utils/error-handler'
 
 interface MutationContext {
   previousData?: unknown
@@ -31,10 +30,12 @@ export function useDataMutation<TData = unknown, TVariables = unknown>(
       try {
         return await mutationFn(variables)
       } catch (error) {
-        throw handleError(error, createErrorContext('DataMutation', 'update', {
-          operation: 'mutate',
-          variables
-        }))
+        throw handleApiError(
+          error,
+          createErrorContext('data', 'mutation', {
+            variables,
+          })
+        )
       }
     },
     onMutate: async (variables): Promise<MutationContext> => {
@@ -101,7 +102,14 @@ export function createMutation<TData = any, TVariables = any>(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || 'An error occurred while updating data')
+      throw handleApiError(
+        new Error(error.message || 'An error occurred while updating data'),
+        createErrorContext('data', 'mutation', {
+          url,
+          method,
+          variables,
+        })
+      )
     }
 
     return response.json()

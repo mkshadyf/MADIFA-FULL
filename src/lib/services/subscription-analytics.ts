@@ -1,74 +1,133 @@
-import type { PlanId } from '@/lib/config/subscription-plans'
-import { createClient } from '@/lib/supabase/server'
+import { supabase } from '@/lib/supabase/client'
+import type {
+  RevenueTier,
+  SubscriptionAnalytics,
+  SubscriptionAnalyticsItem,
+  SubscriptionMetrics,
+  SubscriptionTrend,
+} from '@/types/analytics'
 
-interface SubscriptionMetrics {
-  totalSubscribers: number
-  activeSubscribers: number
-  churnRate: number
-  mrr: number // Monthly Recurring Revenue
-  planDistribution: Record<PlanId, number>
-}
+export async function getSubscriptionAnalytics(
+  startDate?: string,
+  endDate?: string
+): Promise<SubscriptionAnalytics> {
+  const query = supabase
+    .from('subscription_analytics')
+    .select('*')
+    .order('date', { ascending: false })
 
-export async function getSubscriptionMetrics(): Promise<SubscriptionMetrics> {
-  const supabase = createClient()
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  if (startDate) {
+    query.gte('date', startDate)
+  }
+  if (endDate) {
+    query.lte('date', endDate)
+  }
 
-  try {
-    // Get all subscriptions
-    const { data: subscriptions } = await supabase
-      .from('subscriptions')
-      .select('*')
+  const { data, error } = await query
 
-    // Get cancelled subscriptions in last 30 days
-    const { data: cancelledSubs } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('status', 'cancelled')
-      .gte('cancelled_at', thirtyDaysAgo.toISOString())
+  if (error) {
+    throw new Error('Failed to fetch subscription analytics')
+  }
 
-    // Calculate metrics
-    const metrics: SubscriptionMetrics = {
-      totalSubscribers: subscriptions?.length || 0,
-      activeSubscribers:
-        subscriptions?.filter(s => s.status === 'active').length || 0,
-      churnRate: calculateChurnRate(subscriptions || [], cancelledSubs || []),
-      mrr: calculateMRR(subscriptions || []),
-      planDistribution: calculatePlanDistribution(subscriptions || []),
-    }
-
-    return metrics
-  } catch (error) {
-    console.error('Error fetching subscription metrics:', error)
-    throw error
+  return {
+    data: (data as SubscriptionAnalyticsItem[]) || [],
+    metrics: calculateMetrics((data as SubscriptionAnalyticsItem[]) || []),
   }
 }
 
-function calculateChurnRate(allSubs: any[], cancelledSubs: any[]): number {
-  if (allSubs.length === 0) return 0
-  return (cancelledSubs.length / allSubs.length) * 100
+function calculateMetrics(
+  data: SubscriptionAnalyticsItem[]
+): SubscriptionMetrics {
+  const totalSubscribers = data.reduce(
+    (acc: number, curr: SubscriptionAnalyticsItem) =>
+      acc + curr.total_subscribers,
+    0
+  )
+  const totalRevenue = data.reduce(
+    (acc: number, curr: SubscriptionAnalyticsItem) => acc + curr.revenue,
+    0
+  )
+  const averageRevenue = totalRevenue / data.length
+
+  const churnRate =
+    data.reduce(
+      (acc: number, curr: SubscriptionAnalyticsItem) =>
+        acc + curr.churned_subscribers,
+      0
+    ) / totalSubscribers
+
+  const conversionRate =
+    data.reduce(
+      (acc: number, curr: SubscriptionAnalyticsItem) =>
+        acc + curr.new_subscribers,
+      0
+    ) /
+    data.reduce(
+      (acc: number, curr: SubscriptionAnalyticsItem) => acc + curr.total_trials,
+      0
+    )
+
+  return {
+    totalSubscribers,
+    totalRevenue,
+    averageRevenue,
+    churnRate,
+    conversionRate,
+  }
 }
 
-function calculateMRR(subscriptions: any[]): number {
-  return subscriptions
-    .filter(sub => sub.status === 'active')
-    .reduce((total, sub) => total + (sub.price || 0), 0)
+export async function trackSubscriptionEvent(event: {
+  user_id: string
+  event_type:
+    | 'subscription_created'
+    | 'subscription_cancelled'
+    | 'subscription_renewed'
+  subscription_tier: string
+  amount?: number
+}) {
+  const { error } = await supabase.from('subscription_events').insert([
+    {
+      ...event,
+      created_at: new Date().toISOString(),
+    },
+  ])
+
+  if (error) {
+    throw new Error('Failed to track subscription event')
+  }
 }
 
-function calculatePlanDistribution(
-  subscriptions: any[]
-): Record<PlanId, number> {
-  const activeSubs = subscriptions.filter(sub => sub.status === 'active')
-  const distribution: Record<PlanId, number> = {
-    monthly: 0,
-    yearly: 0,
+export async function getSubscriptionTrends(): Promise<SubscriptionTrend[]> {
+  const { data, error } = await supabase.rpc('calculate_subscription_trends')
+
+  if (error) {
+    throw new Error('Failed to fetch subscription trends')
   }
 
-  activeSubs.forEach(sub => {
-    if (distribution[sub.plan_id as PlanId] !== undefined) {
-      distribution[sub.plan_id as PlanId]++
-    }
-  })
+  return data as SubscriptionTrend[]
+}
 
-  return distribution
+export async function getRevenueByTier(
+  startDate?: string,
+  endDate?: string
+): Promise<RevenueTier[]> {
+  const query = supabase
+    .from('subscription_revenue')
+    .select('*')
+    .order('date', { ascending: false })
+
+  if (startDate) {
+    query.gte('date', startDate)
+  }
+  if (endDate) {
+    query.lte('date', endDate)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    throw new Error('Failed to fetch revenue by tier')
+  }
+
+  return (data as RevenueTier[]) || []
 }

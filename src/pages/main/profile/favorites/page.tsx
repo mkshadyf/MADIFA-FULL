@@ -1,11 +1,10 @@
-import React from 'react'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/providers/AuthProvider'
 
-import { getUserFavorites } from '@/lib/services/user-interactions'
-import type { Content } from '@/types/content'
-import ContentGrid from '@/components/ui/content-grid'
+import { ContentGrid } from '@/components/ui/content-grid'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { getUserFavorites } from '@/lib/services/user-interactions'
+import { useAuth } from '@/providers/AuthProvider'
+import type { Content } from '@/types/content'
 
 export default function FavoritesPage() {
   const { user } = useAuth()

@@ -1,5 +1,6 @@
 export interface QuotaCheckResult {
   allowed: boolean
+  canProceed: boolean
   currentUsage: number
   quota: number
   remaining: number
@@ -20,4 +21,4 @@ export interface StorageQuota {
   percentUsed: number
 }
 
-export type QuotaStatus = 'ok' | 'warning' | 'exceeded' 
+export type QuotaStatus = 'ok' | 'warning' | 'exceeded'

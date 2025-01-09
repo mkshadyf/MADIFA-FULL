@@ -1,4 +1,5 @@
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import type { SubscriptionStatus, SubscriptionTier } from './subscription'
 
 export interface UserProfile {
   id: string
@@ -10,8 +11,8 @@ export interface UserProfile {
   website?: string
   role: string
   permissions: Permission[]
-  subscription_status: string
-  subscription_tier: string
+  subscription_status: SubscriptionStatus
+  subscription_tier: SubscriptionTier
   created_at: string
   updated_at: string
 }
@@ -32,6 +33,7 @@ export interface User extends Omit<SupabaseUser, 'user_metadata'> {
   role?: string
   permissions?: Permission[]
   sendEmailVerification?: () => Promise<void>
+  banned_until?: string
 }
 
 export interface Permission {
@@ -62,7 +64,7 @@ export interface Role {
   updated_at: string
 }
 
-export type UserRole = 'admin' | 'user' | 'guest';
+export type UserRole = 'admin' | 'user' | 'guest'
 
 export interface UserActivity {
   id: string
@@ -83,4 +85,10 @@ export interface UserSettings {
   language: string
   created_at: string
   updated_at: string
+}
+
+export interface UserInteractionStats {
+  favorites: number
+  ratings: number
+  watchlist: number
 }

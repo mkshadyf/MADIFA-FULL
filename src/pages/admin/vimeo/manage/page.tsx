@@ -1,10 +1,7 @@
-import React from 'react'
+import VimeoShowcaseCreator from '@/components/admin/Vimeo/vimeo-showcase-creator'
+import VimeoShowcaseManager from '@/components/admin/Vimeo/vimeo-showcase-manager'
+import VimeoUpload from '@/components/admin/Vimeo/vimeo-upload'
 import { useState } from 'react'
-
-import VimeoAnalytics from '@/components/admin/vimeo-analytics'
-import VimeoShowcaseCreator from '@/components/admin/vimeo-showcase-creator'
-import VimeoShowcaseManager from '@/components/admin/vimeo-showcase-manager'
-import VimeoUpload from '@/components/admin/vimeo-upload'
 
 type ActiveView = 'upload' | 'showcases' | 'analytics'
 
@@ -70,7 +67,7 @@ export default function VimeoManagePage() {
 
         {activeView === 'analytics' && (
           <div className="px-4 py-6 sm:px-0">
-            <VimeoAnalytics />
+            {/* <VimeoAnalytics video={selectedVideo} /> */}
           </div>
         )}
       </main>

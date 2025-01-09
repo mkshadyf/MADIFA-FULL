@@ -1,78 +1,111 @@
-import type { SubscriptionService } from '@/lib/services/subscription'
+import { type SubscriptionService } from '@/lib/services/subscription/index'
 import type { Content } from '@/types/content'
+import type { QuotaCheckResult } from '@/types/quota'
 import { useCallback } from 'react'
-
-export interface QuotaCheckResult {
-  allowed: boolean
-  error?: string
-  canProceed: boolean
-  currentUsage: number
-  quota: number
-  remaining: number
-}
+import { useAuth } from './useAuth'
 
 export interface QuotaEnforcement {
   checkQuota: (userId: string, contentId: string) => Promise<QuotaCheckResult>
-  checkQuotaBeforeDownload: (content: Content) => Promise<boolean>
+  checkQuotaBeforeDownload: (content: Content) => Promise<QuotaCheckResult>
   updateUsage: (size: number) => Promise<void>
-  startQuotaMonitoring: () => void
-  stopQuotaMonitoring: () => void
+  startQuotaMonitoring: (userId: string) => void
+  stopQuotaMonitoring: (userId: string) => void
 }
 
-export function useQuotaEnforcement(subscriptionService: SubscriptionService): QuotaEnforcement {
-  const checkQuota = useCallback(async (userId: string, contentId: string): Promise<QuotaCheckResult> => {
-    try {
-      const result = await subscriptionService.checkAccess(userId, contentId)
-      return {
-        ...result,
-        allowed: result.canProceed,
-        currentUsage: result.currentUsage || 0,
-        quota: result.quota || 0,
-        remaining: result.remaining || 0,
+export function useQuotaEnforcement(
+  subscriptionService: SubscriptionService
+): QuotaEnforcement {
+  const { user } = useAuth()
+
+  const checkQuota = useCallback(
+    async (userId: string, contentId: string): Promise<QuotaCheckResult> => {
+      try {
+        const result = await subscriptionService.checkAccess(userId, contentId)
+        return {
+          allowed: result.canProceed,
+          canProceed: result.canProceed,
+          currentUsage: result.currentUsage,
+          quota: result.quota,
+          remaining: result.remaining,
+          error: result.error,
+        }
+      } catch (error) {
+        return {
+          allowed: false,
+          canProceed: false,
+          currentUsage: 0,
+          quota: 0,
+          remaining: 0,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }
       }
-    } catch (error) {
-      return {
-        allowed: false,
-        canProceed: false,
-        currentUsage: 0,
-        quota: 0,
-        remaining: 0,
-        error: error instanceof Error ? error.message : 'Unknown error',
+    },
+    [subscriptionService]
+  )
+
+  const checkQuotaBeforeDownload = useCallback(
+    async (content: Content): Promise<QuotaCheckResult> => {
+      try {
+        const result = await subscriptionService.checkQuotaBeforeDownload(
+          user?.id || '',
+          content.fileSize || content.size || 0
+        )
+        return {
+          allowed: result.canProceed,
+          canProceed: result.canProceed,
+          currentUsage: result.currentUsage,
+          quota: result.quota,
+          remaining: result.remaining,
+          error: result.error,
+        }
+      } catch (error) {
+        console.error('Failed to check quota before download:', error)
+        return {
+          allowed: false,
+          canProceed: false,
+          currentUsage: 0,
+          quota: 0,
+          remaining: 0,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }
       }
-    }
-  }, [subscriptionService])
+    },
+    [subscriptionService, user]
+  )
 
-  const checkQuotaBeforeDownload = useCallback(async (content: Content): Promise<boolean> => {
-    try {
-      const result = await subscriptionService.checkQuotaBeforeDownload(content)
-      return result.canProceed
-    } catch (error) {
-      console.error('Failed to check quota before download:', error)
-      return false
-    }
-  }, [subscriptionService])
+  const startQuotaMonitoring = useCallback(
+    (userId: string) => {
+      if (!userId) return
+      subscriptionService.startQuotaMonitoring(userId)
+    },
+    [subscriptionService]
+  )
 
-  const startQuotaMonitoring = useCallback(() => {
-    subscriptionService.startQuotaMonitoring()
-  }, [subscriptionService])
+  const stopQuotaMonitoring = useCallback(
+    (userId: string) => {
+      if (!userId) return
+      subscriptionService.stopQuotaMonitoring(userId)
+    },
+    [subscriptionService]
+  )
 
-  const stopQuotaMonitoring = useCallback(() => {
-    subscriptionService.stopQuotaMonitoring()
-  }, [subscriptionService])
-
-  const updateUsage = useCallback(async (size: number): Promise<void> => {
-    try {
-      await subscriptionService.updateUsage(size)
-    } catch (error) {
-      console.error('Failed to update usage:', error)
-    }
-  }, [subscriptionService])
+  const updateUsage = useCallback(
+    async (size: number): Promise<void> => {
+      if (!user?.id) return
+      try {
+        await subscriptionService.updateUsage(user.id, size)
+      } catch (error) {
+        console.error('Failed to update usage:', error)
+      }
+    },
+    [subscriptionService, user]
+  )
 
   return {
     checkQuota,
     checkQuotaBeforeDownload,
     updateUsage,
     startQuotaMonitoring,
-    stopQuotaMonitoring
+    stopQuotaMonitoring,
   }
 }

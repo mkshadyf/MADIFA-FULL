@@ -1,6 +1,6 @@
+import { getVideoDetails } from '@/lib/services/vimeo'
 import { createClient } from '@/lib/supabase/client'
 import type { WatchHistoryItem } from '@/types/watch-history'
-import { getVideoDetails } from './vimeo'
 
 export async function updateWatchProgress(
   userId: string,

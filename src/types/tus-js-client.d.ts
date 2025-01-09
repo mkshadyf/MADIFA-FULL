@@ -28,4 +28,4 @@ declare module 'tus-js-client' {
   export const isSupported: boolean
   export const canStoreURLs: boolean
   export const defaultOptions: Partial<UploadOptions>
-} 
+}

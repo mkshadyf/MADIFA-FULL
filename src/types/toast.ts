@@ -28,4 +28,4 @@ export interface ToastContextValue {
   addToast: (message: string, type: ToastType, options?: ToastOptions) => void
   removeToast: (id: string) => void
   clearToasts: () => void
-} 
+}

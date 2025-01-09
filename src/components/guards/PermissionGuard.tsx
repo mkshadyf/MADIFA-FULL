@@ -1,13 +1,8 @@
-import React from 'react'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useAuth } from '@/providers/AuthProvider'
+import type { Permission } from '@/types'
+import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-
-import type { UserProfile } from '@/types/auth'
-
-export interface Permission {
-  resource: string
-  action: 'read' | 'write' | 'delete' | 'manage'
-}
 
 interface PermissionGuardProps {
   children: React.ReactNode
@@ -26,7 +21,7 @@ export function PermissionGuard({
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        Loading...
+        <LoadingSpinner />
       </div>
     )
   }

@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/useToast'
-import { adManager } from '@/lib/services/ad-manager'
-import { adService } from '@/lib/services/ads'
-import { AppLovin } from '@/lib/services/applovin'
+
+import { AdsConfig } from '@/lib/config/ads'
+import { adManager } from '@/lib/services/ads/ad-manager'
 import { subscriptionService } from '@/lib/services/subscription'
 
 interface UseAdsOptions {
@@ -54,11 +54,11 @@ export function useAds({ player, videoId }: UseAdsOptions = {}) {
     if (!adManager.canShowAd('interstitial')) return false
 
     try {
-      const shown = await AppLovin.showInterstitial()
-      if (shown) {
-        adManager.recordAdShow('interstitial')
-      }
-      return shown
+      if (typeof window.applovin === 'undefined') return false
+
+      await window.applovin.showInterstitial(AdsConfig.adUnits.interstitial)
+      adManager.recordAdShow('interstitial')
+      return true
     } catch (error) {
       console.error('Failed to show interstitial ad:', error)
       setError('Failed to show ad')
@@ -71,11 +71,11 @@ export function useAds({ player, videoId }: UseAdsOptions = {}) {
     if (!adManager.canShowAd('rewarded')) return false
 
     try {
-      const shown = await AppLovin.showRewarded()
-      if (shown) {
-        adManager.recordAdShow('rewarded')
-      }
-      return shown
+      if (typeof window.applovin === 'undefined') return false
+
+      await window.applovin.showRewarded(AdsConfig.adUnits.rewarded)
+      adManager.recordAdShow('rewarded')
+      return true
     } catch (error) {
       console.error('Failed to show rewarded ad:', error)
       setError('Failed to show ad')
@@ -92,10 +92,8 @@ export function useAds({ player, videoId }: UseAdsOptions = {}) {
         // Pause video
         await player.pause()
 
-        // Show ad
-        const adShown = await (type === 'preroll'
-          ? adService.showPreRollAd()
-          : adService.showMidRollAd())
+        // Show interstitial ad for video ads
+        const adShown = await showInterstitial()
 
         if (adShown) {
           // Resume video after ad

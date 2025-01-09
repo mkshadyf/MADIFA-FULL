@@ -1,34 +1,55 @@
-import type { ToastState } from '@/types'
+import type { ToastState, ToastType } from '@/types/toast'
 
-class ToastService implements ToastState {
-  private notify(type: 'success' | 'error' | 'info' | 'warning', message: string, options?: { duration?: number }): void {
-    // In a real implementation, this would use a UI toast library like react-hot-toast
-    const style = `
-      color: ${type === 'error' ? 'red' : type === 'warning' ? 'orange' : type === 'success' ? 'green' : 'blue'};
-      font-weight: bold;
-    `
-    console.log(`%c${type.toUpperCase()}: ${message}`, style)
+export class ToastService implements ToastState {
+  private static instance: ToastService
+  private currentId: string = ''
+  private currentType: ToastType = 'info'
+  private currentMessage: string = ''
+
+  private constructor() {
+    this.success = this.success.bind(this)
+    this.error = this.error.bind(this)
+    this.info = this.info.bind(this)
+    this.warning = this.warning.bind(this)
+    this.showToast = this.showToast.bind(this)
   }
 
-  showToast(message: string, type: 'success' | 'error' | 'info' | 'warning', options?: { duration?: number }): void {
-    this.notify(type, message, options)
+  static getInstance(): ToastService {
+    if (!ToastService.instance) {
+      ToastService.instance = new ToastService()
+    }
+    return ToastService.instance
   }
 
-  success(message: string, options?: { duration?: number }): void {
-    this.notify('success', message, options)
+  success(message: string): void {
+    this.show('success', message)
   }
 
-  error(message: string, options?: { duration?: number }): void {
-    this.notify('error', message, options)
+  error(message: string): void {
+    this.show('error', message)
   }
 
-  info(message: string, options?: { duration?: number }): void {
-    this.notify('info', message, options)
+  info(message: string): void {
+    this.show('info', message)
   }
 
-  warning(message: string, options?: { duration?: number }): void {
-    this.notify('warning', message, options)
+  warning(message: string): void {
+    this.show('warning', message)
+  }
+
+  showToast(message: string, type: ToastType): void {
+    this.show(type, message)
+  }
+
+  private show(type: ToastType, message: string): void {
+    this.currentId = crypto.randomUUID()
+    this.currentType = type
+    this.currentMessage = message
+  }
+
+  clear(): void {
+    this.currentId = ''
+    this.currentType = 'info'
+    this.currentMessage = ''
   }
 }
-
-export const toast = new ToastService() 

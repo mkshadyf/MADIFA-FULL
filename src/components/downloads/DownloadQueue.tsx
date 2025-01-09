@@ -1,58 +1,53 @@
-import { formatBytes } from '@/lib/utils/format'
-import { useDownloadQueue } from '@/hooks/useDownloadQueue'
+import { DownloadProgress } from './DownloadProgress'
 
-import { IconButton } from '../ui/button'
-import DownloadProgress from './DownloadProgress'
+interface DownloadQueueProps {
+  items: Array<{
+    id: string
+    progress: number
+    status: 'pending' | 'downloading' | 'completed' | 'error'
+  }>
+  onClearQueue?: () => void
+  onRemoveItem?: (id: string) => void
+}
 
-export default function DownloadQueue() {
-  const {
-    queueItems,
-    removeFromQueue,
-    pauseDownload,
-    resumeDownload,
-    clearQueue,
-  } = useDownloadQueue()
-
-  if (queueItems.length === 0) return null
+export function DownloadQueue({ items, onClearQueue, onRemoveItem }: DownloadQueueProps) {
+  if (items.length === 0) {
+    return (
+      <div className="text-center text-gray-500">
+        No downloads in queue
+      </div>
+    )
+  }
 
   return (
-    <div className="fixed bottom-0 right-0 max-h-[70vh] w-96 overflow-hidden rounded-tl-lg bg-gray-900 shadow-xl">
-      <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 p-4">
-        <h3 className="text-lg font-semibold text-white">Downloads</h3>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-400">
-            {queueItems.length} item{queueItems.length !== 1 ? 's' : ''}
-          </span>
-          <IconButton
-            label="x"
-            icon="x"
-            onClick={clearQueue}
-            className="text-gray-400 hover:text-white"
-          />
-        </div>
+    <div className="space-y-4">
+      <div className="flex justify-between">
+        <h2 className="text-lg font-semibold">Download Queue</h2>
+        {onClearQueue && (
+          <button
+            onClick={onClearQueue}
+            className="text-sm text-gray-600 hover:text-gray-500"
+          >
+            Clear Queue
+          </button>
+        )}
       </div>
-
-      <div className="max-h-[calc(70vh-4rem)] overflow-y-auto">
-        {queueItems.map(item => (
-          <div key={item.id} className="border-b border-gray-800 p-4">
-            <div className="mb-2 flex items-start justify-between">
-              <div className="mr-4 min-w-0 flex-1">
-                <h4 className="truncate text-sm font-medium text-white">
-                  {item.content.title}
-                </h4>
-                <p className="text-xs text-gray-400">
-                  {formatBytes(item.content.fileSize || 0)}
-                </p>
-              </div>
-              <IconButton
-                label="Remove"
-                icon="trash"
-                onClick={() => removeFromQueue(item.id)}
-                className="text-gray-400 hover:text-red-500"
-              />
-            </div>
-
-            <DownloadProgress contentId={item.id} />
+      <div className="space-y-2">
+        {items.map(item => (
+          <div key={item.id} className="relative">
+            <DownloadProgress
+              contentId={item.id}
+              progress={item.progress}
+              status={item.status}
+            />
+            {onRemoveItem && (
+              <button
+                onClick={() => onRemoveItem(item.id)}
+                className="absolute right-2 top-2 text-sm text-gray-600 hover:text-gray-500"
+              >
+                Remove
+              </button>
+            )}
           </div>
         ))}
       </div>

@@ -1,3 +1,4 @@
+import type { FormEvent } from 'react'
 import { useCallback, useState } from 'react'
 import { z } from 'zod'
 
@@ -23,7 +24,7 @@ export function useForm<T extends Record<string, any>>({
   }, [])
 
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault()
       setIsSubmitting(true)
 

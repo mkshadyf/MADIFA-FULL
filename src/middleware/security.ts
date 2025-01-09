@@ -18,9 +18,9 @@ export const securityHeaders = helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", process.env.VITE_SUPABASE_URL].filter(
-        Boolean
-      ) as ContentSecurityPolicyDirective[],
+      connectSrc: process.env.VITE_SUPABASE_URL
+        ? ["'self'", process.env.VITE_SUPABASE_URL]
+        : ["'self'"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
     },
@@ -59,7 +59,8 @@ export const csrfProtection = (
 
 // Input Sanitization
 export const sanitizeInput = (input: string): string => {
-  return xss()
+  // xss-clean is middleware, we'll use a simple sanitizer for strings
+  return input.replace(/[<>]/g, '')
 }
 
 // Apply all security middleware

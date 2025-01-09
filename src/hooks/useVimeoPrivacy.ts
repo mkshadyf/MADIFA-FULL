@@ -12,7 +12,7 @@ export function useVimeoPrivacy() {
         view: makePublic ? 'anybody' : 'disable',
         embed: makePublic ? 'public' : 'private',
         download: false,
-        comments: 'nobody'
+        comments: 'nobody',
       }
       await updateVideoPrivacy(videoId, privacy)
     } catch (error) {

@@ -1,26 +1,54 @@
 import { vimeoService } from '@/lib/services/vimeo'
 import { createClient } from '@/lib/supabase/client'
-import type { Content } from '@/types/content'
 import type { VimeoVideo } from '@/types/vimeo'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useAuth } from './useAuth'
+import type { Content } from '@/types'
 
-const mapVimeoVideoToContent = (video: VimeoVideo): Content => ({
-  id: video.uri.split('/').pop() || '',
-  title: video.name,
-  description: video.description,
-  thumbnail_url: video.pictures?.base_link || null,
-  duration: video.duration,
-  size: video.size,
-  category: video.categories?.[0]?.name || '',
-  tags: [],
-  release_year: new Date(video.created_time).getFullYear(),
-  status: video.status === 'available' ? 'ready' : 'processing',
-  created_at: video.created_time,
-  updated_at: video.modified_time,
-  video_url: null
-})
+const mapVimeoVideoToContent = (video: VimeoVideo): Content => {
+  const fileSize = video.files?.[0]?.size || 0
+  const categoryName = video.metadata?.connections?.categories?.data?.[0]?.name || 'Uncategorized'
+
+  return {
+    id: video.uri.split('/').pop() || '',
+    title: video.name,
+    description: video.description,
+    thumbnail_url: video.pictures?.base_link,
+    preview_url: video.pictures?.base_link,
+    video_url: video.files?.[0]?.link,
+    duration: video.duration,
+    category_id: '1', // Default category ID
+    created_at: video.created_time,
+    updated_at: video.modified_time,
+    views: video.stats?.plays || 0,
+    rating: null,
+    size: fileSize,
+    category: categoryName,
+    tags: [],
+    fileSize: fileSize,
+    owner_id: '1', // Default owner ID
+    content_type: 'video',
+    vimeo_id: video.uri.split('/').pop() || '',
+    status: video.status === 'available' ? 'ready' : 'processing',
+    type: 'video',
+    visibility: video.privacy.view === 'anybody' ? 'public' : 'private',
+    release_year: new Date(video.created_time).getFullYear(),
+    metadata: {
+      width: video.width,
+      height: video.height,
+      duration: video.duration,
+      files: video.files?.map(file => ({
+        quality: file.quality,
+        type: file.type,
+        width: file.width,
+        height: file.height,
+        link: file.link,
+        size: file.size || 0
+      })) || []
+    }
+  }
+}
 
 export function useContent() {
   const { data, error, isLoading } = useQuery<Content[]>({
@@ -32,7 +60,7 @@ export function useContent() {
       }
       const data = await response.json()
       return Array.isArray(data) ? data : []
-    }
+    },
   })
 
   return {
@@ -46,10 +74,11 @@ export function useSearch(query: string) {
   return useQuery<Content[]>({
     queryKey: ['search', query],
     queryFn: async () => {
-      const videos = await vimeoService.getVideos({ page: 1, per_page: 20 })
-      const filteredVideos = videos.filter(video =>
-        video.name.toLowerCase().includes(query.toLowerCase()) ||
-        (video.description?.toLowerCase().includes(query.toLowerCase()))
+      const videos = await vimeoService.getVideos()
+      const filteredVideos = videos.filter(
+        video =>
+          video.name.toLowerCase().includes(query.toLowerCase()) ||
+          video.description?.toLowerCase().includes(query.toLowerCase())
       )
       return filteredVideos.map(mapVimeoVideoToContent)
     },

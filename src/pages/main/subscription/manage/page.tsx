@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import { useAuth } from '@/providers/AuthProvider'
+import { useEffect, useState } from 'react'
 
 import { subscriptionService } from '@/lib/services/subscription'
 import { createClient } from '@/lib/supabase/client'
@@ -50,10 +50,7 @@ export default function ManageSubscription() {
 
     try {
       await subscriptionService.cancelSubscription(subscription.id)
-      setSubscription(  prev =>
-        prev
-
-      )
+      setSubscription(prev => prev)
       setMessage('Subscription cancelled successfully')
     } catch (error) {
       console.error('Error cancelling subscription:', error)
@@ -123,9 +120,7 @@ export default function ManageSubscription() {
                 <div>
                   <p className="text-sm font-medium">Current Period End</p>
                   <p className="text-lg">
-                    {new Date(
-                      subscription.billing_period
-                    ).toLocaleDateString()}
+                    {subscription.billing_period ? new Date(subscription.billing_period).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -144,8 +139,7 @@ export default function ManageSubscription() {
             ) : null}
 
             <div>
-              {subscription.status === 'active' &&
-              !subscription.end_date ? (
+              {subscription.status === 'active' && !subscription.end_date ? (
                 <button
                   type="button"
                   onClick={handleCancelSubscription}
@@ -154,7 +148,7 @@ export default function ManageSubscription() {
                 >
                   {actionLoading ? 'Processing...' : 'Cancel Subscription'}
                 </button>
-              ) : subscription.status === 'inactive' ||
+              ) : subscription.status === 'unpaid' ||
                 subscription.end_date ? (
                 <button
                   type="button"

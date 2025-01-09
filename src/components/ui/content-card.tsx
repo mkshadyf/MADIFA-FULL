@@ -1,12 +1,7 @@
-import React from 'react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
-import type { Database } from '@/lib/database.types'
-
+import type { Content } from '@/types/content'
 import VideoDetailsModal from './video-details-modal'
-
-type Content = Database['public']['Tables']['content']['Row']
 
 interface ContentCardProps {
   content: Content
@@ -20,11 +15,6 @@ export default function ContentCard({
   priority = false,
 }: ContentCardProps) {
   const [showDetails, setShowDetails] = useState(false)
-  const navigate = useNavigate()
-
-  const handlePlay = () => {
-    navigate(`/watch/${content.id}`)
-  }
 
   return (
     <>
@@ -52,13 +42,11 @@ export default function ContentCard({
         </div>
       </div>
 
-      {showDetails ? (
-        <VideoDetailsModal
-          content={content}
-          onClose={() => setShowDetails(false)}
-          onPlay={handlePlay}
-        />
-      ) : null}
+      <VideoDetailsModal
+        content={content}
+        isOpen={showDetails}
+        onClose={() => setShowDetails(false)}
+      />
     </>
   )
 }

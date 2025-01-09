@@ -87,3 +87,53 @@ export interface GeoData {
   id: string
   value: number
 }
+
+export interface SubscriptionAnalyticsItem {
+  date: string
+  total_subscribers: number
+  new_subscribers: number
+  churned_subscribers: number
+  total_trials: number
+  revenue: number
+  tier_distribution: Record<string, number>
+}
+
+export interface SubscriptionAnalytics {
+  data: SubscriptionAnalyticsItem[]
+  metrics: SubscriptionMetrics
+}
+
+export interface SubscriptionMetrics {
+  totalSubscribers: number
+  totalRevenue: number
+  averageRevenue: number
+  churnRate: number
+  conversionRate: number
+}
+
+export interface SubscriptionTrend {
+  period: string
+  growth_rate: number
+  churn_rate: number
+  revenue_growth: number
+}
+
+export interface RevenueTier {
+  date: string
+  tier: string
+  revenue: number
+  subscribers: number
+}
+
+export interface AnalyticsFilter {
+  startDate?: string
+  endDate?: string
+  tier?: string
+  interval?: 'day' | 'week' | 'month'
+}
+
+export interface AnalyticsError {
+  code: string
+  message: string
+  details?: unknown
+}

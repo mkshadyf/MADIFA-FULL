@@ -24,6 +24,6 @@ export function useToast(): ToastState {
     error: (message: string) => showToast(message, 'error'),
     info: (message: string) => showToast(message, 'info'),
     warning: (message: string) => showToast(message, 'warning'),
-    showToast
+    showToast,
   }
 }

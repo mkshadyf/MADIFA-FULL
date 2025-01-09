@@ -57,7 +57,8 @@ export async function GET(): Promise<Response> {
     })
   } catch (error) {
     console.error('Error fetching Vimeo analytics:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch analytics'
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to fetch analytics'
 
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,

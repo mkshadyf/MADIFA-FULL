@@ -161,7 +161,9 @@ export async function getSearchSuggestions(query: string): Promise<string[]> {
   }
 
   try {
-    const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}`)
+    const response = await fetch(
+      `/api/search/suggestions?q=${encodeURIComponent(query)}`
+    )
     if (!response.ok) {
       throw new Error('Failed to fetch search suggestions')
     }

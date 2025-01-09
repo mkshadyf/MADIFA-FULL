@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react'
 import { z } from 'zod'
-
 import { useErrorHandler } from './useErrorHandler'
 
 interface ValidationOptions<T> {

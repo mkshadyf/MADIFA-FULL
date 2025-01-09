@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
 import type { Content } from '@/types'
+import { useState } from 'react'
 
 import { useAuth } from '@/hooks/useAuth'
 import { useDownloadQueue } from '@/hooks/useDownloadQueue'
 import { useToast } from '@/hooks/useToast'
 
-import { IconButton } from '../ui/button'
+import { IconButton } from '@/components/ui'
 
 interface DownloadButtonProps {
   content: Content
@@ -14,12 +14,10 @@ interface DownloadButtonProps {
 }
 
 export default function DownloadButton({
-  content,
-  priority = 0,
   className = '',
 }: DownloadButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const { addToQueue } = useDownloadQueue()
+  useDownloadQueue()
   const { user } = useAuth()
   const { showToast } = useToast()
 
@@ -31,7 +29,7 @@ export default function DownloadButton({
 
     try {
       setIsLoading(true)
-      await addToQueue(content, priority)
+      //await addToQueue(content)
     } catch (error) {
       console.error('Failed to start download:', error)
       showToast(

@@ -1,12 +1,11 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
-
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/types/content'
-import ContentGrid from '@/components/ui/content-grid'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+
 import CategorySlider from '@/components/content/category-slider'
-import FeaturedContent from '@/components/content/featured-content'
+import FeaturedContent from '@/components/content/Featured/FeaturedContent'
+import ContentGrid from '@/components/content/Grid'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useEffect, useState } from 'react'
 
 export default function BrowsePage() {
   const [featured, setFeatured] = useState<Content | null>(null)

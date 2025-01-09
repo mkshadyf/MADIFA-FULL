@@ -1,60 +1,107 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import { useAuth } from '@/providers/AuthProvider'
+import { Navigate, useParams } from 'react-router-dom'
 
-import type { VimeoVideo } from '@/types/vimeo'
-import { vimeoService } from '@/lib/services/vimeo'
-import { getWatchHistory } from '@/lib/services/watch-history'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import VimeoPlayer from '@/components/ui/vimeo-player'
+import VideoPlayer from '@/components/video/VideoPlayer'
+import { useAuth } from '@/hooks/useAuth'
+import { watchHistoryService } from '@/lib/services/watch-history'
+import { createClient } from '@/lib/supabase/client'
+import type { Content } from '@/types/content'
 
 export default function WatchPage() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
-  const [video, setVideo] = useState<VimeoVideo | null>(null)
+  const [content, setContent] = useState<Content | null>(null)
   const [startTime, setStartTime] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Redirect if no ID is provided
+  if (!id) {
+    return <Navigate to="/browse" replace />
+  }
 
   useEffect(() => {
-    const loadVideo = async () => {
+    const loadContent = async () => {
       try {
-        // Get video details from Vimeo
-        const videoDetails = (await vimeoService.getVideoDetails(
-          id as string
-        )) as VimeoVideo
-        setVideo(videoDetails as VimeoVideo)
+        // Get content details from Supabase
+        const supabase = createClient()
+        const { data, error: contentError } = await supabase
+          .from('content')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (contentError) throw contentError
+        if (!data) throw new Error('Content not found')
+
+        setContent(data)
 
         // Get watch progress if user is logged in
         if (user?.id) {
-          const history = await getWatchHistory(user.id, 1)
+          const history = await watchHistoryService.getWatchHistory(user.id, 1)
           const lastWatch = history.find(h => h.vimeo_id === id)
           if (lastWatch) {
-            setStartTime(lastWatch.progress * videoDetails.duration)
+            setStartTime(lastWatch.progress)
           }
         }
       } catch (error) {
-        console.error('Error loading video:', error)
+        console.error('Error loading content:', error)
+        setError(
+          error instanceof Error ? error.message : 'Failed to load content'
+        )
       } finally {
         setLoading(false)
       }
     }
 
-    void loadVideo()
+    void loadContent()
   }, [id, user?.id])
 
-  if (loading) return <LoadingSpinner />
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
+  }
 
-  if (!video) return <div>Video not found</div>
+  if (error || !content) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="text-center text-red-500">
+            {error || 'Content not found'}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-900">
       <main>
-        <VimeoPlayer videoId={id as string} startTime={startTime} />
+        <VideoPlayer
+          content={content}
+          startTime={startTime}
+          onProgress={progress => {
+            // Update watch history
+            if (user?.id) {
+              void watchHistoryService.updateWatchProgress(
+                user.id,
+                id,
+                progress
+              )
+            }
+          }}
+        />
         <div className="mx-auto max-w-7xl px-4 py-6">
-          <h1 className="mb-2 text-2xl font-bold text-white">{video.name}</h1>
-          <p className="text-gray-400">{video.description}</p>
+          <h1 className="mb-2 text-2xl font-bold text-white">
+            {content.title}
+          </h1>
+          <p className="text-gray-400">{content.description}</p>
         </div>
       </main>
     </div>

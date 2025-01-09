@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
+import CategoryNavigation from '@/components/content/Browser/Navigation'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/lib/supabase/types'
 import type { Category } from '@/types/content'
-import CategoryNavigation from '@/components/ui/category-navigation'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useNavigate } from 'react-router-dom'
 
 interface CategoryPageProps {

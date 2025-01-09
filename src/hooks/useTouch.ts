@@ -1,13 +1,13 @@
+import type { TouchEvent } from 'react'
 import { useCallback, useRef, useState } from 'react'
+
+type SwipeDirection = 'left' | 'right' | 'up' | 'down'
 
 interface UseTouchOptions {
   onTap?: () => void
   onDoubleTap?: () => void
   onLongPress?: () => void
-  onSwipe?: (
-    direction: 'left' | 'right' | 'up' | 'down',
-    distance: number
-  ) => void
+  onSwipe?: (direction: SwipeDirection, distance: number) => void
   longPressDelay?: number
   doubleTapDelay?: number
   swipeThreshold?: number
@@ -19,6 +19,12 @@ interface TouchPosition {
   time: number
 }
 
+interface UseTouchResult {
+  onTouchStart: (e: TouchEvent) => void
+  onTouchMove: (e: TouchEvent) => void
+  onTouchEnd: (e: TouchEvent) => void
+}
+
 export function useTouch({
   onTap,
   onDoubleTap,
@@ -27,103 +33,92 @@ export function useTouch({
   longPressDelay = 500,
   doubleTapDelay = 300,
   swipeThreshold = 50,
-}: UseTouchOptions) {
-  const [isLongPressing, setIsLongPressing] = useState(false)
-  const touchStart = useRef<TouchPosition | null>(null)
-  const lastTap = useRef<number>(0)
+}: UseTouchOptions = {}): UseTouchResult {
+  const [touchStart, setTouchStart] = useState<TouchPosition | null>(null)
+  const [lastTap, setLastTap] = useState<number>(0)
   const longPressTimer = useRef<NodeJS.Timeout>()
 
   const handleTouchStart = useCallback(
-    (event: React.TouchEvent) => {
-      const touch = event.touches[0]
-      touchStart.current = {
+    (e: TouchEvent) => {
+      const touch = e.touches[0]
+      const position: TouchPosition = {
         x: touch.clientX,
         y: touch.clientY,
         time: Date.now(),
       }
+      setTouchStart(position)
 
-      longPressTimer.current = setTimeout(() => {
-        setIsLongPressing(true)
-        onLongPress?.()
-      }, longPressDelay)
+      if (onLongPress) {
+        longPressTimer.current = setTimeout(() => {
+          onLongPress()
+        }, longPressDelay)
+      }
     },
-    [longPressDelay, onLongPress]
+    [onLongPress, longPressDelay]
   )
 
-  const handleTouchEnd = useCallback(
-    (event: React.TouchEvent) => {
-      if (!touchStart.current) return
-
-      clearTimeout(longPressTimer.current)
-
-      if (isLongPressing) {
-        setIsLongPressing(false)
-        return
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current)
       }
 
-      const touch = event.changedTouches[0]
-      const deltaX = touch.clientX - touchStart.current.x
-      const deltaY = touch.clientY - touchStart.current.y
-      const deltaTime = Date.now() - touchStart.current.time
+      if (!touchStart || !onSwipe) return
 
-      // Handle swipe
-      if (
-        Math.abs(deltaX) > swipeThreshold ||
-        Math.abs(deltaY) > swipeThreshold
-      ) {
-        const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY)
-        if (isHorizontal) {
-          onSwipe?.(deltaX > 0 ? 'right' : 'left', Math.abs(deltaX))
-        } else {
-          onSwipe?.(deltaY > 0 ? 'down' : 'up', Math.abs(deltaY))
-        }
-      }
-      // Handle tap/double tap
-      else if (deltaTime < 300) {
-        const currentTime = Date.now()
-        const tapLength = currentTime - lastTap.current
+      const touch = e.touches[0]
+      const deltaX = touch.clientX - touchStart.x
+      const deltaY = touch.clientY - touchStart.y
+      const absX = Math.abs(deltaX)
+      const absY = Math.abs(deltaY)
 
-        if (tapLength < doubleTapDelay && tapLength > 0) {
-          onDoubleTap?.()
+      if (absX > swipeThreshold || absY > swipeThreshold) {
+        let direction: SwipeDirection
+        let distance: number
+
+        if (absX > absY) {
+          direction = deltaX > 0 ? 'right' : 'left'
+          distance = absX
         } else {
-          onTap?.()
+          direction = deltaY > 0 ? 'down' : 'up'
+          distance = absY
         }
 
-        lastTap.current = currentTime
+        onSwipe(direction, distance)
+        setTouchStart(null)
       }
-
-      touchStart.current = null
     },
-    [
-      doubleTapDelay,
-      isLongPressing,
-      onDoubleTap,
-      onSwipe,
-      onTap,
-      swipeThreshold,
-    ]
+    [touchStart, onSwipe, swipeThreshold]
   )
 
-  const handleTouchMove = useCallback((event: React.TouchEvent) => {
-    if (!touchStart.current) return
-
-    const touch = event.touches[0]
-    const deltaX = touch.clientX - touchStart.current.x
-    const deltaY = touch.clientY - touchStart.current.y
-
-    // Cancel long press if moved too far
-    if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
       clearTimeout(longPressTimer.current)
-      setIsLongPressing(false)
     }
-  }, [])
+
+    if (!touchStart) return
+
+    const touchEnd = Date.now()
+    const timeDiff = touchEnd - touchStart.time
+
+    if (timeDiff < 300) {
+      const currentTime = Date.now()
+      const tapTimeDiff = currentTime - lastTap
+
+      if (onDoubleTap && tapTimeDiff < doubleTapDelay) {
+        onDoubleTap()
+        setLastTap(0)
+      } else {
+        if (onTap) onTap()
+        setLastTap(currentTime)
+      }
+    }
+
+    setTouchStart(null)
+  }, [touchStart, lastTap, onTap, onDoubleTap, doubleTapDelay])
 
   return {
-    isLongPressing,
-    bind: {
-      onTouchStart: handleTouchStart,
-      onTouchMove: handleTouchMove,
-      onTouchEnd: handleTouchEnd,
-    },
+    onTouchStart: handleTouchStart,
+    onTouchMove: handleTouchMove,
+    onTouchEnd: handleTouchEnd,
   }
 }

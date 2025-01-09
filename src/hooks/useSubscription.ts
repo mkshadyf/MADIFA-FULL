@@ -1,57 +1,104 @@
-import type { SubscriptionService } from '@/lib/services/subscription'
-import type { PaymentMethod, Subscription } from '@/types'
-import { useCallback } from 'react'
-import { useToast } from './useToast'
+import { subscriptionService } from '@/lib/services/subscription'
+import type { SubscriptionPlan, UserSubscription } from '@/types/subscription'
+import { useEffect, useState } from 'react'
+import { useAuth } from './useAuth'
 
-export function useSubscription(subscriptionService: SubscriptionService) {
-  const toast = useToast()
+export function useSubscription() {
+  const { user } = useAuth()
+  const [subscription, setSubscription] = useState<UserSubscription | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
-  const createSubscription = useCallback(async (userId: string, planId: string, paymentMethod: PaymentMethod) => {
-    try {
-      const subscription = await subscriptionService.createSubscription(userId, planId, paymentMethod)
-      toast.success('Subscription created successfully')
-      return subscription
-    } catch (error) {
-      toast.error('Failed to create subscription')
-      throw error
+  useEffect(() => {
+    if (user?.id) {
+      void loadSubscription()
     }
-  }, [subscriptionService, toast])
+  }, [user])
 
-  const updateSubscription = useCallback(async (userId: string, subscription: Partial<Subscription>) => {
+  const loadSubscription = async () => {
     try {
-      const updated = await subscriptionService.updateSubscription(userId, subscription)
-      toast.success('Subscription updated successfully')
-      return updated
-    } catch (error) {
-      toast.error('Failed to update subscription')
-      throw error
+      setIsLoading(true)
+      const data = await subscriptionService.getCurrentSubscription(user!.id)
+      setSubscription(data)
+    } catch (err) {
+      setError(
+        err instanceof Error ? err : new Error('Failed to load subscription')
+      )
+    } finally {
+      setIsLoading(false)
     }
-  }, [subscriptionService, toast])
+  }
 
-  const cancelSubscription = useCallback(async (userId: string) => {
+  const getSubscriptionTiers = async (): Promise<SubscriptionPlan[]> => {
     try {
-      await subscriptionService.cancelSubscription(userId)
-      toast.success('Subscription cancelled successfully')
-    } catch (error) {
-      toast.error('Failed to cancel subscription')
-      throw error
+      return await subscriptionService.getSubscriptionTiers()
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err
+          : new Error('Failed to load subscription tiers')
+      )
+      return []
     }
-  }, [subscriptionService, toast])
+  }
+
+  const createSubscription = async (plan: SubscriptionPlan) => {
+    try {
+      setIsLoading(true)
+      await subscriptionService.createSubscription(user!.id, plan)
+      await loadSubscription()
+    } catch (err) {
+      setError(
+        err instanceof Error ? err : new Error('Failed to create subscription')
+      )
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const cancelSubscription = async () => {
+    if (!subscription) return
+
+    try {
+      setIsLoading(true)
+      await subscriptionService.cancelSubscription(subscription.stripe_subscription_id)
+      await loadSubscription()
+    } catch (err) {
+      setError(
+        err instanceof Error ? err : new Error('Failed to cancel subscription')
+      )
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const updateSubscription = async (updates: Partial<UserSubscription>) => {
+    if (!subscription) return
+
+    try {
+      setIsLoading(true)
+      await subscriptionService.updateSubscription(subscription.stripe_subscription_id, updates)
+      await loadSubscription()
+    } catch (err) {
+      setError(
+        err instanceof Error ? err : new Error('Failed to update subscription')
+      )
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return {
+    subscription,
+    isLoading,
+    error,
+    getSubscriptionTiers,
     createSubscription,
-    updateSubscription,
     cancelSubscription,
-    getPlans: subscriptionService.getPlans,
-    getCurrentSubscription: subscriptionService.getCurrentSubscription,
-    getSubscriptionStatus: subscriptionService.getSubscriptionStatus,
-    getUsage: subscriptionService.getUsage,
-    getSubscriptionTiers: subscriptionService.getSubscriptionTiers,
-    getInvoices: subscriptionService.getInvoices,
-    downloadInvoice: subscriptionService.downloadInvoice,
-    getPaymentMethods: subscriptionService.getPaymentMethods,
-    setDefaultPaymentMethod: subscriptionService.setDefaultPaymentMethod,
-    deletePaymentMethod: subscriptionService.deletePaymentMethod,
-    checkAccess: subscriptionService.checkAccess
+    updateSubscription,
+    refresh: loadSubscription,
   }
 }

@@ -1,19 +1,18 @@
-import React from 'react'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/providers/AuthProvider'
 import { useNavigate } from 'react-router-dom'
 
-import { onboardingService, OPTIONAL_STEPS } from '@/lib/services/onboarding'
-import type { OnboardingState } from '@/lib/services/onboarding'
-import { subscriptionService } from '@/lib/services/subscription'
-import type { SubscriptionTier } from '@/types/subscription'
-import { useToast } from '@/hooks/useToast'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useToast } from '@/hooks/useToast'
+import type { OnboardingState } from '@/lib/services/onboarding'
+import { onboardingService, OPTIONAL_STEPS } from '@/lib/services/onboarding'
+import { subscriptionService } from '@/lib/services/subscription'
+import type { SubscriptionPlan } from '@/types/subscription'
 
+import { useAuth } from '@/hooks/useAuth'
 import OnboardingNavigation from './OnboardingNavigation'
 import OnboardingProgress from './OnboardingProgress'
 import EmailVerificationStep from './steps/EmailVerificationStep'
-import PaymentStep from './steps/PaymentStep'
+import { PaymentStep } from './steps/PaymentStep'
 import PlanSelectionStep from './steps/PlanSelectionStep'
 import ProfileCompletionStep from './steps/ProfileCompletionStep'
 import WelcomeStep from './steps/WelcomeStep'
@@ -25,12 +24,6 @@ const steps = [
   'email-verification',
   'profile-completion',
 ] as const
-
-interface StepProps {
-  onNext: (data: Partial<OnboardingState>) => Promise<void>
-  onBack?: () => void
-  data: Partial<OnboardingState>
-}
 
 export default function OnboardingFlow() {
   const { user } = useAuth()
@@ -99,7 +92,7 @@ export default function OnboardingFlow() {
         setIsLoading(true)
         const plans = await subscriptionService.getSubscriptionTiers()
         const selectedPlan = plans.find(
-          ( p: SubscriptionTier) => p.id === data.planId
+          (p: SubscriptionPlan) => p.id === data.planId
         )
 
         if (!selectedPlan) {
@@ -186,14 +179,14 @@ export default function OnboardingFlow() {
 
         {currentStep === 'welcome' && (
           <WelcomeStep
-            onNext={data => handleStepCompletion(data)}
+            onNext={handleStepCompletion}
             data={onboardingData}
           />
         )}
 
         {currentStep === 'plan-selection' && (
           <PlanSelectionStep
-            onNext={data => handleStepCompletion(data)}
+            onNext={handleStepCompletion}
             onBack={handleBack}
             data={onboardingData}
           />
@@ -201,7 +194,7 @@ export default function OnboardingFlow() {
 
         {currentStep === 'payment' && (
           <PaymentStep
-            onNext={data => handleStepCompletion(data)}
+            onNext={handleStepCompletion}
             onBack={handleBack}
             data={onboardingData}
           />
@@ -209,7 +202,7 @@ export default function OnboardingFlow() {
 
         {currentStep === 'email-verification' && (
           <EmailVerificationStep
-            onNext={data => handleStepCompletion(data)}
+            onNext={handleStepCompletion}
             onBack={handleBack}
             data={onboardingData}
           />
@@ -217,7 +210,7 @@ export default function OnboardingFlow() {
 
         {currentStep === 'profile-completion' && (
           <ProfileCompletionStep
-            onNext={data => handleStepCompletion(data)}
+            onNext={handleStepCompletion}
             onBack={handleBack}
             data={onboardingData}
           />

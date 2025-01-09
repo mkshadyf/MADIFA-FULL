@@ -1,7 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { getRecommendations } from '@/lib/services/recommendations'
-import type { Content } from '@/lib/supabase/types'
+import type { Content } from '@/types/content'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from './useAuth'
 
 interface UseRecommendationsProps {
@@ -23,13 +22,18 @@ export function useRecommendations({
       if (!user) return []
 
       try {
-        if (contentId) {
-          // Get similar content if viewing specific content
-          return await getRecommendations(contentId, limit)
-        } else {
-          // Get personalized recommendations
-          return await getRecommendations(user.id, limit)
-        }
+        const recommendations = contentId
+          ? await getRecommendations(contentId, limit)
+          : await getRecommendations(user.id, limit)
+
+        return recommendations.map(item => ({
+          ...item,
+          category_id: item.category_id || '',
+          category: item.category || '',
+          fileSize: item.size || 0,
+          type: item.content_type,
+          owner_id: item.owner_id || '',
+        })) as Content[]
       } catch (error) {
         console.error('Error fetching recommendations:', error)
         throw error

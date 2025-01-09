@@ -1,10 +1,15 @@
 import type { Content } from '@/types'
 
 export class QuotaEnforcementMiddleware {
-  static async enforceQuotaBeforeDownload(userId: string, content: Content): Promise<void> {
+  static async enforceQuotaBeforeDownload(
+    userId: string,
+    content: Content
+  ): Promise<void> {
     const remainingSpace = await this.getRemainingQuota(userId)
     if (content.size && content.size > remainingSpace) {
-      throw new Error(`Not enough storage space. Required: ${content.size}, Available: ${remainingSpace}`)
+      throw new Error(
+        `Not enough storage space. Required: ${content.size}, Available: ${remainingSpace}`
+      )
     }
   }
 

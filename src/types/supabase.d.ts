@@ -17,8 +17,16 @@ export interface Database {
     Tables: {
       users: {
         Row: User
-        Insert: Omit<User, 'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'>
-        Update: Partial<Omit<User, 'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'>>
+        Insert: Omit<
+          User,
+          'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'
+        >
+        Update: Partial<
+          Omit<
+            User,
+            'id' | 'created_at' | 'email_verified' | 'sendEmailVerification'
+          >
+        >
       }
       user_profiles: {
         Row: UserProfile
@@ -52,8 +60,21 @@ export interface Database {
           video_id: string
           created_at: string
         }
-        Insert: Omit<{ id: string; user_id: string; video_id: string; created_at: string }, 'id' | 'created_at'>
-        Update: Partial<Omit<{ id: string; user_id: string; video_id: string; created_at: string }, 'id' | 'created_at'>>
+        Insert: Omit<
+          { id: string; user_id: string; video_id: string; created_at: string },
+          'id' | 'created_at'
+        >
+        Update: Partial<
+          Omit<
+            {
+              id: string
+              user_id: string
+              video_id: string
+              created_at: string
+            },
+            'id' | 'created_at'
+          >
+        >
       }
     }
     Views: {

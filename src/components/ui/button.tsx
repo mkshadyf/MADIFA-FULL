@@ -1,115 +1,104 @@
-import { type ButtonHTMLAttributes, type FC, type ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
+import React from 'react'
+import { Icon } from './Icon'
 
-import { LoadingSpinner } from './LoadingSpinner'
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link'
   size?: 'sm' | 'md' | 'lg'
   isLoading?: boolean
-  loadingText?: string
+  leftIcon?: React.ReactNode
+  rightIcon?: React.ReactNode
   fullWidth?: boolean
-  icon?: ReactNode
-  iconPosition?: 'left' | 'right'
 }
 
-export const Button: FC<ButtonProps> = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  loadingText,
-  fullWidth = false,
-  icon,
-  iconPosition = 'left',
-  className = '',
-  disabled,
-  ...props
-}): JSX.Element => {
-  const baseStyles = cn(
-    'inline-flex items-center justify-center rounded-md font-medium transition-colors',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
-    'disabled:pointer-events-none disabled:opacity-50'
-  )
-
-  const variantStyles = {
-    primary:
-      'bg-primary text-white hover:bg-primary/90 focus-visible:ring-primary/50',
-    secondary:
-      'bg-secondary text-white hover:bg-secondary/90 focus-visible:ring-secondary/50',
-    outline:
-      'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus-visible:ring-gray-500/50',
-    ghost:
-      'text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-500/50',
-    link: 'text-primary underline-offset-4 hover:underline focus-visible:ring-primary/50',
-  }
-
-  const sizeStyles = {
-    sm: 'h-8 px-3 text-xs',
-    md: 'h-10 px-4 py-2',
-    lg: 'h-12 px-6 text-lg',
-  }
-
-  const classes = cn(
-    baseStyles,
-    variantStyles[variant],
-    sizeStyles[size],
-    fullWidth && 'w-full',
-    className
-  )
-
-  return (
-    <button className={classes} disabled={isLoading || disabled} {...props}>
-      {isLoading ? (
-        <>
-          <LoadingSpinner size="sm" variant="white" className="mr-2" />
-          <span>{loadingText || children}</span>
-        </>
-      ) : (
-        <>
-          {icon && iconPosition === 'left' ? (
-            <span className="mr-2">{icon}</span>
-          ) : null}
-          {children}
-          {icon && iconPosition === 'right' ? (
-            <span className="ml-2">{icon}</span>
-          ) : null}
-        </>
-      )}
-    </button>
-  )
-}
-
-interface IconButtonProps extends Omit<ButtonProps, 'icon' | 'iconPosition'> {
-  icon: ReactNode
+export interface IconButtonProps
+  extends Omit<ButtonProps, 'leftIcon' | 'rightIcon'> {
+  icon: string
   label: string
 }
 
-export const IconButton: FC<IconButtonProps> = ({
-  icon,
-  label,
-  variant = 'ghost',
-  size = 'sm',
-  className = '',
-  ...props
-}): JSX.Element => {
-  const sizeClasses = {
-    sm: 'h-8 w-8',
-    md: 'h-10 w-10',
-    lg: 'h-12 w-12',
+export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
+  (
+    { className, icon, label, variant = 'ghost', size = 'md', ...props },
+    ref
+  ) => {
+    return (
+      <Button
+        ref={ref}
+        variant={variant}
+        size={size}
+        className={cn('p-2', className)}
+        aria-label={label}
+        {...props}
+      >
+        <Icon name={icon} className="h-5 w-5" aria-hidden="true" />
+      </Button>
+    )
   }
+)
 
-  return (
-    <Button
-      variant={variant}
-      size={size}
-      className={cn('p-0', sizeClasses[size], className)}
-      aria-label={label}
-      {...props}
-    >
-      {icon}
-    </Button>
-  )
-}
+IconButton.displayName = 'IconButton'
 
-export default Button
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant = 'primary',
+      size = 'md',
+      isLoading = false,
+      leftIcon,
+      rightIcon,
+      fullWidth = false,
+      children,
+      disabled,
+      type = 'button',
+      ...props
+    },
+    ref
+  ) => {
+    const baseStyles =
+      'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+
+    const variants = {
+      primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+      outline:
+        'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+      ghost: 'hover:bg-accent hover:text-accent-foreground',
+      link: 'text-primary underline-offset-4 hover:underline',
+    }
+
+    const sizes = {
+      sm: 'h-9 px-3 text-sm',
+      md: 'h-10 px-4 py-2',
+      lg: 'h-11 px-8',
+    }
+
+    return (
+      <button
+        ref={ref}
+        type={type}
+        disabled={disabled || isLoading}
+        className={cn(
+          baseStyles,
+          variants[variant],
+          sizes[size],
+          fullWidth && 'w-full',
+          className
+        )}
+        {...props}
+      >
+        {isLoading ? (
+          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        ) : leftIcon ? (
+          <span className="mr-2">{leftIcon}</span>
+        ) : null}
+        {children}
+        {rightIcon && !isLoading && <span className="ml-2">{rightIcon}</span>}
+      </button>
+    )
+  }
+)
+
+Button.displayName = 'Button'

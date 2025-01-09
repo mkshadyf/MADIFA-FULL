@@ -1,9 +1,9 @@
 import React from 'react'
-import type { UserProfile } from '@/types'
+
 import { useNavigate } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/useAuth'
-import { AppLovin } from '@/lib/services/applovin'
+import { AppLovin } from '@/lib/services/ads/providers/applovin'
 
 const plans = [
   {

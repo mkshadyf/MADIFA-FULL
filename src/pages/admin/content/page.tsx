@@ -1,16 +1,14 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
-import fetchMetrics from './manage/page'
-import { createClient } from '@/lib/supabase/client'
+import { LoadingSpinner } from '@/components/ui'
 import type { Database } from '@/lib/database.types'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 
 type Content = Database['public']['Tables']['content']['Row']
 
 export default function AdminContent() {
   const [content, setContent] = useState<Content[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedContent, setSelectedContent] = useState<Content | null>(null)
+  const [isLoading, setLoading] = useState(true)
+  const [, setSelectedContent] = useState<Content | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -44,7 +42,7 @@ export default function AdminContent() {
     }
   }
 
-  if (loading) return <LoadingSpinner />
+  if (isLoading) return <LoadingSpinner />
 
   return (
     <div className="space-y-6">
@@ -66,7 +64,7 @@ export default function AdminContent() {
                 Title
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
-                Category
+                Description
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-300">
                 Release Year
@@ -83,7 +81,7 @@ export default function AdminContent() {
                   {item.title}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                  {item.category}
+                  {item.categories}
                 </td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
                   {item.release_year}

@@ -1,5 +1,5 @@
+import { DownloadProgress } from '@/components/downloads/DownloadProgress'
 import type { Content } from '@/types/content'
-import DownloadProgress from '../downloads/DownloadProgress'
 import OfflineToggle from './OfflineToggle'
 
 interface ContentViewProps {
@@ -15,7 +15,7 @@ export default function ContentView({ content }: ContentViewProps) {
         <OfflineToggle contentId={content.id} />
       </div>
 
-      <DownloadProgress contentId={content.id} />
+      <DownloadProgress contentId={content.id} progress={0} status="pending" />
 
       {/* Rest of the content view */}
     </div>

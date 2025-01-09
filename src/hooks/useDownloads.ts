@@ -1,125 +1,83 @@
-import type { Content } from '@/types'
+import { downloadService } from '@/lib/services/downloads/download-service'
+import type { QueueItem, StorageInfo } from '@/types/downloads'
 import { useCallback, useEffect, useState } from 'react'
-
-import { downloadsManager } from '@/lib/services/downloads'
-
+import { useAuth } from './useAuth'
 import { useToast } from './useToast'
 
-interface DownloadProgress {
-  [key: string]: {
-    progress: number
-    downloaded: number
-    total: number
-    status: 'downloading' | 'paused' | 'completed' | 'error'
-    error?: string
-  }
-}
-
 export function useDownloads() {
-  const [downloads, setDownloads] = useState<Content[]>([])
-  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({})
-  const [storageInfo, setStorageInfo] = useState<{
-    used: number
-    quota: number
-    percentage: number
-  }>({ used: 0, quota: 0, percentage: 0 })
+  const { user } = useAuth()
   const { showToast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+  const [queue, setQueue] = useState<QueueItem[]>([])
+  const [storageInfo, setStorageInfo] = useState<StorageInfo>({
+    used: 0,
+    quota: 0,
+    percentage: 0,
+  })
 
-  const loadDownloads = useCallback(async () => {
+  const refreshQueue = useCallback(async () => {
     try {
-      const [downloadedContent, storage] = await Promise.all([
-        downloadsManager.getDownloadedContent(),
-        downloadsManager.getStorageUsage(),
+      setIsLoading(true)
+      const [queueData, storage] = await Promise.all([
+        downloadService.getQueue(),
+        downloadService.getStorageUsage(),
       ])
-      setDownloads(downloadedContent)
+      setQueue(queueData)
       setStorageInfo(storage)
-    } catch (error) {
-      console.error('Failed to load downloads:', error)
-      showToast('Failed to load downloads', 'error')
-    }
-  }, [showToast])
-
-  const startDownload = useCallback(
-    async (content: Content) => {
-      try {
-        // Initialize progress state
-        setDownloadProgress(prev => ({
-          ...prev,
-          [content.id]: {
-            progress: 0,
-            downloaded: 0,
-            total: 0,
-            status: 'downloading',
-          },
-        }))
-
-        // Start download with progress tracking
-        await downloadsManager.getDownloadedContent()
-
-        // Update downloads list
-        await loadDownloads()
-
-        setDownloadProgress(prev => ({
-          ...prev,
-          [content.id]: {
-            ...prev[content.id],
-            status: 'completed',
-          },
-        }))
-
-        showToast('Download completed successfully', 'success')
-      } catch (error) {
-        console.error('Failed to download content:', error)
-        setDownloadProgress(prev => ({
-          ...prev,
-          [content.id]: {
-            ...prev[content.id],
-            status: 'error',
-            error: 'Download failed',
-          },
-        }))
-        showToast('Failed to download content', 'error')
-      }
-    },
-    [loadDownloads, showToast]
-  )
-
-  const removeDownload = useCallback(
-    async (contentId: string) => {
-      try {
-        await downloadsManager.removeDownload(contentId)
-        setDownloads(prev => prev.filter(d => d.id !== contentId))
-        showToast('Download removed successfully', 'success')
-      } catch (error) {
-        console.error('Failed to remove download:', error)
-        showToast('Failed to remove download', 'error')
-      }
-    },
-    [showToast]
-  )
-
-  const clearDownloads = useCallback(async () => {
-    try {
-      await downloadsManager.clearDownloads()
-      setDownloads([])
-      showToast('All downloads cleared successfully', 'success')
-    } catch (error) {
-      console.error('Failed to clear downloads:', error)
-      showToast('Failed to clear downloads', 'error')
+    } catch (err) {
+      showToast('Failed to refresh download queue', 'error')
+    } finally {
+      setIsLoading(false)
     }
   }, [showToast])
 
   useEffect(() => {
-    loadDownloads()
-  }, [loadDownloads])
+    const handleQueueUpdate = (items: QueueItem[]) => {
+      setQueue(items)
+    }
+
+    const handleStorageUpdate = (info: StorageInfo) => {
+      setStorageInfo(info)
+    }
+
+    downloadService.on('queueUpdated', handleQueueUpdate)
+    downloadService.on('storageUpdated', handleStorageUpdate)
+
+    if (user?.id) {
+      void refreshQueue()
+    }
+
+    return () => {
+      downloadService.off('queueUpdated', handleQueueUpdate)
+      downloadService.off('storageUpdated', handleStorageUpdate)
+    }
+  }, [user, refreshQueue])
+
+  const runCleanup = useCallback(async () => {
+    try {
+      if (!user?.id) return
+      await downloadService.cleanupDownloads(user.id)
+      showToast('Cleanup completed', 'success')
+    } catch (err) {
+      showToast('Failed to cleanup downloads', 'error')
+    }
+  }, [user, showToast])
+
+  const recoverFailedDownloads = useCallback(async () => {
+    try {
+      await downloadService.recoverFailedDownloads()
+      showToast('Recovery started for failed downloads', 'success')
+    } catch (err) {
+      showToast('Failed to recover downloads', 'error')
+    }
+  }, [showToast])
 
   return {
-    downloads,
-    downloadProgress,
+    queue,
+    isLoading,
     storageInfo,
-    startDownload,
-    removeDownload,
-    clearDownloads,
-    refreshDownloads: loadDownloads,
+    runCleanup,
+    recoverFailedDownloads,
+    refreshQueue,
   }
 }

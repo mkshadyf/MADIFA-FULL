@@ -1,10 +1,8 @@
-import React from 'react'
-import { useEffect, useState } from 'react'
-
-import { createClient } from '@/lib/supabase/client'
-import type { Database } from '@/lib/database.types'
+import UsersList from '@/components/admin/Users/users-list'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import UsersList from '@/components/admin/users-list'
+import type { Database } from '@/lib/database.types'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 
@@ -192,7 +190,7 @@ export default function UserManagementDashboard() {
             Recent Signups
           </h3>
           <div className="space-y-4">
-            {metrics?.recentSignups.map(user => (
+            {metrics?.recentSignups.map((user: UserProfile) => (
               <div key={user.id} className="flex items-center justify-between">
                 <div>
                   <div className="font-medium text-white">{user.full_name}</div>

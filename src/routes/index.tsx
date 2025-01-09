@@ -1,80 +1,100 @@
-import { Suspense, lazy } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 
-import { useAuth } from '@/hooks/useAuth'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { ErrorBoundary } from '@/components/error-boundary'
 import { AuthGuard } from '@/components/guards/AuthGuard'
 import { MainLayout } from '@/components/layouts'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useAuth } from '@/hooks/useAuth'
+import React from 'react'
 
 // Auth pages (not lazy loaded for faster initial auth)
 import SignInPage from '@/pages/auth/signin/page'
 import SignUpPage from '@/pages/auth/signup/page'
 
 // Lazy loaded pages
-const HomePage = lazy(() => import('@/pages/home/index'))
-const ProfilePage = lazy(() => import('@/pages/profile/index'))
-const AdminDashboard = lazy(() => import('@/pages/admin/dashboard/page'))
-
-// Loading component with error boundary
-const PageLoader = ({ children }: { children: React.ReactNode }) => (
-  <ErrorBoundary>
-    <Suspense fallback={<LoadingSpinner size="lg" className="mx-auto mt-8" />}>
-      {children}
-    </Suspense>
-  </ErrorBoundary>
+const AdminDashboard = React.lazy(() => import('@/pages/admin/dashboard/page'))
+const BrowsePage = React.lazy(() => import('@/pages/main/browse/page'))
+const CategoryPage = React.lazy(
+  () => import('@/pages/main/category/[slug]/page')
 )
+const ProfilePage = React.lazy(() => import('@/pages/main/profile/page'))
+const SubscriptionPage = React.lazy(
+  () => import('@/pages/main/subscription/page')
+)
+const WatchPage = React.lazy(() => import('@/pages/main/watch/[id]/page'))
 
-export function AppRoutes(): JSX.Element {
-  const { loading } = useAuth()
+// Wrapper component to pass params to CategoryPage
+function CategoryPageWrapper() {
+  const params = useParams<{ slug: string }>()
+  if (!params.slug) {
+    return <Navigate to="/browse" replace />
+  }
+  return <CategoryPage params={{ slug: params.slug }} />
+}
 
-  if (loading) {
-    return <LoadingSpinner size="lg" className="mx-auto mt-8" />
+export function AppRoutes() {
+  const { isLoading, isAuthenticated } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
   }
 
   return (
-    <Routes>
-      <Route element={<MainLayout />}>
+    <ErrorBoundary>
+      <Routes>
         {/* Public routes */}
-        <Route path="/auth/signin" element={<SignInPage />} />
-        <Route path="/auth/signup" element={<SignUpPage />} />
+        <Route
+          path="/auth/signin"
+          element={
+            !isAuthenticated ? <SignInPage /> : <Navigate to="/" replace />
+          }
+        />
+        <Route
+          path="/auth/signup"
+          element={
+            !isAuthenticated ? <SignUpPage /> : <Navigate to="/" replace />
+          }
+        />
 
         {/* Protected routes */}
-        <Route element={<AuthGuard allowedRoles={['user', 'admin']} />}>
-          <Route
-            path="/"
-            element={
-              <PageLoader>
-                <HomePage />
-              </PageLoader>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PageLoader>
-                <ProfilePage />
-              </PageLoader>
-            }
-          />
+        <Route
+          element={
+            <AuthGuard allowedRoles={['user', 'admin']}>
+              <MainLayout />
+            </AuthGuard>
+          }
+        >
+          <Route path="/" element={<Navigate to="/browse" replace />} />
+          <Route path="/browse" element={<BrowsePage />} />
+          <Route path="/category/:slug" element={<CategoryPageWrapper />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
+          <Route path="/watch/:id" element={<WatchPage />} />
         </Route>
 
         {/* Admin routes */}
-        <Route element={<AuthGuard allowedRoles={['admin']} />}>
+        <Route
+          element={
+            <AuthGuard allowedRoles={['admin']}>
+              <MainLayout />
+            </AuthGuard>
+          }
+        >
           <Route
             path="/admin"
-            element={
-              <PageLoader>
-                <AdminDashboard />
-              </PageLoader>
-            }
+            element={<Navigate to="/admin/dashboard" replace />}
           />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Route>
 
-        {/* Catch-all route */}
+        {/* Fallback route */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </ErrorBoundary>
   )
 }
 

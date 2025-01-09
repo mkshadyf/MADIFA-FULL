@@ -1,14 +1,9 @@
-import React from 'react'
 import { useQuery } from '@tanstack/react-query'
+import React from 'react'
 
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { createClient } from '@/lib/supabase/client'
-
-interface SearchResult {
-  id: string
-  title: string
-  description: string
-  thumbnail_url: string
-}
+import type { SearchResult } from '@/types/search'
 
 export default function SearchPage() {
   const [query, setQuery] = React.useState('')
@@ -21,11 +16,13 @@ export default function SearchPage() {
 
       const { data } = await supabase
         .from('content')
-        .select('*')
+        .select(
+          'id, title, description, thumbnail_url, video_url, duration, category_id, created_at, updated_at, views, rating, size, category, tags, fileSize, expiration_date, vimeo_id, metadata, status, type, visibility, encoding_status'
+        )
         .ilike('title', `%${query}%`)
         .limit(20)
 
-      return data || []
+      return (data || []) as SearchResult[]
     },
     enabled: !!query,
   })
@@ -45,7 +42,9 @@ export default function SearchPage() {
         className="w-full rounded-lg bg-gray-800 p-4 text-white"
       />
       {isLoading ? (
-        <div>Loading...</div>
+        <div className="flex min-h-screen items-center justify-center">
+          <LoadingSpinner />
+        </div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {results.map(result => (
