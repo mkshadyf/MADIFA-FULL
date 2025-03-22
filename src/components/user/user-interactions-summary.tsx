@@ -1,4 +1,4 @@
-import { userInteractionsService } from '@/lib/services/user-interactions'
+import { getUserFavorites, getUserRatings, getUserWatchlist } from '@/lib/services/user-interactions'
 import type { UserInteractionStats } from '@/types/user'
 import { useEffect, useState } from 'react'
 
@@ -15,9 +15,9 @@ export default function UserInteractionsSummary({
 
   useEffect(() => {
     const loadStats = async () => {
-      const favorites = await userInteractionsService.getUserFavorites(userId)
-      const ratings = await userInteractionsService.getUserRatings(userId)
-      const watchlist = await userInteractionsService.getUserWatchlist(userId)
+      const favorites = await getUserFavorites(userId)
+      const ratings = await getUserRatings(userId)
+      const watchlist = await getUserWatchlist(userId)
 
       setStats({
         favorites: favorites.length,

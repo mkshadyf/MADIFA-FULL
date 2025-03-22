@@ -1,11 +1,20 @@
-import { SubscriptionService } from './subscription-service'
+import { subscriptionService } from './subscription-service'
+import { payFastService } from './payfast'
 
-export const subscriptionService = new SubscriptionService()
+// Export subscription service 
+export { subscriptionService } from './subscription-service'
+export type { SubscriptionService } from './types'
 
-// Export the service class for type checking
-export { SubscriptionService }
+// Export utility functions
+export { handleSubscriptionError } from './subscription-error-handler'
 
-// Export individual functions
+// Export vimeo utilities
+export { getVimeoAccess, syncVimeoAccess } from './vimeo'
+
+// Export PayFast service
+export { payFastService }
+
+// Export individual methods for direct use
 export const {
   getSubscription,
   getCurrentSubscription,
@@ -13,18 +22,9 @@ export const {
   updateSubscription,
   cancelSubscription,
   getBillingHistory,
-  getPaymentMethods,
-  setDefaultPaymentMethod,
-  deletePaymentMethod,
-  getInvoices,
-  downloadInvoice,
   checkAccess,
   checkQuotaBeforeDownload,
   startQuotaMonitoring,
   stopQuotaMonitoring,
-  updateUsage,
-  getSubscriptionTiers,
-  syncSubscriptions,
-  getSyncErrors,
-  getSyncJobs
+  checkSchedulerHealth
 } = subscriptionService

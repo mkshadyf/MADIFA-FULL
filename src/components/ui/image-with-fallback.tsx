@@ -1,6 +1,5 @@
 import React from 'react'
 import { useState } from 'react'
-import Image from 'react-router-dom'
 
 interface ImageWithFallbackProps {
   src: string

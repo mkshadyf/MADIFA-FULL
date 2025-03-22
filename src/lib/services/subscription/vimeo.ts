@@ -1,74 +1,62 @@
-import { vimeoClient } from '@/lib/services/vimeo/vimeo-client'
+import { vimeoService } from '@/lib/services/vimeo/vimeo-service'
 import type { UserSubscription } from '@/types/subscription'
-import type { VimeoVideo } from '@/types/vimeo'
 
+/**
+ * Determines Vimeo access rights based on subscription status and tier
+ */
 export async function getVimeoAccess(subscription: UserSubscription): Promise<{
   canAccess: boolean
   maxQuality: string
 }> {
   try {
-    // Check if subscription is active
-    if (subscription.status !== 'active') {
-      return { canAccess: false, maxQuality: '360p' }
+    // Default access level for free users
+    const defaultAccess = {
+      canAccess: false,
+      maxQuality: 'none'
     }
 
-    // Get quality limits based on subscription tier
-    const qualityLimits = {
-      free: '360p',
-      premium: '1080p',
-      premium_plus: '4K',
+    // If no subscription or not active, return default access
+    if (!subscription || subscription.status !== 'active') {
+      return defaultAccess
     }
 
-    const maxQuality =
-      qualityLimits[subscription.tier as keyof typeof qualityLimits] || '360p'
-
-    // Verify access with Vimeo
-    const response = await vimeoClient.request<VimeoVideo>({
-      method: 'GET',
-      path: '/me',
-      query: {
-        fields: 'account_type',
-      },
-    })
-
-    return {
-      canAccess: response.data.length > 0,
-      maxQuality,
+    // Determine access based on subscription tier
+    switch (subscription.tier) {
+      case 'premium':
+        return { canAccess: true, maxQuality: '720p' }
+      case 'premium_plus':
+        return { canAccess: true, maxQuality: '1080p' }
+      default:
+        return defaultAccess
     }
   } catch (error) {
-    console.error('Error checking Vimeo access:', error)
-    return { canAccess: false, maxQuality: '360p' }
+    console.error('Error determining Vimeo access:', error)
+    return { canAccess: false, maxQuality: 'none' }
   }
 }
 
-export async function syncVimeoAccess(
-  subscription: UserSubscription
-): Promise<void> {
+/**
+ * Syncs subscription status with Vimeo access rights
+ */
+export async function syncVimeoAccess(subscription: UserSubscription): Promise<void> {
   try {
-    const { canAccess, maxQuality } = await getVimeoAccess(subscription)
-
-    if (!canAccess) {
-      // Revoke access if subscription is not active
-      await vimeoClient.request({
-        method: 'PUT',
-        path: '/me/access',
-        query: {
-          type: 'none',
-        },
-      })
-    } else {
-      // Update access based on subscription tier
-      await vimeoClient.request({
-        method: 'PUT',
-        path: '/me/access',
-        query: {
-          type: 'limited',
-          max_quality: maxQuality,
-        },
-      })
+    if (!subscription) {
+      console.warn('No subscription provided for sync')
+      return
     }
+
+    const access = await getVimeoAccess(subscription)
+    
+    // Update Vimeo access rights based on subscription tier
+    await vimeoService.updateAccessRights({
+      userId: subscription.user_id,
+      canAccess: access.canAccess,
+      maxQuality: access.maxQuality,
+      tier: subscription.tier
+    })
+    
+    console.log(`Vimeo access synced for user ${subscription.user_id}`)
   } catch (error) {
-    console.error('Error syncing Vimeo access:', error)
-    throw error
+    console.error('Failed to sync Vimeo access:', error)
   }
 }

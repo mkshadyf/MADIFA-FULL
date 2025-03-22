@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 import { createClient } from '@/lib/supabase/client'
 import type { Category } from '@/types/content'
 
-import { usePathname } from 'next/navigation'
 export default function CategoryNavigation() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
-  const pathname = usePathname()
+  const location = useLocation()
+  const pathname = location.pathname
   const supabase = createClient()
 
   useEffect(() => {

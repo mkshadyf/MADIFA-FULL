@@ -1,12 +1,12 @@
 import React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import { useDebounce } from '@/hooks/useDebounce'
 import { createClient } from '@/lib/supabase/client'
 import type { Content } from '@/types/content'
+import { Image } from '@/components/ui/Image'
 
 export function SearchBar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -127,10 +127,11 @@ export function SearchBar() {
                       className="flex w-full items-center space-x-4 p-4 hover:bg-gray-800"
                     >
                       <div className="relative h-9 w-16 flex-shrink-0 overflow-hidden rounded">
-                        <img
-                          src={item.thumbnail_url || undefined}
+                        <Image
+                          src={item.thumbnail_url || '/images/placeholder.jpg'}
                           alt={item.title}
                           className="object-cover"
+                          fill
                         />
                       </div>
                       <div className="flex-1 text-left">

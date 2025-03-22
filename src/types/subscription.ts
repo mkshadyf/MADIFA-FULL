@@ -6,6 +6,10 @@ export type SubscriptionStatus =
   | 'past_due'
   | 'trialing'
   | 'unpaid'
+  // PayFast specific statuses
+  | 'complete'
+  | 'pending'
+  | 'cancelled'
 
 export type SubscriptionTier = 'free' | 'premium' | 'premium_plus'
 export type SubscriptionInterval = 'month' | 'year'
@@ -23,10 +27,12 @@ export interface SubscriptionPlan {
   metadata?: {
     stripePriceId?: string
     stripeProductId?: string
+    payFastProductId?: string
+    tier?: string
     quota?: number
     maxDownloads?: number
     maxStorage?: number
-    [key: string]: any
+    [key: string]: string | number | boolean | undefined
   }
 }
 
@@ -34,8 +40,10 @@ export interface UserSubscription {
   id: string
   user_id: string
   plan_id: string
-  stripe_subscription_id: string
-  stripe_customer_id: string
+  stripe_subscription_id?: string
+  stripe_customer_id?: string
+  payfast_reference?: string
+  payfast_token?: string
   status: SubscriptionStatus
   current_period_start: string
   current_period_end: string
@@ -44,7 +52,7 @@ export interface UserSubscription {
   ended_at?: string
   trial_start?: string
   trial_end?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, string | number | boolean | null | undefined>
   tier?: SubscriptionTier
   plan?: SubscriptionPlan
   usage?: {
@@ -64,7 +72,7 @@ export interface BillingHistory {
   currency: string
   status: 'succeeded' | 'failed' | 'pending'
   created_at: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, string | number | boolean | null | undefined>
 }
 
 export interface SubscriptionError extends Error {
@@ -159,7 +167,7 @@ export interface SyncError {
   error_code: string
   created_at: string
   subscription_id?: string
-  details?: Record<string, unknown>
+  details?: Record<string, string | number | boolean | null | undefined>
 }
 
 export interface SyncJob {
@@ -168,5 +176,5 @@ export interface SyncJob {
   started_at: string
   completed_at?: string
   error?: string
-  details?: Record<string, unknown>
+  details?: Record<string, string | number | boolean | null | undefined>
 }

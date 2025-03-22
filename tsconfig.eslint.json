@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    ".eslintrc.js",
+    ".eslintrc.cjs",
+    "commitlint.config.js",
+    "lint-staged.config.js",
+    "postcss.config.js",
+    "playwright.config.ts",
+    "scripts/**/*.ts",
+    "scripts/**/*.js",
+    "dev-dist/**/*.js",
+    "e2e/**/*.ts"
+  ]
+} 

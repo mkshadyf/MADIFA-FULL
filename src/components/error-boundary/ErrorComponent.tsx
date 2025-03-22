@@ -1,6 +1,8 @@
+import React from 'react';
+
 interface ErrorComponentProps {
-  error?: Error
-  resetErrorBoundary?: () => void
+  error: Error;
+  resetErrorBoundary: () => void;
 }
 
 export function ErrorComponent({
@@ -14,16 +16,14 @@ export function ErrorComponent({
           Something went wrong
         </h2>
         <p className="mb-4 text-gray-600">
-          {error?.message || 'An unexpected error occurred'}
+          {error.message || 'An unexpected error occurred'}
         </p>
-        {resetErrorBoundary && (
-          <button
-            onClick={resetErrorBoundary}
-            className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-          >
-            Try again
-          </button>
-        )}
+        <button
+          onClick={resetErrorBoundary}
+          className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+        >
+          Try again
+        </button>
       </div>
     </div>
   )

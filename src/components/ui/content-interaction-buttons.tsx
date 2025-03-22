@@ -1,7 +1,7 @@
 import { IconButton } from '@/components/ui'
 import { useActivityTracking } from '@/hooks/useActivityTracking'
 import { useAuth } from '@/hooks/useAuth'
-import { userInteractionsService } from '@/lib/services/user-interactions'
+import { toggleFavorite, toggleWatchlist, rateContent } from '@/lib/services/user-interactions'
 import { useState } from 'react'
 
 interface ContentInteractionButtonsProps {
@@ -32,7 +32,7 @@ export default function ContentInteractionButtons({
     setLoading(true)
 
     try {
-      await userInteractionsService.toggleFavorite(user.id, contentId)
+      await toggleFavorite(user.id, contentId)
       setIsFavorite(!isFavorite)
       if (!isFavorite) {
         await trackLike(contentId)
@@ -50,7 +50,7 @@ export default function ContentInteractionButtons({
     setLoading(true)
 
     try {
-      await userInteractionsService.toggleWatchlist(user.id, contentId)
+      await toggleWatchlist(user.id, contentId)
       setIsWatchlist(!isWatchlist)
       if (!isWatchlist) {
         await trackWatchlistAdd(contentId)
@@ -70,7 +70,7 @@ export default function ContentInteractionButtons({
     setLoading(true)
 
     try {
-      await userInteractionsService.rateContent(user.id, contentId, value)
+      await rateContent(user.id, contentId, value)
       setRating(value)
       onInteraction?.()
     } catch (error) {

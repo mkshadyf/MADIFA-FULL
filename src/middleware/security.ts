@@ -4,11 +4,18 @@ import helmet from 'helmet'
 import hpp from 'hpp'
 import xss from 'xss-clean'
 
+// Security middleware for PWA with full mobile support
+// Using proper typing to maintain clean structure
+
+// Define middleware function type
+type MiddlewareFunction = (req: Request, res: Response, next: NextFunction) => void;
+
 // Rate limiting
 export const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
-})
+  message: 'Too many requests from this IP, please try again later'
+}) as MiddlewareFunction;
 
 // Security headers middleware
 export const securityHeaders = helmet({
@@ -18,9 +25,7 @@ export const securityHeaders = helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: process.env.VITE_SUPABASE_URL
-        ? ["'self'", process.env.VITE_SUPABASE_URL]
-        : ["'self'"],
+      connectSrc: ["'self'", 'https://api.payfast.co.za'],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"],
     },
@@ -36,38 +41,48 @@ export const securityHeaders = helmet({
   noSniff: true,
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   xssFilter: true,
-})
+}) as MiddlewareFunction;
 
 // XSS Protection
-export const xssProtection = xss()
+export const xssProtection = xss() as MiddlewareFunction;
 
-// Parameter Pollution Protection
-export const parameterProtection = hpp()
+// Parameter Pollution
+export const parameterProtection = hpp() as MiddlewareFunction;
 
-// CSRF Protection
-export const csrfProtection = (
+// CSRF Protection - Type-safe implementation
+export const csrfProtection: MiddlewareFunction = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers['x-csrf-token']
+  const token = req.headers['x-csrf-token'] as string;
   if (!token || token !== process.env.CSRF_TOKEN) {
-    return res.status(403).json({ error: 'Invalid CSRF token' })
+    return res.status(403).json({ error: 'Invalid CSRF token' });
   }
-  next()
-}
+  next();
+};
 
 // Input Sanitization
 export const sanitizeInput = (input: string): string => {
-  // xss-clean is middleware, we'll use a simple sanitizer for strings
-  return input.replace(/[<>]/g, '')
+  return input.replace(/[<>]/g, '');
+};
+
+// Define type for Express application
+interface ExpressApplication {
+  use(middleware: MiddlewareFunction): void;
+  use(path: string, middleware: MiddlewareFunction): void;
 }
 
 // Apply all security middleware
-export const applySecurityMiddleware = (app: any) => {
-  app.use(securityHeaders)
-  app.use(limiter)
-  app.use(xssProtection)
-  app.use(parameterProtection)
-  app.use('/api', csrfProtection)
-}
+export const applySecurityMiddleware = (app: ExpressApplication): void => {
+  // Helmet middleware for secure headers
+  app.use(securityHeaders);
+  // Rate limiting middleware to prevent abuse
+  app.use(limiter);
+  // XSS protection middleware
+  app.use(xssProtection);
+  // Parameter pollution protection middleware
+  app.use(parameterProtection);
+  // CSRF protection for API routes
+  app.use('/api', csrfProtection);
+};

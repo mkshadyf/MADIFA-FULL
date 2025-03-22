@@ -197,3 +197,7 @@ class SubscriptionService {
 }
 
 export const subscriptionService = SubscriptionService.getInstance()
+
+export async function getCurrentSubscription(userId: string): Promise<UserSubscription | null> {
+  return subscriptionService.getActiveSubscription(userId);
+}

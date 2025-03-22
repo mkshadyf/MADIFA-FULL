@@ -15,15 +15,12 @@ export class SubscriptionManagementService {
     try {
       const products = await this.stripe.products.list({
         active: true,
-        type: 'service',
         expand: ['data.default_price'],
       })
 
       return products.data
         .filter(
-          (
-            product
-          ): product is Stripe.Product & { default_price: Stripe.Price } =>
+          (product): product is Stripe.Product & { default_price: Stripe.Price } =>
             !!product.default_price && !!product.metadata?.features
         )
         .map(product => {

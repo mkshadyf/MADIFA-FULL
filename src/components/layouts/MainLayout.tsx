@@ -3,15 +3,15 @@ import { Outlet } from 'react-router-dom'
 
 import { Navigation } from '@/components/layouts/Navigation'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import InstallPrompt from '@/components/ui/install-prompt'
 import { useAuth } from '@/hooks/useAuth'
-import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
-import { ErrorComponent } from '../error-boundary/ErrorComponent'
+import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary'
 
 interface MainLayoutProps {
   children?: React.ReactNode
 }
 
-export function MainLayout({ children }: MainLayoutProps): JSX.Element {
+export function MainLayout({ children }: MainLayoutProps): React.ReactElement {
   const { isLoading } = useAuth()
 
   if (isLoading) {
@@ -19,7 +19,7 @@ export function MainLayout({ children }: MainLayoutProps): JSX.Element {
   }
 
   return (
-    <ErrorBoundary errorComponent={ErrorComponent}>
+    <ErrorBoundary>
       <div className="flex min-h-screen flex-col">
         <Navigation />
         <main className="container mx-auto flex-1 px-4 py-8">
@@ -27,9 +27,10 @@ export function MainLayout({ children }: MainLayoutProps): JSX.Element {
         </main>
         <footer className="bg-gray-100 py-6">
           <div className="container mx-auto px-4 text-center text-gray-600">
-            © {new Date().getFullYear()} Your App Name. All rights reserved.
+            &copy; {new Date().getFullYear()} Your App Name. All rights reserved.
           </div>
         </footer>
+        <InstallPrompt />
       </div>
     </ErrorBoundary>
   )

@@ -13,7 +13,7 @@ export interface SubscriptionService {
   createSubscription(
     userId: string,
     plan: SubscriptionPlan
-  ): Promise<{ clientSecret: string }>
+  ): Promise<{ redirectUrl: string }>
   cancelSubscription(subscriptionId: string): Promise<UserSubscription | null>
   getSubscription(userId: string): Promise<UserSubscription | null>
   getCurrentSubscription(userId: string): Promise<UserSubscription | null>
@@ -47,4 +47,7 @@ export interface SubscriptionService {
   getSyncErrors(): Promise<SyncError[]>
   getSyncJobs(): Promise<SyncJob[]>
   getSubscriptionTiers(): Promise<SubscriptionPlan[]>
+
+  // Health check
+  checkSchedulerHealth(): Promise<boolean>
 }

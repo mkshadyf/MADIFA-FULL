@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom'
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { getUserRatings } from '@/lib/services/user-interactions'
-import type { Content } from '@/types/content'
 
-interface RatedContent extends Content {
+interface RatedContent {
   content_id: string
-  rated_at: string
+  title: string
   rating: number
+  rated_at: string
+  // Additional content properties can be included here if needed
 }
 
 export default function RatingsPage() {
@@ -29,13 +30,13 @@ export default function RatingsPage() {
           data
             .filter(item => item.rating !== null)
             .map(item => ({
-              ...item,
-              content_id: item.id,
-              rating: item.rating as number,
-              rated_at: new Date().toISOString(), // TODO: Get actual rated_at from backend
+              content_id: item.content_id,
+              title: item.title,
+              rating: item.rating,
+              rated_at: item.rated_at
             }))
         )
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error loading ratings:', error)
         setError(
           error instanceof Error ? error.message : 'Failed to load ratings'

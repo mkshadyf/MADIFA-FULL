@@ -62,7 +62,13 @@ export function useSubscription() {
 
     try {
       setIsLoading(true)
-      await subscriptionService.cancelSubscription(subscription.stripe_subscription_id)
+      if (subscription.stripe_subscription_id) {
+        await subscriptionService.cancelSubscription(subscription.stripe_subscription_id)
+      } else if (subscription.payfast_token) {
+        await subscriptionService.cancelSubscription(subscription.payfast_token)
+      } else {
+        throw new Error('No valid subscription ID found to cancel')
+      }
       await loadSubscription()
     } catch (err) {
       setError(
@@ -79,7 +85,13 @@ export function useSubscription() {
 
     try {
       setIsLoading(true)
-      await subscriptionService.updateSubscription(subscription.stripe_subscription_id, updates)
+      if (subscription.stripe_subscription_id) {
+        await subscriptionService.updateSubscription(subscription.stripe_subscription_id, updates)
+      } else if (subscription.payfast_token) {
+        await subscriptionService.updateSubscription(subscription.payfast_token, updates)
+      } else {
+        throw new Error('No valid subscription ID found to update')
+      }
       await loadSubscription()
     } catch (err) {
       setError(

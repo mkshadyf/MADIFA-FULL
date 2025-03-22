@@ -3,8 +3,8 @@ import { Navigate, Outlet } from 'react-router-dom'
 
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useAuth } from '@/hooks/useAuth'
-import { ErrorBoundary } from 'next/dist/client/components/error-boundary'
-import { ErrorComponent } from '../error-boundary/ErrorComponent'
+import { ErrorBoundary } from '@/components/error-boundary/ErrorBoundary'
+
 interface AuthLayoutProps {
   children?: React.ReactNode
   requireGuest?: boolean
@@ -13,7 +13,7 @@ interface AuthLayoutProps {
 export function AuthLayout({
   children,
   requireGuest = true,
-}: AuthLayoutProps): JSX.Element {
+}: AuthLayoutProps): React.ReactElement {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
@@ -26,7 +26,7 @@ export function AuthLayout({
   }
 
   return (
-    <ErrorBoundary errorComponent={ErrorComponent}>
+    <ErrorBoundary>
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">

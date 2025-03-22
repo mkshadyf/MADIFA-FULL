@@ -1,6 +1,11 @@
-import type { VimeoPrivacy } from '@/types/vimeo'
-import { vimeoService } from './index'
+import type { VimeoPrivacy, VimeoVideo } from '@/types/vimeo'
+import { vimeoService } from './vimeo-service'
 
-export const getVideoDetails = (videoId: string) => vimeoService.getVideoDetails(videoId)
-export const updateVideoPrivacy = (videoId: string, privacy: VimeoPrivacy) => vimeoService.updateVideoPrivacy(videoId, privacy)
-export const getVideosByFolder = (folderId: string) => vimeoService.getVideosByFolder(folderId) 
+export const getVideoDetails = (videoId: string): Promise<VimeoVideo> => 
+  vimeoService.getVideo(videoId)
+
+export const updateVideoPrivacy = (videoId: string, privacy: VimeoPrivacy): Promise<boolean> => 
+  vimeoService.updateVideoProperties(videoId, { privacy })
+
+export const getVideosByFolder = (folderId: string): Promise<VimeoVideo[]> => 
+  vimeoService.getVideosByFolder(folderId)

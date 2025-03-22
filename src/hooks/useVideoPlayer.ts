@@ -2,16 +2,7 @@ import type Player from '@vimeo/player'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useToast } from './useToast'
-
-type VideoQuality =
-  | 'auto'
-  | '4K'
-  | '2K'
-  | '1080p'
-  | '720p'
-  | '540p'
-  | '360p'
-  | '240p'
+import type { VideoQuality } from '@/types/video'
 
 interface ProgressState {
   currentTime: number

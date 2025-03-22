@@ -1,6 +1,5 @@
 import React from 'react'
-import { usePathname } from 'next/navigation'
-import Link from 'next/link'
+import { Link, useLocation } from 'react-router-dom'
 
 const navigation = [
   {
@@ -107,7 +106,7 @@ const navigation = [
 ]
 
 export default function AdminSidebar() {
-  const pathname = usePathname()
+  const location = useLocation()
 
   return (
     <div className="hidden lg:flex lg:flex-shrink-0">
@@ -116,11 +115,11 @@ export default function AdminSidebar() {
           <div className="flex flex-1 flex-col overflow-y-auto pb-4 pt-5">
             <nav className="mt-5 flex-1 space-y-1 px-2">
               {navigation.map(item => {
-                const isActive = pathname === item.href
+                const isActive = location.pathname === item.href
                 return (
-                  <a
+                  <Link
                     key={item.name}
-                    href={item.href}
+                    to={item.href}
                     className={`group flex items-center rounded-md px-2 py-2 text-sm font-medium ${
                       isActive
                         ? 'bg-gray-900 text-white'
@@ -137,7 +136,7 @@ export default function AdminSidebar() {
                       {item.icon}
                     </div>
                     {item.name}
-                  </a>
+                  </Link>
                 )
               })}
             </nav>
