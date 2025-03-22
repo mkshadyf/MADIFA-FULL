@@ -82,11 +82,12 @@ export function useThrottle<T>(value: T, limit: number): T {
  *   return () => window.removeEventListener('scroll', handleScroll);
  * }, [handleScroll]);
  */
-export function useThrottleCallback<T extends (...args: any[]) => any>(
+export function useThrottleCallback<T extends (...args: Parameters<T>) => ReturnType<T>>(
   callback: T,
   limit: number,
-  deps: any[] = []
+  deps: React.DependencyList = []
 ): (...args: Parameters<T>) => void {
+  // Important: This ESLint rule needs the explicit dependencies
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const memoizedCallback = useCallback(callback, deps);
   const lastRun = useRef<number>(0);
@@ -148,7 +149,7 @@ export function useThrottleCallback<T extends (...args: any[]) => any>(
 export function useThrottleEffect(
   effect: () => void | (() => void),
   limit: number,
-  deps: any[]
+  deps: React.DependencyList
 ): void {
   const lastRun = useRef<number>(0);
   const effectRef = useRef<() => void | (() => void)>(effect);
@@ -198,6 +199,7 @@ export function useThrottleEffect(
         cleanupRef.current();
       }
     };
+    // Important: This ESLint rule needs the explicit dependencies
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, limit]);
 } 
